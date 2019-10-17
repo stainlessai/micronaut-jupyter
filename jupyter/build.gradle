@@ -1,0 +1,41 @@
+plugins {
+    // Apply the groovy plugin to add support for Groovy
+    id 'groovy'
+}
+
+repositories {
+    // Use jcenter for resolving dependencies.
+    // You can declare any Maven/Ivy/file repository here.
+    jcenter()
+}
+
+dependencies {
+    // Use the latest Groovy version for building this library
+    implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+
+    implementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+    implementation "io.micronaut:micronaut-inject-java:$micronautVersion"
+    implementation "io.micronaut:micronaut-messaging:$micronautVersion"
+    implementation "io.micronaut:micronaut-inject:$micronautVersion"
+    implementation "io.micronaut:micronaut-management:$micronautVersion"
+    
+    // Use the awesome Spock testing and specification framework
+    testImplementation "org.spockframework:spock-core:$spockVersion"
+
+    testImplementation "org.testcontainers:spock:1.12.1"
+    testImplementation "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
+    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+    testImplementation "io.micronaut.test:micronaut-test-junit5:$micronautTestVersion"
+    testImplementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+    testImplementation "io.micronaut:micronaut-inject-java:$micronautVersion"
+
+    testImplementation "ch.qos.logback:logback-classic:1.2.3"
+    testImplementation "org.codehaus.groovy:groovy-test:$groovyVersion"
+}
+
+test {
+    testLogging {
+        showStandardStreams = true
+    }
+    failFast = true
+}

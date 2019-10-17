@@ -1,0 +1,63 @@
+plugins {
+    // Apply the groovy plugin to add support for Groovy
+    id 'groovy'
+}
+
+repositories {
+    // Use jcenter for resolving dependencies.
+    // You can declare any Maven/Ivy/file repository here.
+    jcenter()
+}
+
+version projectVersion
+
+dependencies {
+    // Use the latest Groovy version for building this library
+    implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+
+    // Use the awesome Spock testing and specification framework
+    testImplementation "org.spockframework:spock-core:$spockVersion"
+}
+
+subprojects { Project subproject ->
+
+    version project.projectVersion
+    group "io.micronaut.configuration"
+
+    repositories {
+        mavenLocal()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+
+    apply plugin: "groovy"
+    apply plugin: "java"
+
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+
+    jar {
+        manifest {
+            attributes('Automatic-Module-Name': "${subproject.group}.${subproject.name}".replaceAll('[^\\w\\.\\$_]', "_"))
+            attributes('Implementation-Version':project.projectVersion)
+            attributes('Implementation-Title': 'Micronaut Jupyter')
+        }
+    }
+
+    tasks.withType(Test) {
+        jvmArgs '-Duser.country=US'
+        jvmArgs '-Duser.language=en'
+        testLogging {
+            exceptionFormat = 'full'
+        }
+        afterSuite {
+            System.out.print(".")
+            System.out.flush()
+        }
+
+        reports.html.enabled = true
+    }
+
+    task allDeps(type: DependencyReportTask) {}
+
+}
