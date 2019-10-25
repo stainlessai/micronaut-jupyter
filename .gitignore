@@ -1,4 +1,10 @@
 *.bak
+**/.classpath
+**/.project
+**/.settings/*
+.vscode/*
+**/bin
+
 
 # Ignore Gradle project-specific cache directory
 .gradle
