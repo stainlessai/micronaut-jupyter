@@ -10,7 +10,6 @@ repositories {
 }
 
 dependencies {
-    // Use the latest Groovy version for building this library
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
 
     implementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
@@ -18,11 +17,19 @@ dependencies {
     implementation "io.micronaut:micronaut-messaging:$micronautVersion"
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
     implementation "io.micronaut:micronaut-management:$micronautVersion"
-    
+
+    implementation fileTree(
+        dir: "$rootProject.projectDir/ext/beakerx_kernel/base/lib",
+        include: '*.jar',
+        exclude: 'jackson-*.jar'
+    )
+    implementation fileTree(dir: "$rootProject.projectDir/ext/beakerx_kernel/groovy/lib", include: '*.jar')
+
+    testImplementation "org.codehaus.groovy:groovy-test:$groovyVersion"
     // Use the awesome Spock testing and specification framework
     testImplementation "org.spockframework:spock-core:$spockVersion"
-
     testImplementation "org.testcontainers:spock:1.12.1"
+
     testImplementation "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
     testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testImplementation "io.micronaut.test:micronaut-test-junit5:$micronautTestVersion"
@@ -30,7 +37,7 @@ dependencies {
     testImplementation "io.micronaut:micronaut-inject-java:$micronautVersion"
 
     testImplementation "ch.qos.logback:logback-classic:1.2.3"
-    testImplementation "org.codehaus.groovy:groovy-test:$groovyVersion"
+
 }
 
 test {
@@ -39,3 +46,78 @@ test {
     }
     failFast = true
 }
+
+task getBeakerXDependency {
+    // don't run on windows
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        println "Detected windows system, skipping BeakerX dependency download"
+        return
+    }
+    println "Get beakerx dependency"
+    // define target directory
+    def extTarget = "$rootProject.projectDir/ext/beakerx_kernel"
+    //don't re-fetch
+    if (new File(extTarget).exists()) {
+        return
+    }
+    // install beakerx
+    def pythonMajorVersion = "3"
+    def beakerXVersion = "1.4.1"
+    // check for existing python installation
+    def p = "python --version".execute()
+    p.waitForOrKill(10000)
+    // handle error
+    if (p.exitValue() != 0) {
+        throw new RuntimeException("Unable to run python, is it installed and correctly configured? (${p.err.text})")
+    }
+    //if the version is wrong
+    if (p.text.replaceAll("Python ", "")[0] != pythonMajorVersion) {
+        throw new RuntimeException("Python 2 not supported, please make Python 3 default installation.")
+    }
+    // check for existing beakerx installation
+    p = "python -m pip show beakerx".execute() | "grep Version".execute()
+    // if the target version is not installed
+    if (p.text.replaceAll("Version: ", "").replaceAll("\n", "") != beakerXVersion) {
+        p = "python -m pip install --user --upgrade ipywidgets pandas py4j beakerx==$beakerXVersion".execute()
+        p.waitForOrKill(60000)
+        // if we weren't successful
+        if (p.exitValue() != 0) {
+            throw new RuntimeException("Unable to install beakerx dependency, please try again. (${p.err.text})")
+        }
+    }
+    // by now, we should have the correct version beakerx installed, get location of distribution
+    // check for existing beakerx installation
+    p = "python -m pip show beakerx".execute() | "grep Location".execute()
+    //p = ["python", "-c", '"import beakerx; print(beakerx.__path__[0])"'].execute()
+    p.waitForOrKill(10000)
+    // if we weren't successful
+    if (p.exitValue() != 0) {
+        throw new RuntimeException("Unable to locate installed beakerx dependency! (err: ${p.err.text})")
+    }
+    def beakerLocation = p.text.replaceAll("Location: ", "").replaceAll("\n", "")
+    if (!beakerLocation) {
+        throw new RuntimeException("Unable to locate installed beakerx dependency! (out: $beakerLocation)")
+    }
+    beakerLocation = "$beakerLocation/beakerx"
+    // create destination directory, and copy beakerx to it
+    [
+        "mkdir -p $extTarget",
+        "cp -r $beakerLocation/kernel/base $extTarget/",
+        "cp -r $beakerLocation/kernel/groovy $extTarget/"
+    ].each { cmd ->
+        println cmd
+        p = cmd.execute()
+        p.waitFor()
+        // if we weren't successful
+        if (p.exitValue() != 0) {
+            throw new RuntimeException("Unable to copy beakerx dependency! (${p.err.text})")
+        }
+    }
+}
+
+task getExternalDependencies {
+    println "Get external dependencies"
+    dependsOn getBeakerXDependency
+}
+
+build.dependsOn getExternalDependencies

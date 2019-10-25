@@ -4,6 +4,8 @@
 **/.settings/*
 .vscode/*
 **/bin
+ext/*
+!ext/.gitkeep
 
 
 # Ignore Gradle project-specific cache directory
