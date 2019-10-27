@@ -1,2 +1,4 @@
 jupyter:
   server-url: http://localhost:8080
+  kernel:
+    location: /tmp/test-location/jupyter-kernels

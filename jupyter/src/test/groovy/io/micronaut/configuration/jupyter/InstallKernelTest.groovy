@@ -10,8 +10,10 @@ class InstallKernelTest extends Specification {
 
     def defaultKernelDirectory = "micronaut"
     def defaultKernels = "/usr/local/share/jupyter/kernels"
+    def testKernels = "/tmp/test-location/jupyter-kernels"
     def kernelJsonName = "kernel.json"
-    def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory/$kernelJsonName"
+    def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory"
+    def testKernelLocation = "$testKernels/$defaultKernelDirectory"
     def serverUrl = "http://localhost:8080"
 
     def "bean is created"() {
@@ -31,8 +33,8 @@ class InstallKernelTest extends Specification {
 
     def "installs kernel with default config on context creation"() {
         given:
-        // delete possibly existing kernel
-        File existing = new File(defaultKernelLocation)
+        // delete possibly existing kernel directory
+        File existing = new File("$defaultKernelLocation")
         if (existing.exists()) {
             existing.delete()
         }
@@ -57,15 +59,18 @@ class InstallKernelTest extends Specification {
         
         cleanup:
         applicationContext.close()
+        // delete existing kernel directory
+        existing = new File("$defaultKernelLocation")
+        if (existing.exists()) {
+            existing.delete()
+        }
     }
 
     def "installs kernel at configured location"() {
         given:
-        def customPath = "/tmp/test-location/jupyter-kernels"
-        def customLocation = "$customPath/$defaultKernelDirectory/kernel.json"
         // create application context
         ApplicationContext applicationContext = ApplicationContext.run([
-            'jupyter.kernel.location': customPath,
+            'jupyter.kernel.location': testKernels,
             'jupyter.server-url': serverUrl
         ], Environment.TEST)
 
@@ -108,9 +113,10 @@ class InstallKernelTest extends Specification {
         given:
         def kernelName = "Micronaut Version_23"
         def kernelDir = "micronaut-version-23"
-        def customLocation = "$defaultKernels/$kernelDir/$kernelJsonName"
+        def customLocation = "$testKernels/$kernelDir/$kernelJsonName"
         // create application context
         ApplicationContext applicationContext = ApplicationContext.run([
+            'jupyter.kernel.location': testKernels,
             'jupyter.kernel.name': kernelName,
             'jupyter.server-url': serverUrl
         ], Environment.TEST)
