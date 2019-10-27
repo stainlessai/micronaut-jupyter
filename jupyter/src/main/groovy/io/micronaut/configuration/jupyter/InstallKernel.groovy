@@ -46,11 +46,22 @@ public class InstallKernel {
             )
         }
         // create/update kernel json
-        def kernelDirectory = kernelName.replaceAll("[^A-Za-z0-9]", "-").toLowerCase()
+        def kernelDirectory = getKernelDirectory()
         new FileTreeBuilder(location)."$kernelDirectory" {
             "kernel.json"("")
+            "kernel.sh"("")
         }
         new File("$kernelsLocation/$kernelDirectory/kernel.json").write createKernelJson()
+        File kernelSh = new File("$kernelsLocation/$kernelDirectory/kernel.sh")
+        kernelSh.write createKernelSh()
+        // things like the Python and Java binaries can be executed by anyone,
+        // so I don't see the harm in letting this be executed by anyone as well,
+        // it essentially does the same thing
+        kernelSh.setExecutable(true, false)
+    }
+
+    private getKernelDirectory () {
+        return kernelName.replaceAll("[^A-Za-z0-9]", "-").toLowerCase()
     }
 
     private getEndpointPath () {
@@ -62,22 +73,31 @@ public class InstallKernel {
     }
 
     private createKernelJson () {
-        // create endpoint url to call
-        def endpointUrl = "$serverUrl/${getEndpointPath()}"
         return new JsonBuilder([
             language: "groovy",
             argv: [
-                "curl",
-                "-X",
-                "POST",
-                endpointUrl,
-                "-H",
-                "'Content-Type: application/json'",
-                "-d",
-                new JsonBuilder([file: "{connection_file}"]).toString()
+                "$kernelsLocation/$kernelDirectory/kernel.sh",
+                "{connection_file}"
             ],
             display_name: kernelName
         ]).toPrettyString()
+    }
+
+    private createKernelSh () {
+        // create endpoint url to call
+        def endpointUrl = "$serverUrl/${getEndpointPath()}"
+        return """#!/bin/bash
+curl -X POST $endpointUrl -H 'Content-Type: application/json' -d "{\\"file\\":\\"\$1\\"}" --trace -
+RET=\$?
+if [ \$RET -ne 0 ]; then
+  exit \$RET
+fi
+
+while true; do
+  sleep 5
+done
+
+"""
     }
 
 }

@@ -8,12 +8,15 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
 import spock.lang.Specification
 
+import java.nio.file.Files
+
 class InstallKernelTest extends Specification {
 
     def defaultKernelDirectory = "micronaut"
     def defaultKernels = "/usr/local/share/jupyter/kernels"
     def testKernels = "/tmp/test-location/jupyter-kernels"
     def kernelJsonName = "kernel.json"
+    def kernelShName = "kernel.sh"
     def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory"
     def testKernelLocation = "$testKernels/$defaultKernelDirectory"
     def serverUrl = "http://localhost:8080"
@@ -46,18 +49,28 @@ class InstallKernelTest extends Specification {
         ], Environment.TEST)
 
         when:
-        def kernel = new File(defaultKernelLocation)
+        def kernelConfig = new File("$defaultKernelLocation/$kernelJsonName")
+        def kernelShFile = new File("$defaultKernelLocation/$kernelShName")
 
         then:
         // default kernel should have been created
-        kernel.exists()
+        kernelConfig.exists()
+        kernelShFile.exists()
+        Files.isExecutable(kernelShFile.toPath())
 
         when:
-        def kernelJson = new JsonSlurper().parse(kernel)
+        def kernelJson = new JsonSlurper().parse(kernelConfig)
+        def kernelCommand = kernelShFile.text
 
         then:
         kernelJson.display_name == "Micronaut"
-        kernelJson.argv.contains("$serverUrl/jupyterkernel" as String)
+        kernelJson.argv == [
+            "$defaultKernelLocation/$kernelShName",
+            "{connection_file}"
+        ]
+        kernelCommand.indexOf("#!/bin/bash") == 0
+        kernelCommand.contains("$serverUrl/jupyterkernel" as String)
+        kernelCommand[-1] == "\n"
         
         cleanup:
         applicationContext.close()
@@ -76,9 +89,20 @@ class InstallKernelTest extends Specification {
             'jupyter.server-url': serverUrl
         ], Environment.TEST)
 
-        expect:
-        // default kernel should have been created
-        new File(customLocation).exists()
+        when:
+        def kernelConfig = new File("$testKernelLocation/$kernelJsonName")
+        def kernelShFile = new File("$testKernelLocation/$kernelShName")
+
+        then:
+        // kernel should have been created at given location
+        kernelConfig.exists()
+        kernelShFile.exists()
+
+        when:
+        def kernelJson = new JsonSlurper().parse(kernelConfig)
+
+        then:
+        kernelJson.argv[0] == "$testKernelLocation/$kernelShName"
 
         cleanup:
         applicationContext.close()
