@@ -13,3 +13,4 @@ A special Micronaut kernel is provided to Jupyter that can be used to run notebo
 ## Installation
 
 ## Usage
+See the [/examples](examples/) directory for example apps that use this configuration along with sample Jupyter notebooks that take advantage of the available features.
