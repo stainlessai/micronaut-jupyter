@@ -48,8 +48,9 @@ public class InstallKernel {
         // create/update kernel json
         def kernelDirectory = kernelName.replaceAll("[^A-Za-z0-9]", "-").toLowerCase()
         new FileTreeBuilder(location)."$kernelDirectory" {
-            "kernel.json"(createKernelJson())
+            "kernel.json"("")
         }
+        new File("$kernelsLocation/$kernelDirectory/kernel.json").write createKernelJson()
     }
 
     private getEndpointPath () {

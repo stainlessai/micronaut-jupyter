@@ -1,6 +1,8 @@
 
 package io.micronaut.configuration.jupyter
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
@@ -127,6 +129,34 @@ class InstallKernelTest extends Specification {
 
         then:
         kernelJson.display_name == kernelName
+
+        cleanup:
+        applicationContext.close()
+    }
+
+    def "updates existing kernel"() {
+        given:
+        def kernelName = "Micronaut Version_23"
+        def kernelDir = "micronaut-version-23"
+        def customLocation = "$testKernels/$kernelDir/$kernelJsonName"
+        // create application context
+        ApplicationContext applicationContext = ApplicationContext.run([
+            'jupyter.kernel.location': testKernels,
+            'jupyter.kernel.name': kernelName,
+            'jupyter.server-url': serverUrl
+        ], Environment.TEST)
+        // create kernel a second time
+        applicationContext.getBean(InstallKernel).install()
+        //create mapper
+        ObjectMapper mapper = new ObjectMapper()
+        mapper.configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true)
+
+        when:
+        // parse kernel
+        mapper.readValue(new File(customLocation), Map)
+
+        then:
+        noExceptionThrown()
 
         cleanup:
         applicationContext.close()
