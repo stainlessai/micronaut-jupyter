@@ -13,3 +13,13 @@ ext/*
 
 # Ignore Gradle build output directory
 build
+
+# Micronaut create-app
+Thumbs.db
+.DS_Store
+target/
+out/
+.idea
+*.iml
+*.ipr
+*.iws
