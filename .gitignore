@@ -6,6 +6,7 @@
 **/bin
 ext/*
 !ext/.gitkeep
+**/.ipynb_checkpoints/*
 
 
 # Ignore Gradle project-specific cache directory

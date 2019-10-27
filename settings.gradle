@@ -10,3 +10,4 @@
 rootProject.name = 'micronaut-jupyter'
 
 include 'jupyter'
+include ':examples:basic-service'
