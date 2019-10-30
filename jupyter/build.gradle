@@ -1,7 +1,11 @@
 plugins {
     // Apply the groovy plugin to add support for Groovy
     id 'groovy'
+    id 'maven-publish'
 }
+
+group = 'ai.stainless'
+version = '1.0.0-SNAPSHOT'
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -19,7 +23,8 @@ dependencies {
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
     implementation "io.micronaut:micronaut-management:$micronautVersion"
 
-    implementation "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
+    compile "com.github.twosigma.beakerx:beaker-kernel-base:$beakerxVersion"
+    compile "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
 
     testImplementation "org.codehaus.groovy:groovy-test:$groovyVersion"
 
@@ -46,3 +51,13 @@ test {
     }
     failFast = true
 }
+
+publishing {
+    publications {
+        jupyterConfigurationLibrary(MavenPublication) {
+            artifactId = 'micronaut-jupyter'
+            from components.java
+        }
+    }
+}
+
