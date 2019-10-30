@@ -7,6 +7,7 @@ repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -18,14 +19,10 @@ dependencies {
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
     implementation "io.micronaut:micronaut-management:$micronautVersion"
 
-    implementation fileTree(
-        dir: "$rootProject.projectDir/ext/beakerx_kernel/base/lib",
-        include: '*.jar',
-        exclude: 'jackson-*.jar'
-    )
-    implementation fileTree(dir: "$rootProject.projectDir/ext/beakerx_kernel/groovy/lib", include: '*.jar')
+    implementation "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
 
     testImplementation "org.codehaus.groovy:groovy-test:$groovyVersion"
+
     // Use the awesome Spock testing and specification framework
     testImplementation "org.spockframework:spock-core:$spockVersion"
     testImplementation "org.testcontainers:spock:1.12.1"
