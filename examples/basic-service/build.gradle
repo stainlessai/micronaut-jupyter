@@ -10,6 +10,8 @@ group "basic.service"
 repositories {
     mavenCentral()
     maven { url "https://jcenter.bintray.com" }
+    mavenLocal ()
+    maven { url 'https://jitpack.io' }
 }
 
 configurations {
