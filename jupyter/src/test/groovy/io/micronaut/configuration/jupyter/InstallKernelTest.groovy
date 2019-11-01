@@ -36,10 +36,26 @@ class InstallKernelTest extends Specification {
         applicationContext.close()
     }
 
+    def "default location"() {
+        given:
+        // create application context
+        ApplicationContext applicationContext = ApplicationContext.build([
+            'jupyter.server-url': serverUrl,
+            'jupyter.kernel.install': false
+        ] as Map).deduceEnvironment(false).start()
+
+        expect:
+        //bean should have been created
+        applicationContext.getBean(InstallKernel).getKernelLocation() == "/usr/local/share/jupyter/kernels"
+
+        cleanup:
+        applicationContext.close()
+    }
+
     def "installs kernel with default config on context creation"() {
         given:
         // delete possibly existing kernel directory
-        File existing = new File("$defaultKernelLocation")
+        File existing = new File("$testKernelLocation")
         if (existing.exists()) {
             existing.delete()
         }
@@ -49,8 +65,8 @@ class InstallKernelTest extends Specification {
         ], Environment.TEST)
 
         when:
-        def kernelConfig = new File("$defaultKernelLocation/$kernelJsonName")
-        def kernelShFile = new File("$defaultKernelLocation/$kernelShName")
+        def kernelConfig = new File("$testKernelLocation/$kernelJsonName")
+        def kernelShFile = new File("$testKernelLocation/$kernelShName")
 
         then:
         // default kernel should have been created
@@ -65,7 +81,7 @@ class InstallKernelTest extends Specification {
         then:
         kernelJson.display_name == "Micronaut"
         kernelJson.argv == [
-            "$defaultKernelLocation/$kernelShName",
+            "$testKernelLocation/$kernelShName",
             "{connection_file}"
         ]
         kernelCommand.indexOf("#!/bin/bash") == 0
@@ -74,11 +90,6 @@ class InstallKernelTest extends Specification {
         
         cleanup:
         applicationContext.close()
-        // delete existing kernel directory
-        existing = new File("$defaultKernelLocation")
-        if (existing.exists()) {
-            existing.delete()
-        }
     }
 
     def "installs kernel at configured location"() {

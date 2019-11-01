@@ -27,11 +27,20 @@ public class InstallKernel {
     @Value('${jupyter.kernel.name:Micronaut}')
     private String kernelName
 
+    @Value('${jupyter.kernel.install:true}')
+    private Boolean installKernel
+
     @Value('${jupyter.server-url}')
     private String serverUrl
 
     @PostConstruct
     public void install () {
+        //if we aren't supposed to install the kernel
+        if (!installKernel) {
+            //then do nothing more
+            log.warn "\${jupyter.kernel.install} set to false, will NOT install jupyter kernel on system!"
+            return
+        }
         // ensure our location exists
         File location = new File(kernelsLocation)
         try {
@@ -101,4 +110,7 @@ done
 """
     }
 
+    String getKernelLocation() {
+        return kernelsLocation
+    }
 }
