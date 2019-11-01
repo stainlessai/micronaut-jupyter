@@ -1,5 +1,6 @@
 package io.micronaut.configuration.jupyter
 
+import groovy.util.logging.Slf4j
 import io.micronaut.management.endpoint.annotation.Endpoint
 import io.micronaut.management.endpoint.annotation.Write
 import org.slf4j.Logger
@@ -7,10 +8,9 @@ import org.slf4j.LoggerFactory
 
 import javax.inject.Inject
 
+@Slf4j
 @Endpoint(id = 'jupyterkernel', defaultSensitive = false)
 public class KernelEndpoint {
-
-    private static final Logger log = LoggerFactory.getLogger(KernelEndpoint.class)
 
     @Inject
     private KernelManager kernelManager
