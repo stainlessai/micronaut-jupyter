@@ -3,8 +3,6 @@ package ai.stainless.micronaut.jupyter
 import groovy.util.logging.Slf4j
 import io.micronaut.management.endpoint.annotation.Endpoint
 import io.micronaut.management.endpoint.annotation.Write
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import javax.inject.Inject
 

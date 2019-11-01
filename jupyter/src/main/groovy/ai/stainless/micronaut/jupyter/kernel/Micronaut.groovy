@@ -14,16 +14,12 @@ import com.twosigma.beakerx.kernel.CloseKernelAction
 import com.twosigma.beakerx.kernel.EnvCacheFolderFactory
 import com.twosigma.beakerx.kernel.KernelConfigurationFile
 import com.twosigma.beakerx.kernel.KernelRunner
-import com.twosigma.beakerx.kernel.KernelSocketsFactory
-import com.twosigma.beakerx.kernel.KernelSocketsFactoryImpl
 import com.twosigma.beakerx.kernel.Utils
 import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfiguration
 import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfigurationImpl
 import com.twosigma.beakerx.kernel.restserver.BeakerXServer
 import com.twosigma.beakerx.kernel.restserver.impl.GetUrlArgHandler
 import groovy.util.logging.Slf4j
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 @Slf4j
 public class Micronaut extends Groovy {

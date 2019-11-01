@@ -24,7 +24,6 @@ package ai.stainless.micronaut.jupyter.kernel;
  */
 
 import com.twosigma.beakerx.kernel.*;
-import com.twosigma.beakerx.socket.KernelSocketsZMQ;
 
 import java.util.ArrayList;
 
