@@ -1,4 +1,4 @@
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
 import groovy.json.JsonBuilder
 import groovy.util.logging.Slf4j

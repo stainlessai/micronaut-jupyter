@@ -1,10 +1,10 @@
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
+import ai.stainless.micronaut.jupyter.kernel.KernelExitException
+import ai.stainless.micronaut.jupyter.kernel.Micronaut
+import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import com.twosigma.beakerx.jvm.threads.BeakerStdInOutErrHandler
 import com.twosigma.beakerx.kernel.Kernel
-import io.micronaut.configuration.jupyter.kernel.KernelExitException
-import io.micronaut.configuration.jupyter.kernel.Micronaut
-import io.micronaut.configuration.jupyter.kernel.UnexpectedExitException
 import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

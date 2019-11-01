@@ -1,4 +1,4 @@
-package io.micronaut.configuration.jupyter.kernel
+package ai.stainless.micronaut.jupyter.kernel
 
 import com.twosigma.beakerx.BeakerXCommRepository
 import com.twosigma.beakerx.CommRepository
@@ -22,7 +22,6 @@ import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfigurationImpl
 import com.twosigma.beakerx.kernel.restserver.BeakerXServer
 import com.twosigma.beakerx.kernel.restserver.impl.GetUrlArgHandler
 import groovy.util.logging.Slf4j
-import io.micronaut.configuration.jupyter.KernelEndpoint
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

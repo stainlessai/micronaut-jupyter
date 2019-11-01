@@ -6,7 +6,7 @@
  */
 @Configuration
 @Requires(property = "jupyter.enabled", notEquals = "false")
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
 import io.micronaut.context.annotation.Configuration
 import io.micronaut.context.annotation.Requires

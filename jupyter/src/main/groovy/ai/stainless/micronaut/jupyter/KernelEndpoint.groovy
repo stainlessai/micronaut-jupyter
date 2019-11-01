@@ -1,4 +1,4 @@
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
 import groovy.util.logging.Slf4j
 import io.micronaut.management.endpoint.annotation.Endpoint

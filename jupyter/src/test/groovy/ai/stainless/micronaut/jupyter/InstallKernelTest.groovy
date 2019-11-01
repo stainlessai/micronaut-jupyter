@@ -1,5 +1,5 @@
 
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper

@@ -1,4 +1,4 @@
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment

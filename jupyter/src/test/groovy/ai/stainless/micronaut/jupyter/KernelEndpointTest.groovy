@@ -1,5 +1,5 @@
 
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.type.Argument

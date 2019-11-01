@@ -1,9 +1,9 @@
 
-package io.micronaut.configuration.jupyter
+package ai.stainless.micronaut.jupyter
 
+import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import groovy.json.JsonBuilder
-import io.micronaut.configuration.jupyter.kernel.KernelExitException
-import io.micronaut.configuration.jupyter.kernel.UnexpectedExitException
+import ai.stainless.micronaut.jupyter.kernel.KernelExitException
 import io.micronaut.context.ApplicationContext
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.AutoCleanup

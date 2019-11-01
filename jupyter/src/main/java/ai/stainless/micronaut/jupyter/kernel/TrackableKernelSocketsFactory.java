@@ -1,4 +1,4 @@
-package io.micronaut.configuration.jupyter.kernel;
+package ai.stainless.micronaut.jupyter.kernel;
 
 /*
  * Customized KernelSocketsFactory implementation that tracks and stores the

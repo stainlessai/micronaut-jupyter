@@ -1,4 +1,4 @@
-package io.micronaut.configuration.jupyter.kernel;
+package ai.stainless.micronaut.jupyter.kernel;
 
 public class UnexpectedExitException extends SecurityException {
 
