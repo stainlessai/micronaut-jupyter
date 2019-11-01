@@ -1,6 +1,5 @@
 package io.micronaut.configuration.jupyter
 
-import com.fasterxml.jackson.databind.InjectableValues
 import groovy.json.JsonBuilder
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
