@@ -9,6 +9,7 @@ repositories {
     jcenter()
 }
 
+group "ai.stainless"
 version projectVersion
 
 dependencies {
@@ -21,8 +22,8 @@ dependencies {
 
 subprojects { Project subproject ->
 
+    group "ai.stainless"
     version project.projectVersion
-    group "io.micronaut.configuration"
 
     repositories {
         mavenLocal()
