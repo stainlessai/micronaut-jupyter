@@ -123,6 +123,10 @@ class InstallKernelTest extends Specification {
      * As far as I can tell, it isn't possible to allow a configurable endpoint url
      * @see https://stackoverflow.com/questions/58459116/micronaut-configuration-placeholder-in-endpoint-id-ignores-custom-value
      *
+     * UPDATE: Configurable endpoints do work, more investigation needs to be done as
+     * to why this test doesn't work (probably the way I am reading the
+     * annotation).
+     *
      * /
     def "kernel includes custom endpoint url"() {
         given:
