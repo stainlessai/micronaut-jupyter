@@ -62,3 +62,19 @@ subprojects { Project subproject ->
     task allDeps(type: DependencyReportTask) {}
 
 }
+
+task rsync {
+    // define rsync command
+    def rsyncCommand = "$rootProject.projectDir/rsync"
+    // attempt to run command
+    try {
+        def p = "$rsyncCommand".execute()
+        p.waitFor()
+        println "Ran local rsync"
+    }
+    catch (e) {
+        // ignore any errors, like the command not existing
+    }
+}
+
+build.dependsOn rsync
