@@ -4,9 +4,6 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'ai.stainless'
-version = '1.0.0-SNAPSHOT'
-
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
@@ -60,4 +57,3 @@ publishing {
         }
     }
 }
-
