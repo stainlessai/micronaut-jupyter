@@ -4,9 +4,7 @@ plugins {
 }
 
 repositories {
-    // Use jcenter for resolving dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    jcenter()
+    mavenCentral()
 }
 
 group "ai.stainless"
@@ -29,6 +27,9 @@ subprojects { Project subproject ->
         mavenLocal()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://repo.grails.org/grails/core" }
+        // Use jcenter for resolving dependencies.
+        // You can declare any Maven/Ivy/file repository here.
+        jcenter()
     }
 
     apply plugin: "groovy"
