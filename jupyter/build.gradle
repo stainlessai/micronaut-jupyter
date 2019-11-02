@@ -2,6 +2,7 @@ plugins {
     // Apply the groovy plugin to add support for Groovy
     id 'groovy'
     id 'maven-publish'
+    id 'signing'
 }
 
 repositories {
@@ -54,6 +55,36 @@ publishing {
         jupyterConfigurationLibrary(MavenPublication) {
             artifactId = 'micronaut-jupyter'
             from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                name = artifactId
+                description = projectDesc
+                url = projectUrl
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        name = "Joshua Carter"
+                        email = "jcarter@stainless.ai"
+                        organization = "Stainless.Ai"
+                        organizationUrl = "http://www.stainless.ai"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/${githubSlug}.git"
+                    developerConnection = "scm:git:ssh://github.com:${githubSlug}.git"
+                    url = "http://github.com/${githubSlug}/tree/$githubBranch"
+                }
+            }
         }
     }
+}
+
+signing {
+    sign publishing.publications.jupyterConfigurationLibrary
 }
