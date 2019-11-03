@@ -19,14 +19,12 @@ class InstallKernelTest extends Specification {
     def kernelShName = "kernel.sh"
     def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory"
     def testKernelLocation = "$testKernels/$defaultKernelDirectory"
-    def serverUrl = "http://localhost:8080"
+    def serverUrl = "http://localhost:9999"
 
     def "bean is created"() {
         given:
         // create application context
-        ApplicationContext applicationContext = ApplicationContext.run([
-            'jupyter.server-url': serverUrl
-        ] as Map, Environment.TEST)
+        ApplicationContext applicationContext = ApplicationContext.run(Environment.TEST)
 
         expect:
         //bean should have been created
@@ -40,7 +38,6 @@ class InstallKernelTest extends Specification {
         given:
         // create application context
         ApplicationContext applicationContext = ApplicationContext.build([
-            'jupyter.server-url': serverUrl,
             'jupyter.kernel.install': false
         ] as Map).deduceEnvironment(false).start()
 
@@ -60,9 +57,7 @@ class InstallKernelTest extends Specification {
             existing.delete()
         }
         // create application context
-        ApplicationContext applicationContext = ApplicationContext.run([
-            'jupyter.server-url': serverUrl
-        ], Environment.TEST)
+        ApplicationContext applicationContext = ApplicationContext.run(Environment.TEST)
 
         when:
         def kernelConfig = new File("$testKernelLocation/$kernelJsonName")
@@ -96,8 +91,7 @@ class InstallKernelTest extends Specification {
         given:
         // create application context
         ApplicationContext applicationContext = ApplicationContext.run([
-            'jupyter.kernel.location': testKernels,
-            'jupyter.server-url': serverUrl
+            'jupyter.kernel.location': testKernels
         ], Environment.TEST)
 
         when:
@@ -158,8 +152,7 @@ class InstallKernelTest extends Specification {
         // create application context
         ApplicationContext applicationContext = ApplicationContext.run([
             'jupyter.kernel.location': testKernels,
-            'jupyter.kernel.name': kernelName,
-            'jupyter.server-url': serverUrl
+            'jupyter.kernel.name': kernelName
         ], Environment.TEST)
 
         when:
@@ -173,6 +166,36 @@ class InstallKernelTest extends Specification {
         applicationContext.close()
     }
 
+    /*
+     * TODO: Test passing no server-url without an embedded server running,
+     * this should throw error with helpful message.
+     * If a server-url is given, no error should be thrown even if no embedded
+     * server is running.
+     * I haven't figured out a way to write a test that runs the app without
+     * an embedded server.
+     * Currently, this is tested by disabled the http-netty-server dependency
+     * in build.gradle and making sure the correct tests fail and pass.
+     */
+
+    def "kernel uses configured server-url"() {
+        given:
+        def testUrl = "http://localhost:4321"
+        // create application context
+        ApplicationContext applicationContext = ApplicationContext.run([
+            'jupyter.server-url': testUrl
+        ], Environment.TEST)
+
+        when:
+        def kernelShFile = new File("$testKernelLocation/$kernelShName")
+        def kernelCommand = kernelShFile.text
+
+        then:
+        kernelCommand.contains("$testUrl/jupyterkernel" as String)
+
+        cleanup:
+        applicationContext.close()
+    }
+
     def "updates existing kernel"() {
         given:
         def kernelName = "Micronaut Version_23"
@@ -181,8 +204,7 @@ class InstallKernelTest extends Specification {
         // create application context
         ApplicationContext applicationContext = ApplicationContext.run([
             'jupyter.kernel.location': testKernels,
-            'jupyter.kernel.name': kernelName,
-            'jupyter.server-url': serverUrl
+            'jupyter.kernel.name': kernelName
         ], Environment.TEST)
         // create kernel a second time
         applicationContext.getBean(InstallKernel).install()

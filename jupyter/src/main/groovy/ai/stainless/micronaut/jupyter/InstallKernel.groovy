@@ -6,6 +6,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Value
 import io.micronaut.management.endpoint.annotation.Endpoint
+import io.micronaut.runtime.server.EmbeddedServer
 
 import javax.annotation.PostConstruct
 import javax.inject.Inject
@@ -30,7 +31,7 @@ public class InstallKernel {
     @Value('${jupyter.kernel.install:true}')
     private Boolean installKernel
 
-    @Value('${jupyter.server-url}')
+    @Value('${jupyter.server-url:DEFAULT_EMBEDDED_SERVER}')
     private String serverUrl
 
     @PostConstruct
@@ -82,6 +83,24 @@ public class InstallKernel {
             .get()
     }
 
+    private getServerUrl () {
+        //if we were given a value
+        if (serverUrl != "DEFAULT_EMBEDDED_SERVER") {
+            //just use the configured value
+            return serverUrl
+        }
+        //else, we had better have an EmbeddedServer
+        if (applicationContext.containsBean(EmbeddedServer)) {
+            //we have an embedded server, return the url from it
+            return applicationContext.getBean(EmbeddedServer).URL.toString()
+        }
+        //else, we can't do anything
+        throw new RuntimeException(
+            "\${jupyter.server-url} config not set AND no EmbeddedServer bean found. " +
+                "One of these must be available for micronaut-jupyter to function."
+        )
+    }
+
     private createKernelJson () {
         return new JsonBuilder([
             language: "groovy",
@@ -95,7 +114,7 @@ public class InstallKernel {
 
     private createKernelSh () {
         // create endpoint url to call
-        def endpointUrl = "$serverUrl/${getEndpointPath()}"
+        def endpointUrl = "${getServerUrl()}/${getEndpointPath()}"
         return """#!/bin/bash
 curl -X POST $endpointUrl -H 'Content-Type: application/json' -d "{\\"file\\":\\"\$1\\"}" --trace -
 RET=\$?
