@@ -19,7 +19,7 @@ configurations {
 }
 
 dependencies {
-    //implementation fileTree(dir: "$rootProject.projectDir/jupyter/build/libs/", include: "*.jar")
+    //implementation "ai.stainless:micronaut-jupyter"
     implementation project(':jupyter')
 
     compileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")
