@@ -48,12 +48,12 @@ public class InstallKernel {
             location.mkdirs()
         }
         catch (e) {
-            throw new RuntimeException("Unable to create kernels location at ${kernelsLocation}!", e)
+            throw new RuntimeException("Unable to create kernels location at ${kernelsLocation}", e)
         }
         // ensure that we can write to this location
         if (!Files.isWritable(location.toPath())) {
             throw new RuntimeException(
-                "Unable to access kernels location at ${kernelsLocation}! (No write permissions.)"
+                "Unable to access kernels location at ${kernelsLocation} (No write permissions!)"
             )
         }
         // create/update kernel json
