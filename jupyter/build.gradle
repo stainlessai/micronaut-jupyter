@@ -44,7 +44,7 @@ test {
     testLogging {
         showStandardStreams = true
     }
-    failFast = true
+    failFast = false
 }
 
 publishing {
