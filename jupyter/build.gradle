@@ -37,7 +37,7 @@ dependencies {
 
     testImplementation "org.objenesis:objenesis:1.4"
     testImplementation "ch.qos.logback:logback-classic:1.2.3"
-
+    testImplementation "org.testcontainers:spock:1.12.3"
 }
 
 test {
