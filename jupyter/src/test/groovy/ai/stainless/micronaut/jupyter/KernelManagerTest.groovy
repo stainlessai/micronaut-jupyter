@@ -4,6 +4,8 @@ package ai.stainless.micronaut.jupyter
 import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import groovy.json.JsonBuilder
 import ai.stainless.micronaut.jupyter.kernel.KernelExitException
+import groovy.json.JsonParser
+import groovy.json.JsonSlurper
 import io.micronaut.context.ApplicationContext
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.AutoCleanup
@@ -23,7 +25,6 @@ class KernelManagerTest extends Specification {
     KernelManager kernelManager
 
     def serverUrl = "http://localhost:8080"
-    def connectionFileLocation = "/tmp/micronaut-jupyter"
 
     class Exits {
 
@@ -49,25 +50,10 @@ class KernelManagerTest extends Specification {
 
     def "starts basic Groovy kernel that can be killed"() {
         given:
-        //create tmp directory
-        new File(connectionFileLocation).mkdirs()
         // create connection file
-        String connectionFile = "$connectionFileLocation/connection_file"
-        Map connectionInfo = [
-            control_port: 50160,
-            shell_port: 57503,
-            transport: "tcp",
-            signature_scheme: "hmac-sha256",
-            stdin_port: 52597,
-            hb_port: 42540,
-            ip: "127.0.0.1",
-            iopub_port: 40885,
-            key: "a0436f6c-1916-498b-8eb9-e81ab9368e84"
-        ]
-        new File(connectionFile).withWriter { writer ->
-            writer.write new JsonBuilder(connectionInfo).toString()
-        }
-        println "Connection file exists: ${new File(connectionFile).exists()}"
+        String connectionFile = this.class.classLoader.getResource("micronaut_kernel_connection.json").getFile()
+        println "Connection file location: $connectionFile"
+        Map connectionInfo = new JsonSlurper().parse(new File(connectionFile)) as Map
         ServerSocket s = null
 
         when:
@@ -77,9 +63,9 @@ class KernelManagerTest extends Specification {
         sleep(5000)
         //port should be in use
         s = new ServerSocket(
-            connectionInfo.control_port,
+            connectionInfo.control_port as Integer,
             5,
-            InetAddress.getByName(connectionInfo.ip)
+            InetAddress.getByName(connectionInfo.ip as String)
         )
 
         then:
@@ -95,9 +81,9 @@ class KernelManagerTest extends Specification {
         kernelManager.waitForAllKernels(10000)
         //port should be open
         s = new ServerSocket(
-            connectionInfo.control_port,
+            connectionInfo.control_port as Integer,
             5,
-            InetAddress.getByName(connectionInfo.ip)
+            InetAddress.getByName(connectionInfo.ip as String)
         )
 
         then:
@@ -107,9 +93,6 @@ class KernelManagerTest extends Specification {
         kernelManager.kernelThreads.size() == 0
 
         cleanup:
-        // remove connection file
-        new File(connectionFile).delete()
-
         // close our test socket
         if (s) {
             s.close()
