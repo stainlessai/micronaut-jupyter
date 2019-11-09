@@ -114,7 +114,8 @@ subprojects { Project subproject ->
          * Replace `SHORT_ID` with the id of your key (or the email associated with the key).
          * DO NOT COMMIT THIS FILE TO GIT! (Use `travis encrypt-file` instead.)
          */
-        String signingKey = new File("$rootProject.projectDir/SIGNING_GPG_KEY").text
+        File signingKeyFile = new File("$rootProject.projectDir/SIGNING_GPG_KEY")
+        String signingKey = signingKeyFile.exists() ? signingKeyFile.text : ""
         def signingPassword = System.getenv("SIGNING_GPG_PASSWORD") ?:
             findProperty("signingPassword") ?: ''
         useInMemoryPgpKeys(signingKey, signingPassword)
