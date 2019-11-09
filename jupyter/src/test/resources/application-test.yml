@@ -3,4 +3,4 @@ micronaut:
     port: 9999
 jupyter:
   kernel:
-    location: /tmp/test-location/jupyter-kernels
+    location: /tmp/test-location/jupyter/kernels

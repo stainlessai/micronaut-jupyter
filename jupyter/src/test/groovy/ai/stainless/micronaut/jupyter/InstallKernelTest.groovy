@@ -14,7 +14,7 @@ class InstallKernelTest extends Specification {
 
     def defaultKernelDirectory = "micronaut"
     def defaultKernels = "/usr/local/share/jupyter/kernels"
-    def testKernels = "/tmp/test-location/jupyter-kernels"
+    def testKernels = "/tmp/test-location/jupyter/kernels"
     def kernelJsonName = "kernel.json"
     def kernelShName = "kernel.sh"
     def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory"
