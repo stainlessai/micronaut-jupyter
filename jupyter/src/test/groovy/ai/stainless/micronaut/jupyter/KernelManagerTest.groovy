@@ -2,14 +2,13 @@
 package ai.stainless.micronaut.jupyter
 
 import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
-import groovy.json.JsonBuilder
 import ai.stainless.micronaut.jupyter.kernel.KernelExitException
-import groovy.json.JsonParser
 import groovy.json.JsonSlurper
 import io.micronaut.context.ApplicationContext
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 
 import javax.inject.Inject
 import org.slf4j.Logger
@@ -24,7 +23,8 @@ class KernelManagerTest extends Specification {
     @Inject
     KernelManager kernelManager
 
-    def serverUrl = "http://localhost:8080"
+    //create conditions
+    PollingConditions conditions = new PollingConditions(timeout: 10, initialDelay: 1)
 
     class Exits {
 
@@ -40,6 +40,24 @@ class KernelManagerTest extends Specification {
             throw new KernelExitException("Test exit handling.")
         }
 
+    }
+
+    private Boolean portAvailable(String ip, Integer port) {
+        ServerSocket s
+        try {
+            s = new ServerSocket(
+                port,
+                5,
+                InetAddress.getByName(ip)
+            )
+        }
+        catch (SocketException e) {
+            return false
+        }
+        finally {
+            if (s) s.close()
+        }
+        return true
     }
 
     def "bean exists"() {
@@ -59,45 +77,26 @@ class KernelManagerTest extends Specification {
         when:
         // create new kernel
         kernelManager.startNewKernel(connectionFile)
-        // wait a sec
-        sleep(5000)
-        //port should be in use
-        s = new ServerSocket(
-            connectionInfo.control_port as Integer,
-            5,
-            InetAddress.getByName(connectionInfo.ip as String)
-        )
 
         then:
-        // we should be unable to create a new socket
-        thrown SocketException
-        // we should have an instance of the kernel
-        kernelManager.kernelInstances.size() == 1
+        conditions.eventually {
+            //port should be in use
+            !portAvailable(connectionInfo.ip as String, connectionInfo.control_port as Integer)
+            // we should have an instance of the kernel
+            kernelManager.kernelInstances.size() == 1
+        }
 
         when:
         // kill the kernel
         kernelManager.killAllKernels()
         // wait for the kernel to finish
         kernelManager.waitForAllKernels(10000)
-        //port should be open
-        s = new ServerSocket(
-            connectionInfo.control_port as Integer,
-            5,
-            InetAddress.getByName(connectionInfo.ip as String)
-        )
 
         then:
-        noExceptionThrown()
+        portAvailable(connectionInfo.ip as String, connectionInfo.control_port as Integer)
         // the kernel should have finished
         kernelManager.kernelInstances.size() == 0
         kernelManager.kernelThreads.size() == 0
-
-        cleanup:
-        // close our test socket
-        if (s) {
-            s.close()
-            println "Closed socket"
-        }
     }
 
     def "handles a system exit from within kernel"() {
@@ -105,34 +104,38 @@ class KernelManagerTest extends Specification {
         // set custom kernel
         kernelManager.kernelClass = Exits
         // create custom logger
-        kernelManager.log = Mock(Logger)
+        kernelManager.log = Mock(Logger) {
+            1 * warn("Kernel exited unexpectedly.", _ as UnexpectedExitException)
+        }
 
         when:
         // create new kernel (exit 1)
         kernelManager.startNewKernel("1")
-        // wait a sec
-        sleep(1000)
 
         then:
-        1 * kernelManager.log.warn("Kernel exited unexpectedly.", _ as UnexpectedExitException)
-        kernelManager.kernelInstances.size() == 0
-        kernelManager.kernelThreads.size() == 0
+        conditions.eventually {
+            kernelManager.kernelInstances.size() == 0
+            kernelManager.kernelThreads.size() == 0
+        }
     }
 
     def "handles thread restart/kill"() {
         given:
         // set custom kernel
         kernelManager.kernelClass = Interrupts
+        // create custom logger
+        kernelManager.log = Mock(Logger) {
+            0 * warn("Kernel exited unexpectedly.", _)
+        }
 
         when:
         // create new kernel (exit 1)
         kernelManager.startNewKernel("")
-        // wait a sec
-        sleep(1000)
 
         then:
-        0 * kernelManager.log.warn("Kernel exited unexpectedly.", _ as UnexpectedExitException)
-        kernelManager.kernelInstances.size() == 0
-        kernelManager.kernelThreads.size() == 0
+        conditions.eventually {
+            kernelManager.kernelInstances.size() == 0
+            kernelManager.kernelThreads.size() == 0
+        }
     }
 }
