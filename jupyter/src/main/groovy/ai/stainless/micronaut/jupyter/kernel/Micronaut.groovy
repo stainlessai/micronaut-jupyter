@@ -3,17 +3,22 @@ package ai.stainless.micronaut.jupyter.kernel
 import com.twosigma.beakerx.BeakerXCommRepository
 import com.twosigma.beakerx.CommRepository
 import com.twosigma.beakerx.NamespaceClient
+import com.twosigma.beakerx.evaluator.ClasspathScannerImpl
 import com.twosigma.beakerx.evaluator.Evaluator
 import com.twosigma.beakerx.groovy.evaluator.GroovyEvaluator
 import com.twosigma.beakerx.groovy.kernel.Groovy
 import com.twosigma.beakerx.groovy.kernel.GroovyBeakerXServer
+import com.twosigma.beakerx.kernel.Configuration
 import com.twosigma.beakerx.kernel.BeakerXJson
 import com.twosigma.beakerx.kernel.BeakerXJsonConfig
 import com.twosigma.beakerx.kernel.CacheFolderFactory
 import com.twosigma.beakerx.kernel.CloseKernelAction
+import com.twosigma.beakerx.kernel.CustomMagicCommandsEmptyImpl
+import com.twosigma.beakerx.kernel.CustomMagicCommandsFactory
 import com.twosigma.beakerx.kernel.EnvCacheFolderFactory
 import com.twosigma.beakerx.kernel.KernelConfigurationFile
 import com.twosigma.beakerx.kernel.KernelRunner
+import com.twosigma.beakerx.kernel.RuntimetoolsImpl
 import com.twosigma.beakerx.kernel.Utils
 import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfiguration
 import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfigurationImpl
@@ -26,28 +31,9 @@ public class Micronaut extends Groovy {
 
     private TrackableKernelSocketsFactory kernelSocketsFactory
 
-    public Micronaut (
-        final String id,
-        final Evaluator evaluator,
-        TrackableKernelSocketsFactory kernelSocketsFactory,
-        CloseKernelAction closeKernelAction,
-        CacheFolderFactory cacheFolderFactory,
-        CommRepository commRepository,
-        BeakerXServer beakerXServer,
-        MagicCommandConfiguration magicCommandConfiguration,
-        BeakerXJson beakerXJson
-    ) {
-        super(
-            id,
-            evaluator,
-            kernelSocketsFactory,
-            closeKernelAction,
-            cacheFolderFactory,
-            commRepository,
-            beakerXServer,
-            magicCommandConfiguration,
-            beakerXJson
-        )
+    public Micronaut (final String sessionId, final Evaluator evaluator, Configuration configuration) {
+        super(sessionId, evaluator, configuration)
+
         //store properties
         this.kernelSocketsFactory = kernelSocketsFactory
     }
@@ -109,18 +95,23 @@ public class Micronaut extends Groovy {
             id,
             getEvaluatorParameters(),
             namespaceClient,
-            magicCommandTypesFactory.patterns()
+            magicCommandTypesFactory.patterns(),
+            new ClasspathScannerImpl()
         );
         return new Micronaut(
             id,
             evaluator,
-            kernelSocketsFactory,
-            closeKernelAction,
-            new EnvCacheFolderFactory(),
-            beakerXCommRepository,
-            new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
-            magicCommandTypesFactory,
-            new BeakerXJsonConfig()
+            new Configuration(
+                kernelSocketsFactory,
+                closeKernelAction,
+                new EnvCacheFolderFactory(),
+                new CustomMagicCommandsEmptyImpl(),
+                beakerXCommRepository,
+                new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
+                magicCommandTypesFactory,
+                new BeakerXJsonConfig(),
+                new RuntimetoolsImpl()
+            )
         );
 
         /*
