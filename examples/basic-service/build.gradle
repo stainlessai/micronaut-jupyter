@@ -29,7 +29,11 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut:micronaut-runtime-groovy"
     implementation "io.micronaut:micronaut-validation"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"    //
+    //runtimeOnly "org.slf4j:slf4j-log4j12:1.7.29"
+    //runtimeOnly "org.slf4j:slf4j-jdk14:1.7.29"
+    //runtimeOnly "org.slf4j:slf4j-simple:1.7.29"             //
+    //runtimeOnly "org.slf4j:slf4j-jcl:1.7.29"
 
     testCompileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")
     testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
