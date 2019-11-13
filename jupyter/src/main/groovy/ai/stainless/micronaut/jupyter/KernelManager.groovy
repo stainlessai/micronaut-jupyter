@@ -5,9 +5,12 @@ import ai.stainless.micronaut.jupyter.kernel.Micronaut
 import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import com.twosigma.beakerx.jvm.threads.BeakerStdInOutErrHandler
 import com.twosigma.beakerx.kernel.Kernel
+import io.micronaut.context.ApplicationContext
 import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import javax.inject.Inject
 import javax.inject.Singleton
 import java.lang.reflect.UndeclaredThrowableException
 
@@ -18,6 +21,9 @@ import java.lang.reflect.UndeclaredThrowableException
 public class KernelManager {
     // use custom logger property that can be overwritten by test
     public static Logger log = LoggerFactory.getLogger(KernelManager.class)
+
+    @Inject
+    ApplicationContext applicationContext
 
     private class KernelSecurityManager extends NoExitSecurityManager {
 
@@ -63,14 +69,16 @@ public class KernelManager {
         kernelThreads << Thread.start {
 
             log.info "Starting new Micronaut kernel! Connection file: $connectionFile"
-            Kernel kernel = null
+            Micronaut kernel = null
             try {
                 try {
                     // start redirecting STDOUT and STDERR now
                     BeakerStdInOutErrHandler.init()
                     // create and run kernel
                     kernel = kernelClass.createKernel([connectionFile] as String[])
+                    kernel.applicationContext = applicationContext
                     kernelInstances << kernel
+                    kernel.init()
                     kernel.run()
                     // stop stream redirects
                     BeakerStdInOutErrHandler.fini()
