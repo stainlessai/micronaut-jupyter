@@ -40,7 +40,8 @@ import com.twosigma.beakerx.kernel.EvaluatorParameters;
 import com.twosigma.beakerx.kernel.ExecutionOptions;
 import com.twosigma.beakerx.kernel.ImportPath;
 import com.twosigma.beakerx.kernel.Imports;
-import com.twosigma.beakerx.kernel.PathToJar;
+import com.twosigma.beakerx.kernel.PathToJar
+import groovy.util.logging.Slf4j;
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
@@ -51,7 +52,7 @@ import static com.twosigma.beakerx.groovy.evaluator.EnvVariablesFilter.envVariab
 import static com.twosigma.beakerx.groovy.evaluator.GroovyClassLoaderFactory.addImportPathToImportCustomizer;
 import static com.twosigma.beakerx.groovy.evaluator.GroovyClassLoaderFactory.newParentClassLoader;
 
-
+@Slf4j
 public class MicronautEvaluator extends GroovyEvaluator {
 
 
@@ -124,6 +125,7 @@ public class MicronautEvaluator extends GroovyEvaluator {
 
     @Override
     public TryResult evaluate(SimpleEvaluationObject seo, String code, ExecutionOptions executionOptions) {
+        log.info ("Evaluating: $code")
         return evaluate(seo, new GroovyWorkerThread(this, new JobDescriptor(code, seo, executionOptions)));
     }
 
