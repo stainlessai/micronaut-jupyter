@@ -37,7 +37,7 @@ class NotebookExecResult {
 @Testcontainers
 class KernelSpec extends Specification {
 
-    ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter")
+    ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter", false)
         .withFileFromClasspath("Dockerfile", "jupyter.Dockerfile")
         .withFileFromClasspath("notebooks/", "notebooks/")
 
