@@ -20,15 +20,19 @@ import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfigurationImpl
 import com.twosigma.beakerx.kernel.restserver.BeakerXServer
 import com.twosigma.beakerx.kernel.restserver.impl.GetUrlArgHandler
 import groovy.util.logging.Slf4j
+import io.micronaut.context.ApplicationContext
 
 @Slf4j
 public class Micronaut extends Groovy {
 
     private TrackableKernelSocketsFactory kernelSocketsFactory
+    private MicronautEvaluator evaluator
+
+    private ApplicationContext applicationContext
 
     public Micronaut (
         final String id,
-        final Evaluator evaluator,
+        final MicronautEvaluator evaluator,
         TrackableKernelSocketsFactory kernelSocketsFactory,
         CloseKernelAction closeKernelAction,
         CacheFolderFactory cacheFolderFactory,
@@ -50,6 +54,13 @@ public class Micronaut extends Groovy {
         )
         //store properties
         this.kernelSocketsFactory = kernelSocketsFactory
+        this.evaluator = evaluator
+    }
+
+    public void init () {
+        //load evaluator
+        evaluator.kernel = this
+        evaluator.init()
     }
 
     public void kill () {
@@ -61,6 +72,14 @@ public class Micronaut extends Groovy {
             }
             catch (NoSuchMethodError e) { }
         }
+    }
+
+    public ApplicationContext getApplicationContext() {
+        return applicationContext
+    }
+
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext
     }
 
     /*
@@ -104,8 +123,7 @@ public class Micronaut extends Groovy {
         BeakerXCommRepository beakerXCommRepository = new BeakerXCommRepository();
         NamespaceClient namespaceClient = NamespaceClient.create(id, configurationFile, beakerXCommRepository);
         MagicCommandConfiguration magicCommandTypesFactory = new MagicCommandConfigurationImpl();
-        GroovyEvaluator evaluator = new GroovyEvaluator(
-            id,
+        MicronautEvaluator evaluator = new MicronautEvaluator(
             id,
             getEvaluatorParameters(),
             namespaceClient,

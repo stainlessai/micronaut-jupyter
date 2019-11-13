@@ -17,10 +17,10 @@ class BeansTest extends KernelSpec {
         notebookResult.outJson != null
         // test stdout of cells
         notebookResult.outJson.cells?.get(0)?.outputs?.find { it.name == "stdout" }?.text == [
-            "io.micronaut.context.ApplicationContext\n"
+            "class io.micronaut.context.DefaultApplicationContext\n"
         ]
         notebookResult.outJson.cells?.get(1)?.outputs?.find { it.name == "stdout" }?.text == [
-            "ai.stainless.micronaut.jupyter.InstallKernel\n"
+            "class ai.stainless.micronaut.jupyter.InstallKernel\n"
         ]
     }
 
@@ -36,7 +36,7 @@ class BeansTest extends KernelSpec {
         notebookResult.outJson != null
         // test stdout of cells
         notebookResult.outJson.cells?.get(0)?.outputs?.find { it.name == "stdout" }?.text == [
-            "ai.stainless.micronaut.jupyter.InstallKernel\n"
+            "class ai.stainless.micronaut.jupyter.InstallKernel\n"
         ]
     }
 
