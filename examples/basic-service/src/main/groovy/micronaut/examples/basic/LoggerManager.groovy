@@ -21,12 +21,14 @@ class LoggerManager {
         instanceLog.info ("Logging from instance logger")
         instanceLog.info ("Starting instance poll.")
         pollInstance("defaultpoll01")
+        println "Println: from LoggerManager constructor"
     }
 
     public void pollInstance (String logId) {
         Thread.start {
             while (true) {
                 instanceLog.info("Polling instance log with id: $logId")
+                println "Println: Polling instance log with id: $logId"
                 sleep(5000)
             }
         }
@@ -38,6 +40,7 @@ class LoggerManager {
 
     public void instanceInfo (String msg) {
         instanceLog.info(msg)
+        println "Println: logging instance info"
     }
 
     public Logger createLogger (String name) {

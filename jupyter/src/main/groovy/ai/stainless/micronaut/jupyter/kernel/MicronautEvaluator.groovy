@@ -126,6 +126,7 @@ public class MicronautEvaluator extends GroovyEvaluator {
     @Override
     public TryResult evaluate(SimpleEvaluationObject seo, String code, ExecutionOptions executionOptions) {
         log.info ("Evaluating: $code")
+        println "Println: Evaluating"
         return evaluate(seo, new GroovyWorkerThread(this, new JobDescriptor(code, seo, executionOptions)));
     }
 

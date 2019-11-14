@@ -22,6 +22,7 @@ public abstract class MicronautJupyterScript extends Script {
     }
 
     private void setBindingInstanceVariables (Binding scriptBinding) {
+        println "Println: set instance variables"
         // set instance variables from binding
         if (binding.hasVariable("_boundApplicationContext")) {
             Object v = binding.getVariable("_boundApplicationContext")
