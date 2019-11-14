@@ -8,6 +8,7 @@ ext/*
 !ext/.gitkeep
 **/.ipynb_checkpoints/*
 SIGNING_GPG_KEY
+**/notebooks/tmp*
 
 # Ignore Gradle project-specific cache directory
 .gradle

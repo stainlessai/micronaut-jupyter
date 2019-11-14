@@ -1,0 +1,76 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.hibernate:hibernate-gradle-plugin:5.4.3.Final"
+    }
+}
+
+plugins {
+    id "groovy"
+    id "java-library"
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "application"
+}
+
+apply plugin: 'org.hibernate.orm'
+
+version "0.1"
+group "beans.service"
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url "https://jcenter.bintray.com" }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly 
+}
+
+ext {
+    micronautDataVersion = "1.0.0.M3"
+}
+
+dependencies {
+    //implementation "ai.stainless:micronaut-jupyter"
+    implementation project(':jupyter')
+
+    implementation "io.micronaut:micronaut-inject-groovy"
+    implementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
+
+    implementation "io.micronaut:micronaut-runtime-groovy"
+    implementation "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation "io.micronaut:micronaut-graal"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-inject"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "io.micronaut:micronaut-http-server-netty"
+
+    implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
+        //exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa'
+        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
+    }
+
+    runtime "com.h2database:h2"
+    runtime "ch.qos.logback:logback-classic:1.2.3"
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "micronaut.examples.beans.Application"
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.classpath += configurations.developmentOnly
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+tasks.withType(GroovyCompile) {
+    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
+}
