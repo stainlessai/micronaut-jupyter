@@ -13,9 +13,7 @@ class BasicGroovyTest extends KernelSpec {
 
         then:
         // commands should have executed successfully
-        notebookResult.execResult.exitCode == 0
-        notebookResult.outResult.exitCode == 0
-        notebookResult.outJson != null
+        verifyExecution(notebookResult)
         // test stdout of cell
         notebookResult.outJson.cells?.get(0)?.outputs?.find { it.name == "stdout" }?.text == [
             "1\n",

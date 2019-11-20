@@ -91,4 +91,11 @@ class KernelSpec extends Specification {
         return result
     }
 
+    protected verifyExecution (NotebookExecResult execution) {
+        // commands should have executed successfully
+        execution.execResult.exitCode == 0
+        execution.outResult.exitCode == 0
+        execution.outJson != null
+    }
+
 }
