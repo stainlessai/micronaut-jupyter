@@ -1,0 +1,8 @@
+dataSource:
+  pooled: true
+  dbCreate: create-drop
+  #dbCreate: update
+  url: jdbc:h2:mem:kernelTestDb
+  driverClassName: org.h2.Driver
+  username: sa
+  password:

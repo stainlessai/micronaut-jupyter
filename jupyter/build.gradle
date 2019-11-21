@@ -9,6 +9,26 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
+configurations {
+    gormTestCompile.extendsFrom testCompile
+    gormTestRuntime.extendsFrom testRuntime
+    gormTestImplementation.extendsFrom testImplementation
+}
+
+sourceSets {
+    gormTest {
+        groovy.srcDir file('src/test-gorm/groovy')
+        groovy.srcDir file('src/test/groovy/ai/stainless/micronaut/jupyter/kernel')
+        groovy.exclude { FileTreeElement elem ->
+            elem.file.absolutePath.contains ('src/test/groovy') &&
+                !elem.file.absolutePath.contains('KernelSpec.groovy')
+        }
+        resources.srcDir file('src/test/resources')
+        compileClasspath += sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
 dependencies {
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
 
@@ -45,14 +65,23 @@ dependencies {
     testImplementation "org.objenesis:objenesis:1.4"
     testImplementation "ch.qos.logback:logback-classic:1.2.3"
     testImplementation "org.testcontainers:spock:1.12.3"
+
+    gormTestImplementation "io.micronaut.configuration:micronaut-hibernate-gorm:1.1.1"
 }
 
-test {
+tasks.withType(Test) {
     testLogging {
         showStandardStreams = true
     }
     failFast = false
 }
+
+task gormTest(type: Test) {
+    testClassesDirs = sourceSets.gormTest.output.classesDirs
+    classpath = sourceSets.gormTest.runtimeClasspath
+}
+
+test.finalizedBy gormTest
 
 publishing {
     publications {
