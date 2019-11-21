@@ -120,11 +120,6 @@ public class InstallKernel {
 # (opens up kernel coms publically)
 jq '.ip = "0.0.0.0"' \$1 > tmp.\$\$.json && mv tmp.\$\$.json \$1
 
-# Grant global read permissions to connection file
-# (this was initially done for testing purposes,
-# and may need to be re-thought if security issues arise out of this)
-chmod o=+r \$1
-
 # Send request to endpoint to start kernel
 curl -X POST $endpointUrl -H 'Content-Type: application/json' -d "{\\"file\\":\\"\$1\\"}" --trace -
 RET=\$?
