@@ -1,0 +1,74 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.hibernate:hibernate-gradle-plugin:5.4.3.Final"
+    }
+}
+
+plugins {
+    id "groovy"
+    id "java-library"
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "application"
+}
+
+apply plugin: 'org.hibernate.orm'
+
+version "0.1"
+group "gorm.service"
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url "https://jcenter.bintray.com" }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly 
+}
+
+dependencies {
+
+    //implementation "ai.stainless:micronaut-jupyter"
+    implementation project(':jupyter')
+
+    implementation "io.micronaut:micronaut-inject-groovy"
+
+    implementation "io.micronaut:micronaut-runtime-groovy"
+    implementation "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation "io.micronaut:micronaut-graal"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-inject"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "io.micronaut:micronaut-http-server-netty"
+    compile "io.micronaut.configuration:micronaut-hibernate-gorm"
+
+    runtime "com.h2database:h2"
+    runtime "ch.qos.logback:logback-classic:1.2.3"
+
+    //compile "org.grails:grails-datastore-gorm-hibernate5:7.0.1.RELEASE"
+    //runtime "org.apache.tomcat:tomcat-jdbc:8.5.0"
+
+    //implementation 'org.hibernate:hibernate-ehcache:4.0.1.Final'
+
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "micronaut.examples.gorm.Application"
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.classpath += configurations.developmentOnly
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+tasks.withType(GroovyCompile) {
+    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
+}
