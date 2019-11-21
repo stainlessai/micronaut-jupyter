@@ -17,6 +17,9 @@ notebooks. This kernel can:
 [BeakerX Groovy](https://nbviewer.jupyter.org/github/twosigma/beakerx/blob/master/StartHere.ipynb)
 kernel can
 - Import classes on your Micronaut app's classpath 
+- Access Micronaut beans
+- Use Micronaut Data repositories
+- Use GORM Data Services and dynamic finders
 
 ## Setup
 
@@ -76,8 +79,8 @@ available features.
 
 #### Planned Features
 - [x] Import classes on app classpath in Jupyter script
-- [ ] Access GORM methods in Jupyter scripts
-- [ ] Access beans in Jupyter script
+- [x] Access GORM methods in Jupyter scripts
+- [x] Access beans in Jupyter script
 - [ ] Ability to add custom methods and properties to scope of Jupyter script
-- [ ] Access GORM Data Services from Jupyter script
-- [ ] Access Micronaut Data repositories from Jupyter script
+- [x] Access GORM Data Services from Jupyter script
+- [x] Access Micronaut Data repositories from Jupyter script
