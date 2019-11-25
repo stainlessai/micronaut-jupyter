@@ -28,7 +28,7 @@ public class Micronaut extends Groovy {
     private TrackableKernelSocketsFactory kernelSocketsFactory
     private MicronautEvaluator evaluator
 
-    private ApplicationContext applicationContext
+    ApplicationContext applicationContext
 
     public Micronaut (
         final String id,
@@ -72,14 +72,6 @@ public class Micronaut extends Groovy {
             }
             catch (NoSuchMethodError e) { }
         }
-    }
-
-    public ApplicationContext getApplicationContext() {
-        return applicationContext
-    }
-
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext
     }
 
     /*

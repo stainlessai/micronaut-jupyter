@@ -35,7 +35,7 @@ public class KernelManager {
 
     }
 
-    private Class kernelClass = Micronaut
+    Class kernelClass = Micronaut
     private List<Thread> kernelThreads = []
     private List<Kernel> kernelInstances = []
 
@@ -111,14 +111,6 @@ public class KernelManager {
             }
 
         }
-    }
-
-    public Class getKernelClass() {
-        return kernelClass
-    }
-
-    public void setKernelClass(Class kernelClass) {
-        this.kernelClass = kernelClass
     }
 
     public List<Kernel> getKernelInstances() {

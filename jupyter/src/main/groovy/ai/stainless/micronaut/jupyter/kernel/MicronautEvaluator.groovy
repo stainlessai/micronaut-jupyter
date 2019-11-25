@@ -62,7 +62,7 @@ public class MicronautEvaluator extends GroovyEvaluator {
     private GroovyAutocomplete gac;
 
     private Boolean loaded = false
-    private Micronaut kernel
+    Micronaut kernel
 
     public MicronautEvaluator(
         String id,
@@ -206,13 +206,6 @@ public class MicronautEvaluator extends GroovyEvaluator {
         return scriptBinding;
     }
 
-    public Micronaut getKernel() {
-        return kernel
-    }
-
-    public void setKernel(Micronaut kernel) {
-        this.kernel = kernel
-    }
 /*
      * Custom implementation of GroovyClassLoaderFactory methods that use
      * custom compiler config
