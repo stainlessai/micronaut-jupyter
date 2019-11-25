@@ -71,6 +71,14 @@ available features.
 
 ## Development
 
+#### Docker Required
+In order to run the tests, you must have Docker installed on your dev
+environment. The tests use a library called
+[Testcontainers](https://www.testcontainers.org/supported_docker_environment/),
+so you'll need to meet its system requirments (see link) in order to run the
+tests. The tests run in Travis CI out of the box, and on a local machine,
+installing Docker Desktop should be sufficient.
+
 #### Test and Build
 ```bash
 ./gradlew test
