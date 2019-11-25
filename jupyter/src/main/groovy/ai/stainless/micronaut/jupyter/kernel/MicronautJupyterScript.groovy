@@ -6,19 +6,11 @@ import io.micronaut.context.ApplicationContext
 //@Slf4j
 public abstract class MicronautJupyterScript extends Script {
 
-    private ApplicationContext applicationContext
+    ApplicationContext applicationContext
 
     public MicronautJupyterScript () {
         //log.debug "Creating new jupyter script instance with binding: $binding"
         setBindingInstanceVariables(binding)
-    }
-
-    public ApplicationContext getApplicationContext() {
-        return applicationContext
-    }
-
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext
     }
 
     private void setBindingInstanceVariables (Binding scriptBinding) {
