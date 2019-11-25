@@ -32,7 +32,7 @@ configurations {
 
 dependencies {
 
-    //implementation "ai.stainless:micronaut-jupyter"
+    //implementation "ai.stainless:micronaut-jupyter:+"
     implementation project(':jupyter')
 
     implementation "io.micronaut:micronaut-inject-groovy"
