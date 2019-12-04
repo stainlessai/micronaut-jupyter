@@ -93,7 +93,8 @@ public class KernelManager {
                 }
             }
             catch (KernelExitException e) {
-                log.debug "Kernel exited, ending thread.", e
+                log.debug "Kernel exited, ending thread."
+                log.trace "Recevied KernelExitException:", e
             }
             catch (UnexpectedExitException e) {
                 log.warn "Kernel exited unexpectedly.", e
