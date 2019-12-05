@@ -79,9 +79,27 @@ so you'll need to meet its system requirments (see link) in order to run the
 tests. The tests run in Travis CI out of the box, and on a local machine,
 installing Docker Desktop should be sufficient.
 
-#### Test and Build
+#### Test
+Run all the tests:
 ```bash
 ./gradlew test
+```
+
+Run integration and unit tests separately
+```bash
+./gradlew integrationTest
+./gradlew unitTest
+```
+
+Gradle's `--tests` option won't apply to subtasks, so use `-Ptests` to filter
+the tests:
+```bash
+./gradlew test -Ptests=*BasicGroovy*
+./gradlew integrationTest -Ptests=*Finder*
+```
+
+#### Build
+```bash
 ./gradlew build
 ```
 
