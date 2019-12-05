@@ -103,10 +103,23 @@ dependencies {
 }
 
 tasks.withType(Test) {
+    // get tests filter
+     def testsFilter = project.hasProperty("tests") ? tests : "*"
     testLogging {
         showStandardStreams = true
     }
     failFast = false
+    filter {
+        includeTestsMatching testsFilter
+        failOnNoMatchingTests = false
+    }
+    afterSuite { desc, result ->
+        if (!desc.parent && gradle.startParameter.taskNames.contains(name)) {
+            if (result.testCount == 0) {
+                throw new IllegalStateException("No tests found for the given includes: [$testsFilter]")
+            }
+        }
+    }
 }
 
 task gormTest(type: Test) {
