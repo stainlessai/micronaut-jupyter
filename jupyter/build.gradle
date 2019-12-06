@@ -132,15 +132,18 @@ task mdTest(type: Test) {
     classpath = sourceSets.mdTest.runtimeClasspath
 }
 
+task basicIntegrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
 task unitTest(type: Test) {
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
 }
 
 task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
-
+    dependsOn basicIntegrationTest
     dependsOn gormTest
     dependsOn mdTest
 }
