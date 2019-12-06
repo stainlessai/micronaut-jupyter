@@ -13,9 +13,12 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="org.hibernate.orm.deprecation" level="OFF" />
     <logger name="com.twosigma.beakerx.kernel" level="INFO" />
     <logger name="ai.stainless" level="DEBUG" />
+
+    <!--
+    <logger name="org.hibernate.orm.deprecation" level="OFF" />
     <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautWorkerThread" level="INFO" />
+    -->
 
 </configuration>
