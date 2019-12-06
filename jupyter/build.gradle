@@ -147,13 +147,7 @@ task integrationTest(type: Test) {
     dependsOn gormTest
     dependsOn mdTest
 }
-/*
-task test(type: Test, overwrite: true) {
-    dependsOn unitTest
-    dependsOn integrationTest
-}
 
- */
 test.dependsOn unitTest
 test.dependsOn integrationTest
 
