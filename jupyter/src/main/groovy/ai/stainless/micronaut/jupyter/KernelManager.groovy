@@ -2,10 +2,14 @@ package ai.stainless.micronaut.jupyter
 
 import ai.stainless.micronaut.jupyter.kernel.KernelExitException
 import ai.stainless.micronaut.jupyter.kernel.Micronaut
+import ai.stainless.micronaut.jupyter.kernel.StandardStreamHandler
 import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import com.twosigma.beakerx.jvm.threads.BeakerStdInOutErrHandler
 import com.twosigma.beakerx.kernel.Kernel
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Property
+import io.micronaut.context.annotation.Value
+import io.micronaut.runtime.context.scope.Refreshable
 import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,6 +21,7 @@ import java.lang.reflect.UndeclaredThrowableException
 /**
  * Manages the Jupyter kernel instances that are created.
  */
+@Refreshable
 @Singleton
 public class KernelManager {
     // use custom logger property that can be overwritten by test
@@ -24,6 +29,9 @@ public class KernelManager {
 
     @Inject
     ApplicationContext applicationContext
+
+    @Value('${jupyter.kernel.redirectLogOutput:true}')
+    Boolean redirectLogOutput
 
     private class KernelSecurityManager extends NoExitSecurityManager {
 
@@ -73,7 +81,8 @@ public class KernelManager {
             try {
                 try {
                     // start redirecting STDOUT and STDERR now
-                    BeakerStdInOutErrHandler.init()
+                    StandardStreamHandler streamHandler = new StandardStreamHandler(redirectLogOutput: redirectLogOutput)
+                    streamHandler.init()
                     // create and run kernel
                     kernel = kernelClass.createKernel([connectionFile] as String[])
                     kernel.applicationContext = applicationContext
@@ -81,7 +90,7 @@ public class KernelManager {
                     kernel.init()
                     kernel.run()
                     // stop stream redirects
-                    BeakerStdInOutErrHandler.fini()
+                    streamHandler.restore()
                 }
                 catch (UndeclaredThrowableException e) {
                     if (e.cause) {
