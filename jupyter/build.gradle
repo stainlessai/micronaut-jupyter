@@ -102,9 +102,26 @@ dependencies {
     gormTestRuntime "com.h2database:h2:1.4.200"
 }
 
+// get tests filter
+def testsFilter = project.hasProperty("tests") ? tests : "*"
+// count total tests
+def testCount = 0
+
+def checkTests = {
+    if (testCount != 0 || !gradle.startParameter.taskNames.contains(name)) {
+        return
+    }
+    def testTasks = taskDependencies.getDependencies()
+        .collect { [it, it.getDependsOn()] }
+        .flatten()
+        .findAll { it.didWork && it instanceof Test }
+    // if any of our dependent test tasks ran
+    if (testTasks.size()) {
+        logger.warn("Warning: No tests found for the given includes: [$testsFilter] among tasks: ${testTasks.collect { it.name }}")
+    }
+}
+
 tasks.withType(Test) {
-    // get tests filter
-     def testsFilter = project.hasProperty("tests") ? tests : "*"
     testLogging {
         showStandardStreams = true
     }
@@ -114,12 +131,11 @@ tasks.withType(Test) {
         failOnNoMatchingTests = false
     }
     afterSuite { desc, result ->
-        if (!desc.parent && gradle.startParameter.taskNames.contains(name)) {
-            if (result.testCount == 0) {
-                throw new IllegalStateException("No tests found for the given includes: [$testsFilter]")
-            }
+        if (!desc.parent) {
+            testCount += result.testCount
         }
     }
+    doLast checkTests
 }
 
 task gormTest(type: Test) {
@@ -142,14 +158,22 @@ task unitTest(type: Test) {
     classpath = sourceSets.test.runtimeClasspath
 }
 
-task integrationTest(type: Test) {
+task integrationTest() {
     dependsOn basicIntegrationTest
     dependsOn gormTest
     dependsOn mdTest
+
+    outputs.upToDateWhen { false }
+    doLast checkTests
 }
 
-test.dependsOn unitTest
-test.dependsOn integrationTest
+task test(overwrite: true) {
+    dependsOn unitTest
+    dependsOn integrationTest
+
+    outputs.upToDateWhen { false }
+    doLast checkTests
+}
 
 publishing {
     publications {
