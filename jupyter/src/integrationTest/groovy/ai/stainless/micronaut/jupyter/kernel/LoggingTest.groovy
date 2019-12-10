@@ -20,12 +20,12 @@ class LoggingTest extends KernelSpec {
             "After in-cell logging\n"
         ]
         notebookResult.outJson.cells?.get(4)?.outputs?.find { it.name == "stdout" }?.text == [
-            "Before in-cell logging\n",
-            "After in-cell logging\n"
+            "Before in-class logging\n",
+            "After in-class logging\n"
         ]
         notebookResult.outJson.cells?.get(5)?.outputs?.find { it.name == "stdout" }?.text == [
-            "Before in-cell logging\n",
-            "After in-cell logging\n"
+            "Before in-library logging\n",
+            "After in-library logging\n"
         ]
     }
 
