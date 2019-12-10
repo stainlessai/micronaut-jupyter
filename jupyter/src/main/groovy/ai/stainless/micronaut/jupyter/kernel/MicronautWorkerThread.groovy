@@ -40,7 +40,7 @@ class MicronautWorkerThread implements Callable<TryResult> {
     }
 
     private def executeCode () {
-        return (new GroovyCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject)).call()
+        return (new MicronautCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject)).call()
     }
 
     @Override

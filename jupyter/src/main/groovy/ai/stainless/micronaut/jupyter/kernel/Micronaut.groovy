@@ -29,6 +29,7 @@ public class Micronaut extends Groovy {
     private MicronautEvaluator evaluator
 
     ApplicationContext applicationContext
+    StandardStreamHandler streamHandler
 
     public Micronaut (
         final String id,

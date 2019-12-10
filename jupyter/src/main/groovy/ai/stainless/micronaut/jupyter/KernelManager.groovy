@@ -86,6 +86,7 @@ public class KernelManager {
                     // create and run kernel
                     kernel = kernelClass.createKernel([connectionFile] as String[])
                     kernel.applicationContext = applicationContext
+                    kernel.streamHandler = streamHandler
                     kernelInstances << kernel
                     kernel.init()
                     kernel.run()
