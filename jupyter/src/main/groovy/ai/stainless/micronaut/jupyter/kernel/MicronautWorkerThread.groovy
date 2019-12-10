@@ -69,7 +69,7 @@ class MicronautWorkerThread implements Callable<TryResult> {
                 }
                 log.debug("Found HibernateDatastore bean")
                 return evaluator.kernel.applicationContext.getBean(HibernateDatastore).withNewSession { session ->
-                    def result = (new GroovyCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject)).call()
+                    def result = executeCode()
 
                     // attempt to flush session
                     try {
