@@ -4,10 +4,8 @@ import ai.stainless.micronaut.jupyter.kernel.KernelExitException
 import ai.stainless.micronaut.jupyter.kernel.Micronaut
 import ai.stainless.micronaut.jupyter.kernel.StandardStreamHandler
 import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
-import com.twosigma.beakerx.jvm.threads.BeakerStdInOutErrHandler
 import com.twosigma.beakerx.kernel.Kernel
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.annotation.Property
 import io.micronaut.context.annotation.Value
 import io.micronaut.runtime.context.scope.Refreshable
 import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
