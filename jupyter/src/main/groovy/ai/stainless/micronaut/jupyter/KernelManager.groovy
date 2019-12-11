@@ -24,15 +24,6 @@ import java.lang.reflect.UndeclaredThrowableException
 @Refreshable
 @Singleton
 public class KernelManager {
-    // use custom logger property that can be overwritten by test
-    public static Logger log = LoggerFactory.getLogger(KernelManager.class)
-
-    @Inject
-    ApplicationContext applicationContext
-
-    @Value('${jupyter.kernel.redirectLogOutput:true}')
-    Boolean redirectLogOutput
-
     private class KernelSecurityManager extends NoExitSecurityManager {
 
         // intercept exit calls
@@ -42,6 +33,15 @@ public class KernelManager {
         }
 
     }
+
+    // use custom logger property that can be overwritten by test
+    public static Logger log = LoggerFactory.getLogger(KernelManager.class)
+
+    @Inject
+    ApplicationContext applicationContext
+
+    @Value('${jupyter.kernel.redirectLogOutput:true}')
+    Boolean redirectLogOutput
 
     Class kernelClass = Micronaut
     private List<Thread> kernelThreads = []
