@@ -8,10 +8,13 @@ import com.twosigma.beakerx.kernel.Kernel
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Value
 import io.micronaut.runtime.context.scope.Refreshable
+import io.micronaut.runtime.context.scope.refresh.RefreshEvent
+import io.micronaut.runtime.event.annotation.EventListener
 import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,10 +49,25 @@ public class KernelManager {
     private List<Thread> kernelThreads = []
     private List<Kernel> kernelInstances = []
     private SecurityManager originalSecurityManager
+    private StandardStreamHandler streamHandler
 
-    KernelManager () {
+    public KernelManager () {
         // create an set new security manager to manage BeakerX System.exit() calls
         setSecurityManager()
+
+        // start redirecting STDOUT, STDERR, and STDIN now
+        streamHandler = new StandardStreamHandler(redirectLogOutput: true)
+        streamHandler.init()
+    }
+
+    @PostConstruct
+    public void postConstruct () {
+        updateRedirectLogOutput()
+    }
+
+    @EventListener
+    public void onRefresh (RefreshEvent event) {
+        updateRedirectLogOutput()
     }
 
     @PreDestroy
@@ -59,6 +77,9 @@ public class KernelManager {
             //restore it
             System.setSecurityManager(originalSecurityManager)
         }
+
+        // stop stream redirects
+        streamHandler.restore()
     }
 
     private void setSecurityManager () {
@@ -89,6 +110,10 @@ public class KernelManager {
         }
     }
 
+    private void updateRedirectLogOutput () {
+        streamHandler.redirectLogOutput = redirectLogOutput
+    }
+
     public void startNewKernel (String connectionFile) {
         // start kernel in new thread
         kernelThreads << Thread.start {
@@ -97,9 +122,6 @@ public class KernelManager {
             Micronaut kernel = null
             try {
                 try {
-                    // start redirecting STDOUT and STDERR now
-                    StandardStreamHandler streamHandler = new StandardStreamHandler(redirectLogOutput: redirectLogOutput)
-                    streamHandler.init()
                     // create and run kernel
                     kernel = kernelClass.createKernel([connectionFile] as String[])
                     kernel.applicationContext = applicationContext
@@ -107,8 +129,6 @@ public class KernelManager {
                     kernelInstances << kernel
                     kernel.init()
                     kernel.run()
-                    // stop stream redirects
-                    streamHandler.restore()
                 }
                 catch (UndeclaredThrowableException e) {
                     if (e.cause) {
