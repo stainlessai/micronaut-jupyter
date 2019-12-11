@@ -14,6 +14,7 @@ import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import javax.annotation.PreDestroy
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.lang.reflect.UndeclaredThrowableException
@@ -46,8 +47,23 @@ public class KernelManager {
     Class kernelClass = Micronaut
     private List<Thread> kernelThreads = []
     private List<Kernel> kernelInstances = []
+    private SecurityManager originalSecurityManager
 
-    public void startNewKernel (String connectionFile) {
+    KernelManager () {
+        // create an set new security manager to manage BeakerX System.exit() calls
+        setSecurityManager()
+    }
+
+    @PreDestroy
+    public void destroy () {
+        // if were overrode a security manager
+        if (originalSecurityManager) {
+            //restore it
+            System.setSecurityManager(originalSecurityManager)
+        }
+    }
+
+    private void setSecurityManager () {
         //get existing security manager
         SecurityManager existingSm = System.getSecurityManager()
         if (!(existingSm instanceof KernelSecurityManager)) {
@@ -70,9 +86,12 @@ public class KernelManager {
                 //we are good to replace with our own security manager
                 //set security manager to intercept exit calls from the beakerx kernel
                 System.setSecurityManager(sm)
+                originalSecurityManager = existingSm
             }
         }
+    }
 
+    public void startNewKernel (String connectionFile) {
         // start kernel in new thread
         kernelThreads << Thread.start {
 
