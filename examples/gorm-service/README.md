@@ -3,7 +3,7 @@ gorm-service
 
 Demonstrates the ability to use GORM functionality inside a notebook.
 
-Read the docs at [../examples](../examples) for how to run and use the app.
+Read the docs in the [/examples](../) directory for how to run and use the app.
 
 ## The Notebooks
 `use-data-service.ipynb` - Gets and uses a GORM Data Service to list and create
