@@ -107,17 +107,24 @@ def testsFilter = project.hasProperty("tests") ? tests : "*"
 // count total tests
 def testCount = 0
 
-def checkTests = {
-    if (testCount != 0 || !gradle.startParameter.taskNames.contains(name)) {
-        return
-    }
-    def testTasks = taskDependencies.getDependencies()
-        .collect { [it, it.getDependsOn()] }
-        .flatten()
-        .findAll { it.didWork && it instanceof Test }
-    // if any of our dependent test tasks ran
-    if (testTasks.size()) {
-        logger.warn("Warning: No tests found for the given includes: [$testsFilter] among tasks: ${testTasks.collect { it.name }}")
+def createCheckTests = { isTest ->
+    return {
+        if (testCount != 0 || !gradle.startParameter.taskNames.contains(name)) {
+            return
+        }
+        def testTasks = taskDependencies.getDependencies()
+            .collect { [it, it.getDependsOn()] }
+            .flatten()
+            .findAll { it instanceof Test && it.didWork }
+        if (isTest && didWork) {
+            testTasks.add([name: name])
+        }
+        // if any of our dependent test tasks ran
+        if (testTasks.size()) {
+            logger.warn(
+                "Warning: No tests found for the given includes: [$testsFilter] among tasks: ${ testTasks.collect { it.name } }"
+            )
+        }
     }
 }
 
@@ -135,7 +142,7 @@ tasks.withType(Test) {
             testCount += result.testCount
         }
     }
-    doLast checkTests
+    doLast createCheckTests(true)
 }
 
 task gormTest(type: Test) {
@@ -164,7 +171,7 @@ task integrationTest() {
     dependsOn mdTest
 
     outputs.upToDateWhen { false }
-    doLast checkTests
+    doLast createCheckTests()
 }
 
 task test(overwrite: true) {
@@ -172,7 +179,7 @@ task test(overwrite: true) {
     dependsOn integrationTest
 
     outputs.upToDateWhen { false }
-    doLast checkTests
+    doLast createCheckTests()
 }
 
 publishing {
