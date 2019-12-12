@@ -13,13 +13,15 @@ installation.
 A special Micronaut kernel is provided to Jupyter that can be used to run
 notebooks. This kernel can:
 - Execute Groovy code
-- Do anything the
-[BeakerX Groovy](https://nbviewer.jupyter.org/github/twosigma/beakerx/blob/master/StartHere.ipynb)
-kernel can
 - Import classes on your Micronaut app's classpath 
 - Access Micronaut beans
 - Use Micronaut Data repositories
 - Use GORM Data Services and dynamic finders
+- Access functionality available to the
+[BeakerX Groovy](https://nbviewer.jupyter.org/github/twosigma/beakerx/blob/master/StartHere.ipynb)
+kernel
+  - **Note:** This requires that the `beakerx` Pyhton package (and possibly
+    other Jupyter packages) be installed on the system separately.
 
 ## Setup
 
