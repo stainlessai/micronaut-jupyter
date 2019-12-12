@@ -20,7 +20,7 @@ notebooks. This kernel can:
 - Access functionality available to the
 [BeakerX Groovy](https://nbviewer.jupyter.org/github/twosigma/beakerx/blob/master/StartHere.ipynb)
 kernel
-  - **Note:** This requires that the `beakerx` Pyhton package (and possibly
+  - **Note:** This requires that the `beakerx` Python package (and possibly
     other Jupyter packages) be installed on the system separately.
 
 ## Setup
