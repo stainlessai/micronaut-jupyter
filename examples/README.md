@@ -26,5 +26,5 @@ http://localhost:8888/lab).
 
 ## Run the Notebooks
 The notebooks are located in the `notebooks/` directory for each example. Open
-the desired notebook and run all of it's cells in order (either individually or
+the desired notebook and run all of its cells in order (either individually or
 at once).
