@@ -73,6 +73,14 @@ available features.
 
 ## Development
 
+#### Branches
+The `master` branch contains the latest production release. The `develop` branch contains
+the latest stable build. It is recommended that most PRs be submitted
+to the `develop` branch in order to ensure that they are based on the most
+recent version of the code. Most PRs that are submitted to `master` will be
+rebased onto `develop`. Exceptions to this would include things like critical
+bugfixes that need to be pushed ahead of the next planned release.
+
 #### Docker Required
 In order to run the tests, you must have Docker installed on your dev
 environment. The tests use a library called
