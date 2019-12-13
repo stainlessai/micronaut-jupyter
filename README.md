@@ -81,7 +81,7 @@ recent version of the code. Most PRs that are submitted to `master` will be
 rebased onto `develop`. Exceptions to this would include things like critical
 bugfixes that need to be pushed ahead of the next planned release.
 
-#### Test
+#### Testing
 
 ##### Docker Required
 In order to run the tests, you must have Docker installed on your dev
@@ -110,7 +110,7 @@ the tests:
 ./gradlew integrationTest -Ptests=*Finder*
 ```
 
-#### Build
+#### Building
 ```bash
 ./gradlew build
 ```
