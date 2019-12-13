@@ -81,15 +81,17 @@ recent version of the code. Most PRs that are submitted to `master` will be
 rebased onto `develop`. Exceptions to this would include things like critical
 bugfixes that need to be pushed ahead of the next planned release.
 
-#### Docker Required
+#### Test
+
+##### Docker Required
 In order to run the tests, you must have Docker installed on your dev
 environment. The tests use a library called
 [Testcontainers](https://www.testcontainers.org/supported_docker_environment/),
-so you'll need to meet its system requirments (see link) in order to run the
-tests. The tests run in Travis CI out of the box, and on a local machine,
+so you'll need to meet its system requirements (see link) in order to run the
+tests. The tests run in Travis CI out of the box; on a local machine,
 installing Docker Desktop should be sufficient.
 
-#### Test
+##### Running the Tests
 Run all the tests:
 ```bash
 ./gradlew test
