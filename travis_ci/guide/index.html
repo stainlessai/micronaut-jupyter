@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>Micronaut Jupyter</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <link rel="stylesheet" href="../css/custom.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8" />
+    <link rel="stylesheet" href="../css/highlight/agate.css">
+    <link rel="stylesheet" href="../css/jupyter.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
+    <script src="../js/highlight.pack.js"></script>
+    <script src="../js/guide.js"></script>
+    <script src="../js/multi-language-sample.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <link rel="stylesheet" href="../css/multi-language-sample.css"/>
+    <script src="../js/docs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
+    <script type="text/javascript">
+        function addJsClass(el) {
+            var classes = document.body.className.split(" ");
+            classes.push("js");
+            document.body.className = classes.join(" ");
+        }
+    </script>
+
+</head>
+
+<body class="body" id="docs" onload="addJsClass();" onhashchange="highlightMenu()">
+
+<div id="table-of-content-nav-link" class="desktop">
+    <a id="theme-switcher" title="Switch to dark theme" href="javascript:switchTheme(true)"><i class="fa fa-moon-o"></i></a>
+    <a title="Collapse/Open Table of contents" title="Hide Table of Contents" href="javascript:hideTableOfContents();" class="button">[ + ]</a>
+</div>
+
+<div id="main">
+    <div id="navigation" class="no-print">
+        <div class="navTitle">
+            <span id="logo">
+                <a href="https://www.stainless.ai/" aria-label="Go to Stainless AI Website" target="_blank">
+                    <img src="https://www.stainless.ai/wp-content/themes/stainlesss-code/images/ai-logo.svg" alt="Stainless AI">
+                </a>
+            </span>
+        </div>
+        <div class="navLinks">
+            <ul>
+                <li class="desktop navMenuLink">
+                    <a href="../guide/index.html" class="button">Table of contents</a>
+                    
+                    <div class="navMenu">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="#getting-started"><strong>2</strong><span>Getting Started</span></a></div>
+                        
+                    </div>
+                </li>
+                            
+                <li id="table-of-content-nav-link-mobile" class="mobile">
+                    <a title="Scroll to Table of contents" href="javascript:scrollToTop();" class="button">Toc</a>
+                </li>
+                            
+                <li class="desktop navMenuLink">
+                    <a title="Go to API documentation" href="../api/index.html" class="button">API Reference</a>
+                    
+                    <div class="navMenu">
+                        <div class="toc-item" style="margin-left:0"><a href="../gapi/index.html" target="_blank"><span>Groovy API</span></a></div>
+                        <div class="toc-item" style="margin-left:0"><a href="../api/index.html" target="_blank"><span>Java API</span></a></div>
+                    </div>
+                </li>
+                            
+                <li class="mobile">
+                    <a title="Go to API documentation" href="../api/index.html" class="button" target="_blank">API</a>
+                </li>
+                            
+                <li class="mobile">
+                    <a title="Go to API documentation" href="../gapi/index.html" class="button" target="_blank">GAPI</a>
+                </li>
+                
+                <!-- Not currently implemented. I suspect I have to define a @ConfigurationProperties class --
+                <li class="desktop">
+                    <a title="Go to Configuration Reference documentation" href="../guide/configurationreference.html" class="button">Configuration Reference</a>
+                </li>
+                            
+                <li class="mobile">
+                    <a title="Go to Configuration Reference documentation" href="../guide/configurationreference.html" class="button">Conf</a>
+                </li
+                -->
+            </ul>
+
+        </div>
+    </div>
+    
+    <div id="table-of-content">
+        <div class="toc-content">
+
+        <h2>Table of Contents</h2>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-introduction"><a href="#introduction"><strong>1</strong><span>Introduction</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-getting-started"><a href="#getting-started"><strong>2</strong><span>Getting Started</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-setup"><a href="#setup"><strong>2.1</strong><span>Setup</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-usage"><a href="#usage"><strong>2.2</strong><span>Usage</span></a></div>
+        
+        </div>
+    </div>
+    
+    <div class="docs-content">
+    <div class="project">
+        <h1>Micronaut Jupyter</h1>
+        <p></p>
+        <p>Integration between Micronaut and Jupyter</p>
+        <p><strong>Version:</strong> 0.2.1</p>
+    </div>
+    
+<h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/stainlessai/micronaut-jupyter/edit/master/src/main/docs/guide/introduction.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>A Micronaut configuration that integrates your app with an existing Jupyter
+installation.</p>
+</div>
+<div class="sect1">
+<h2 id="_features">Features</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_micronaut_kernel">Micronaut kernel</h3>
+<div class="paragraph">
+<p>A special Micronaut kernel is provided to Jupyter that can be used to run
+notebooks. This kernel can:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Execute Groovy code</p>
+</li>
+<li>
+<p>Import classes on your Micronaut app&#8217;s classpath</p>
+</li>
+<li>
+<p>Access Micronaut beans</p>
+</li>
+<li>
+<p>Use Micronaut Data repositories</p>
+</li>
+<li>
+<p>Use GORM Data Services and dynamic finders</p>
+</li>
+<li>
+<p>Access functionality available to the
+<a href="https://nbviewer.jupyter.org/github/twosigma/beakerx/blob/master/StartHere.ipynb">BeakerX Groovy</a>
+kernel</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Note:</strong> This requires that the <code>beakerx</code> Python package (and possibly
+other Jupyter packages) be installed on the system separately.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<h1 id="getting-started"><a class="anchor" href="#getting-started"></a>2 Getting Started</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/stainlessai/micronaut-jupyter/edit/master/src/main/docs/guide/getting-started.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+
+
+<h2 id="setup"><a class="anchor" href="#setup"></a>2.1 Setup</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/stainlessai/micronaut-jupyter/edit/master/src/main/docs/guide/getting-started/setup.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="sect2">
+<h3 id="_add_build_dependency_gradle">Add Build Dependency (Gradle)</h3>
+<div class="paragraph">
+<p>Ensure the following repositories are added to your gradle build:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Groovy hljs" data-lang="Groovy">repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Add the following dependency to your gradle build:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-Groovy hljs" data-lang="Groovy">dependencies {
+    implementation "ai.stainless:micronaut-jupyter:0.2.1"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configure_your_jupyter_kernels_directory">Configure your Jupyter Kernels Directory</h3>
+<div class="paragraph">
+<p>Ensure that your app can write to a directory where Jupyter will search for
+kernels.</p>
+</div>
+<div class="sect3">
+<h4 id="_option_1_easiest_strong_possible_security_vulnerability_strong">Option 1 - Easiest (<strong>Possible security vulnerability!</strong>)</h4>
+<div class="paragraph">
+<p>The default directory is <code>/usr/local/share/jupyter/kernels</code>, so the following
+is sufficient:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">chmod 777 /usr/local/share/jupyter/kernels</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_option_2_may_be_more_secure">Option 2 - May be More Secure</h4>
+<div class="paragraph">
+<p>Create a separate directory, say at <code>/opt/jupyter-alt/kernels</code>, that your app
+can write to. Then, configure Jupyter to search this directory using
+<a href="https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html#envvar-JUPYTER_PATH">JUPYTER_PATH</a>.
+Lastly, add the following config to your application.yml:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yml hljs" data-lang="yml">jupyter:
+  kernel:
+    location: /opt/jupyter-alt/kernels</code></pre>
+</div>
+</div>
+</div>
+</div>
+
+<h2 id="usage"><a class="anchor" href="#usage"></a>2.2 Usage</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/stainlessai/micronaut-jupyter/edit/master/src/main/docs/guide/getting-started/usage.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>When your app starts up, this configuration will make any necessary
+configurations to Jupyter. Once both your app and Jupyter are running, login to
+Jupyter to start using the features.</p>
+</div>
+<div class="paragraph">
+<p>For examples, see the
+<a href="https://github.com/stainlessai/micronaut-jupyter/tree/master/examples/">example apps</a>
+that use this configuration along with sample Jupyter notebooks that take
+advantage of the available features.</p>
+</div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+
+</script>
+</body>
+</html>
