@@ -14,13 +14,13 @@ env:
 before_install:
 - ./travis/before-install.sh
 script: "./travis/build.sh"
+before_deploy:
+    - "./travis/prepare-docs.sh"
 deploy:
   provider: pages:git
   on:
     all_branch: true
     condition: '"${TRAVIS_JDK_VERSION}" == "openjdk11"'
-  before_deploy:
-    - "./travis/prepare-docs.sh"
   token:
     secure: CR3sgRbZGiCQCDZOV6eLSr+9w7dO0qvSVsKfkHwOXS3MmH/IjwiAQHlq0YTgP2k/vEGywzZEWR0HoR4YnquvUdTPbPmCnjnQlFZC7/IlSqemh/6QQ7GakrF+kmTQDg/EoRNkmj3cNbpiwaG/YJrvawIok55cmfiiaZCB9vPAiXkANC6rF44oF4v7Jgt4vK9xZxbOOhMQnCp1D7s2h7T2v+/sokY78jsCtkRMngYGyyisQekXGEOT9aorplscZ9xuaD6wpG0ACEXlmumTlnGBF5XShTw56GRGcRl5d5qp9oWux28JtgdmavMJSqBCLtmgzB+EMKp+2G2eNqB7aKWyoDuZ7O0jO+m57UBEPOyLrH0qAm22wxnqI4bgDLaZwqsIw0BX+rbzVyr8lBN33wvlvz346MZNYO1CBX21Dgr+eZ6nNNg0vI3FdU1O2a4T42nCygleFp7hsWtC6GXwmG9vTZpz55W7Xeka82BfpETowx/ieJ059cE8M0Z6QLO+/EctQj+2zaZiKSTtJfME34GJtXO8fPpMCf74NRa2qKjFAzAb5sPi+kaXfGIzSKc/x7AcGecVr+sG+KwEl1bG9APjiqWSGtgZeQfvGpMeMT1keGWZuUYRiWrEsFGxfGMr5fsHo0Q5NNiHtGU2WZ+1CZiBg/a5/keQcnkQI52PW7cQu7A=
   edge: true
