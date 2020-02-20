@@ -18,6 +18,7 @@ deploy:
   provider: pages:git
   on:
     all_branch: true
+    condition: '"${TRAVIS_JDK_VERSION}" == "openjdk11"'
   before_deploy:
     - "./travis/prepare-docs.sh"
   token:
