@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="${resourcesPath}/css/custom.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
     <link rel="stylesheet" href="${resourcesPath}/css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8" />
     <link rel="stylesheet" href="${resourcesPath}/css/highlight/agate.css">
-    <link rel="stylesheet" href="${resourcesPath}/css/jupyter.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
     <script src="${resourcesPath}/js/highlight.pack.js"></script>
     <script src="${resourcesPath}/js/guide.js"></script>
     <script src="${resourcesPath}/js/multi-language-sample.js"></script>
@@ -36,65 +35,46 @@
 <div id="main">
     <div id="navigation" class="no-print">
         <div class="navTitle">
-            <span id="logo">
-                <a href="https://www.stainless.ai/" aria-label="Go to Stainless AI Website" target="_blank">
-                    <img src="https://www.stainless.ai/wp-content/themes/stainlesss-code/images/ai-logo.svg" alt="Stainless AI">
-                </a>
-            </span>
+            <span id="logo"><a href="http://micronaut.io" title="Go to Micronaut Website"><img src="${resourcesPath}/img/micronaut-logo-white.svg" alt="Micronaut"/></a></span>
         </div>
         <div class="navLinks">
             <ul>
-                <li class="desktop navMenuLink">
-                    <a href="${path}/guide/index.html" class="button">Table of contents</a>
-                    
-                    <div class="navMenu">
-                        <%
-                        toc.children.eachWithIndex { ch, i ->
-                        if (single) {
-                        %>
-                        <div class="toc-item" style="margin-left:0"><a href="#${ ch.name.encodeAsUrlFragment().encodeAsHtml() }"><strong>${i + 1}</strong><span>${ch.title?.encodeAsHtml()}</span></a></div>
-                        <%
-                        }
-                        else {
-                        %>
-                        <div class="toc-item" style="margin-left:0"><a href="${path}/guide/${ch.name.encodeAsUrlPath().encodeAsHtml()}.html"><strong>${i + 1}</strong><span>${ch.title?.encodeAsHtml()}</span></a></div>
-                        <%
-                        }
-                        }
-                        %>
-                    </div>
-                </li>
-                            
+                    <li><div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
+                            <a href="${path}/guide/index.html" class="button">Table of contents</a>
+                            <div id="nav-summary-childs" style="display:none;">
+                                <%
+                                toc.children.eachWithIndex { ch, i ->
+                                if (single) {
+                                %>
+                                <div class="toc-item" style="margin-left:0"><a href="#${ ch.name.encodeAsUrlFragment().encodeAsHtml() }"><strong>${i + 1}</strong><span>${ch.title?.encodeAsHtml()}</span></a></div>
+                                <%
+                                }
+                                else {
+                                %>
+                                <div class="toc-item" style="margin-left:0"><a href="${path}/guide/${ch.name.encodeAsUrlPath().encodeAsHtml()}.html"><strong>${i + 1}</strong><span>${ch.title?.encodeAsHtml()}</span></a></div>
+                                <%
+                                }
+                                }
+                                %>
+                            </div>
+                        </div>
+                    </li>
+
                 <li id="table-of-content-nav-link-mobile" class="mobile">
                     <a title="Scroll to Table of contents" href="javascript:scrollToTop();" class="button">Toc</a>
                 </li>
-                            
-                <li class="desktop navMenuLink">
+                <li class="desktop">
                     <a title="Go to API documentation" href="${path}/api/index.html" class="button">API Reference</a>
-                    
-                    <div class="navMenu">
-                        <div class="toc-item" style="margin-left:0"><a href="${path}/gapi/index.html" target="_blank"><span>Groovy API</span></a></div>
-                        <div class="toc-item" style="margin-left:0"><a href="${path}/api/index.html" target="_blank"><span>Java API</span></a></div>
-                    </div>
                 </li>
-                            
                 <li class="mobile">
-                    <a title="Go to API documentation" href="${path}/api/index.html" class="button" target="_blank">API</a>
+                    <a title="Go to API documentation" href="${path}/api/index.html" class="button">API</a>
                 </li>
-                            
-                <li class="mobile">
-                    <a title="Go to API documentation" href="${path}/gapi/index.html" class="button" target="_blank">GAPI</a>
-                </li>
-                
-                <!-- Not currently implemented. I suspect I have to define a @ConfigurationProperties class --
                 <li class="desktop">
                     <a title="Go to Configuration Reference documentation" href="${path}/guide/configurationreference.html" class="button">Configuration Reference</a>
                 </li>
-                            
                 <li class="mobile">
                     <a title="Go to Configuration Reference documentation" href="${path}/guide/configurationreference.html" class="button">Conf</a>
-                </li
-                -->
+                </li>
             </ul>
 
         </div>
