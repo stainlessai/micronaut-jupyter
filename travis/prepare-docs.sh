@@ -4,16 +4,7 @@ echo "Preparing docs for deployment..."
 echo ""
 
 echo "TRAVIS_BRANCH=$TRAVIS_BRANCH"
-echo "TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST"
 
-# do not deploy docs on pull request
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    echo "Pull request detected, skipping docs preparation"
-    exit 1
-fi
-
-# Generate docs
-./gradlew docs
 BUILD_DOCS="build/docs"
 
 # if this is a version tag
