@@ -19,4 +19,32 @@ else
   ./gradlew test
 fi
 
+echo ""
+
+if [ "${TRAVIS_JDK_VERSION}" == "openjdk11" ] ; then
+  echo "Deploying docs..."
+  echo ""
+  git clone https://${GH_TOKEN}@github.com/stainlessai/micronaut-jupyter.git -b gh-pages gh-pages --single-branch > /dev/null
+  cd gh-pages
+
+  echo ""
+
+  ./travis/prepare-docs.sh
+
+  echo ""
+
+  git add .
+  echo "Generated and added docs. Git status: "
+  git status
+  echo ""
+  git commit -a -m "Updating docs for Travis build: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/$TRAVIS_BUILD_ID"
+  echo ""
+  git push origin HEAD
+
+  cd ..
+  rm -rf gh-pages
+else
+  echo "Skipping docs deploy for JDK version $TRAVIS_JDK_VERSION"
+fi
+
 exit $EXIT_STATUS
