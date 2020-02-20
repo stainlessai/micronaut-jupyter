@@ -1,3 +1,5 @@
+import io.micronaut.docs.MicronautDocsResources
+
 buildscript {
     repositories {
         mavenLocal()
@@ -135,6 +137,47 @@ subprojects { Project subproject ->
 
 // configure micronuat-docs
 apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v$micronautDocsVersion/gradle/docs.gradle"
+// alter downloadDocResources task:
+// - Change resource tasks order to:
+//      - prepareDocResources -> downloadDocResources -> copyLocalDocResources
+// - Download resources directly to build dir
+//      (will overwrite common resources, and be overwritten by src resources)
+// - Also alter clean task to remove from build dir instead of src dir
+def commonGithubSlug = 'grails-common-build'
+def commonBranch = 'master'
+def docResourcesDir = "${buildDir}/resources/${commonGithubSlug}-${commonBranch}/src/main/resources"
+def resourceFolderPath = "$docResourcesDir"
+downloadDocResources.mustRunAfter prepareDocResources
+copyLocalDocResources.mustRunAfter downloadDocResources
+downloadDocResources { task ->
+    resourceFolder = file(resourceFolderPath)
+    resourceFolders = [
+        file("$resourceFolderPath/css"),
+        file("$resourceFolderPath/css/highlight"),
+        file("$resourceFolderPath/js"),
+        file("$resourceFolderPath/img"),
+        file("$resourceFolderPath/style")
+    ]
+    task.onlyIf {
+        boolean existsLogo = new File("$resourceFolderPath/img/${MicronautDocsResources.LOGO}").exists()
+        if (existsLogo) {
+            println "Skipping download resources, logo already exists."
+        }
+        !existsLogo
+    }
+}
+publishConfigurationReference {
+    pageTemplate = file("$resourceFolderPath/style/page.html")
+}
+cleanDocResources {
+    resourceFolders = [
+        file("$resourceFolderPath/css"),
+        file("$resourceFolderPath/css/highlight"),
+        file("$resourceFolderPath/js"),
+        file("$resourceFolderPath/img"),
+        file("$resourceFolderPath/style")
+    ]
+}
 // the version dropdown wasn't working quite right, disable it for now
 createReleasesDropdown.enabled = false
 // run groovydoc on docs
