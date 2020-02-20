@@ -47,7 +47,7 @@ if [ "${TRAVIS_JDK_VERSION}" == "openjdk11" ] && [ "$TRAVIS_PULL_REQUEST" == "fa
   echo ""
   git commit -a -m "Updating docs for Travis build: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/$TRAVIS_BUILD_ID"
   echo ""
-  git pull origin HEAD
+  git pull --no-edit origin gh-pages
   git push origin HEAD
 
   cd ..
