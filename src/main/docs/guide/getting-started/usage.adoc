@@ -1,0 +1,8 @@
+When your app starts up, this configuration will make any necessary
+configurations to Jupyter. Once both your app and Jupyter are running, login to
+Jupyter to start using the features.
+
+For examples, see the
+https://github.com/stainlessai/micronaut-jupyter/tree/master/examples/[example apps]
+that use this configuration along with sample Jupyter notebooks that take
+advantage of the available features.

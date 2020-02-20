@@ -1,0 +1,36 @@
+### Add Build Dependency (Gradle)
+Ensure the following repositories are added to your gradle build:
+```Groovy
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+```
+Add the following dependency to your gradle build:
+```Groovy
+dependencies {
+    implementation "ai.stainless:micronaut-jupyter:0.2.1"
+}
+```
+
+### Configure your Jupyter Kernels Directory
+Ensure that your app can write to a directory where Jupyter will search for
+kernels.
+
+#### Option 1 - Easiest (**Possible security vulnerability!**)
+The default directory is `/usr/local/share/jupyter/kernels`, so the following
+is sufficient:
+```bash
+chmod 777 /usr/local/share/jupyter/kernels
+```
+
+#### Option 2 - May be More Secure
+Create a separate directory, say at `/opt/jupyter-alt/kernels`, that your app
+can write to. Then, configure Jupyter to search this directory using
+https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html#envvar-JUPYTER_PATH[JUPYTER_PATH].
+Lastly, add the following config to your application.yml:
+```yml
+jupyter:
+  kernel:
+    location: /opt/jupyter-alt/kernels
+```
