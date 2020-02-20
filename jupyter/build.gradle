@@ -188,6 +188,15 @@ task test(overwrite: true) {
     doLast createCheckTests()
 }
 
+task copyGroovydoc(type: Copy) {
+    from "${project.buildDir}/docs/groovydoc"
+    into "${rootProject.buildDir}/docs/gapi"
+}
+
+groovydoc {
+    finalizedBy copyGroovydoc
+}
+
 publishing {
     publications {
         jupyterConfigurationLibrary(MavenPublication) {

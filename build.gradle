@@ -1,6 +1,22 @@
-plugins {
-    // Apply the groovy plugin to add support for Groovy
-    id 'groovy'
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "org.grails:grails-docs:$grailsVersion"
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+        classpath 'io.github.groovylang.groovydoc:groovydoc-gradle-plugin:1.0.1'
+        classpath "io.micronaut.docs:micronaut-docs-asciidoc-extensions:$micronautDocsVersion", {
+            exclude group:"com.github.jengelman.gradle.plugins"
+        }
+        classpath "io.micronaut.docs:micronaut-docs-gradle-plugins:$micronautDocsVersion", {
+            exclude group:"com.github.jengelman.gradle.plugins"
+        }
+        classpath 'com.adarshr:gradle-test-logger-plugin:2.0.0'
+    }
 }
 
 repositories {
@@ -9,14 +25,6 @@ repositories {
 
 group "ai.stainless"
 version projectVersion
-
-dependencies {
-    // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
-
-    // Use the awesome Spock testing and specification framework
-    testImplementation "org.spockframework:spock-core:$spockVersion"
-}
 
 subprojects { Project subproject ->
 
@@ -125,6 +133,13 @@ subprojects { Project subproject ->
 
 }
 
+// configure micronuat-docs
+apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v$micronautDocsVersion/gradle/docs.gradle"
+// the version dropdown wasn't working quite right, disable it for now
+createReleasesDropdown.enabled = false
+// run groovydoc on docs
+docs.dependsOn ':jupyter:groovydoc'
+
 task rsync {
     // define rsync command
     def rsyncCommand = "$rootProject.projectDir/rsync"
@@ -139,4 +154,7 @@ task rsync {
     }
 }
 
-build.dependsOn rsync
+task build {
+    dependsOn rsync
+}
+docs.dependsOn rsync
