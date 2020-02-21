@@ -178,8 +178,6 @@ cleanDocResources {
         file("$resourceFolderPath/style")
     ]
 }
-// the version dropdown wasn't working quite right, disable it for now
-createReleasesDropdown.enabled = false
 // run groovydoc on docs
 docs.dependsOn ':jupyter:groovydoc'
 
