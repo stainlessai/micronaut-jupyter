@@ -36,11 +36,7 @@ repositories {
 Add the following dependency to your gradle build:
 ```Groovy
 dependencies {
-<<<<<<< HEAD
-    implementation "ai.stainless:micronaut-jupyter:0.2.2"
-=======
-    implementation "ai.stainless:micronaut-jupyter:0.2.3"
->>>>>>> 8af5ed297b71c0a3aa294e4a0004fe421b8694cd
+    implementation "ai.stainless:micronaut-jupyter:0.2.4"
 }
 ```
 
