@@ -64,15 +64,3 @@
     background-color: #fff !important;
     color: #000 !important;
 }
-
-#main .docs-content .project .version select {
-    border: 0;
-    cursor: pointer;
-    vertical-align: top;
-    width: auto;
-}
-
-/* hide the snapshot entry from the version select */
-#main .docs-content .project .version select option:first-child {
-    display: none;
-}
