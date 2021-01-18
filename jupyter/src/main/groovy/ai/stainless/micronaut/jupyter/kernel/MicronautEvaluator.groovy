@@ -1,5 +1,7 @@
 package ai.stainless.micronaut.jupyter.kernel
 
+import com.twosigma.beakerx.BeakerXClient
+
 /*
  * Customized GroovyEvaluator implementation that uses custom threading and
  * class loader. License from BeakerX pasted below.
@@ -20,37 +22,30 @@ package ai.stainless.micronaut.jupyter.kernel
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import com.twosigma.beakerx.BeakerXClient;
-import com.twosigma.beakerx.TryResult;
-import com.twosigma.beakerx.autocomplete.AutocompleteResult;
-import com.twosigma.beakerx.autocomplete.MagicCommandAutocompletePatterns;
-import com.twosigma.beakerx.evaluator.JobDescriptor;
-import com.twosigma.beakerx.evaluator.TempFolderFactory;
-import com.twosigma.beakerx.evaluator.TempFolderFactoryImpl;
-import com.twosigma.beakerx.groovy.autocomplete.GroovyAutocomplete;
+
+import com.twosigma.beakerx.TryResult
+import com.twosigma.beakerx.autocomplete.AutocompleteResult
+import com.twosigma.beakerx.autocomplete.MagicCommandAutocompletePatterns
+import com.twosigma.beakerx.evaluator.ClasspathScannerImpl
+import com.twosigma.beakerx.evaluator.JobDescriptor
+import com.twosigma.beakerx.evaluator.TempFolderFactory
+import com.twosigma.beakerx.evaluator.TempFolderFactoryImpl
+import com.twosigma.beakerx.groovy.autocomplete.GroovyAutocomplete
 import com.twosigma.beakerx.groovy.autocomplete.GroovyClasspathScanner
 import com.twosigma.beakerx.groovy.evaluator.GroovyEvaluator
-import com.twosigma.beakerx.groovy.evaluator.GroovyWorkerThread;
-import com.twosigma.beakerx.jvm.classloader.BeakerXUrlClassLoader;
-import com.twosigma.beakerx.jvm.object.SimpleEvaluationObject;
-import com.twosigma.beakerx.jvm.threads.BeakerCellExecutor;
-import com.twosigma.beakerx.jvm.threads.CellExecutor;
-import com.twosigma.beakerx.kernel.Classpath;
-import com.twosigma.beakerx.kernel.EvaluatorParameters;
-import com.twosigma.beakerx.kernel.ExecutionOptions;
-import com.twosigma.beakerx.kernel.ImportPath;
-import com.twosigma.beakerx.kernel.Imports;
-import com.twosigma.beakerx.kernel.PathToJar;
+import com.twosigma.beakerx.jvm.classloader.BeakerXUrlClassLoader
+import com.twosigma.beakerx.jvm.object.SimpleEvaluationObject
+import com.twosigma.beakerx.jvm.threads.BeakerCellExecutor
+import com.twosigma.beakerx.jvm.threads.CellExecutor
+import com.twosigma.beakerx.kernel.*
 import org.codehaus.groovy.control.CompilerConfiguration
-import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.codehaus.groovy.control.customizers.ImportCustomizer
 
-import java.io.File;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executors
 
-import static com.twosigma.beakerx.groovy.evaluator.EnvVariablesFilter.envVariablesFilter;
-import static com.twosigma.beakerx.groovy.evaluator.GroovyClassLoaderFactory.addImportPathToImportCustomizer;
-import static com.twosigma.beakerx.groovy.evaluator.GroovyClassLoaderFactory.newParentClassLoader;
-
+import static com.twosigma.beakerx.groovy.evaluator.EnvVariablesFilter.envVariablesFilter
+import static com.twosigma.beakerx.groovy.evaluator.GroovyClassLoaderFactory.addImportPathToImportCustomizer
+import static com.twosigma.beakerx.groovy.evaluator.GroovyClassLoaderFactory.newParentClassLoader
 
 public class MicronautEvaluator extends GroovyEvaluator {
 
@@ -65,41 +60,42 @@ public class MicronautEvaluator extends GroovyEvaluator {
     Micronaut kernel
 
     public MicronautEvaluator(
-        String id,
-        EvaluatorParameters evaluatorParameters,
-        BeakerXClient beakerxClient,
-        MagicCommandAutocompletePatterns autocompletePatterns
+            String id,
+            EvaluatorParameters evaluatorParameters,
+            BeakerXClient beakerxClient,
+            MagicCommandAutocompletePatterns autocompletePatterns
     ) {
         this(
-            id,
-            new BeakerCellExecutor("groovy"),
-            new TempFolderFactoryImpl(),
-            evaluatorParameters,
-            beakerxClient,
-            autocompletePatterns
+                id,
+                new BeakerCellExecutor("groovy"),
+                new TempFolderFactoryImpl(),
+                evaluatorParameters,
+                beakerxClient,
+                autocompletePatterns
         )
     }
 
     public MicronautEvaluator(
-        String id,
-        CellExecutor cellExecutor,
-        TempFolderFactory tempFolderFactory,
-        EvaluatorParameters evaluatorParameters,
-        BeakerXClient beakerxClient,
-        MagicCommandAutocompletePatterns autocompletePatterns
+            String id,
+            CellExecutor cellExecutor,
+            TempFolderFactory tempFolderFactory,
+            EvaluatorParameters evaluatorParameters,
+            BeakerXClient beakerxClient,
+            MagicCommandAutocompletePatterns autocompletePatterns
     ) {
         super(
-            id,
-            id,
-            cellExecutor,
-            tempFolderFactory,
-            evaluatorParameters,
-            beakerxClient,
-            autocompletePatterns
+                id,
+                id,
+                cellExecutor,
+                tempFolderFactory,
+                evaluatorParameters,
+                beakerxClient,
+                autocompletePatterns,
+                new ClasspathScannerImpl()
         )
     }
 
-    public void init () {
+    public void init() {
         //if we are already loaded
         if (loaded) {
             //don't load us a second time
@@ -112,10 +108,10 @@ public class MicronautEvaluator extends GroovyEvaluator {
         //init class loader
         reloadClassloader()
         gac = createGroovyAutocomplete(
-            new GroovyClasspathScanner(),
-            groovyClassLoader,
-            imports,
-            autocompletePatterns
+                new GroovyClasspathScanner(),
+                groovyClassLoader,
+                imports,
+                autocompletePatterns
         )
         outDir = envVariablesFilter(outDir, System.getenv())
         // we are loaded
@@ -195,12 +191,12 @@ public class MicronautEvaluator extends GroovyEvaluator {
     public ClassLoader getClassLoader() {
         return groovyClassLoader;
     }
-    
+
     @Override
     public GroovyClassLoader getGroovyClassLoader() {
         return groovyClassLoader;
     }
-    
+
     @Override
     public Binding getScriptBinding() {
         return scriptBinding;
@@ -210,14 +206,14 @@ public class MicronautEvaluator extends GroovyEvaluator {
      * Custom implementation of GroovyClassLoaderFactory methods that use
      * custom compiler config
      */
-    
+
     public GroovyClassLoader newEvaluator(ClassLoader parent) {
-        
+
         if (!imports.isEmpty()) {
             Iterator var2 = imports.getImportPaths().iterator()
 
-            while(var2.hasNext()) {
-                ImportPath importLine = (ImportPath)var2.next()
+            while (var2.hasNext()) {
+                ImportPath importLine = (ImportPath) var2.next()
                 addImportPathToImportCustomizer(icz, importLine)
             }
         }
