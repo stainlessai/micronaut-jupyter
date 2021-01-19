@@ -135,7 +135,7 @@ subprojects { Project subproject ->
 
 }
 
-// configure micronuat-docs
+// configure micronaut-docs
 apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v$micronautDocsVersion/gradle/docs.gradle"
 // alter downloadDocResources task:
 // - Change resource tasks order to:
