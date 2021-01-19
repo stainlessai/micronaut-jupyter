@@ -19,7 +19,11 @@ public class Micronaut extends Groovy {
     ApplicationContext applicationContext
     StandardStreamHandler streamHandler
 
-    public Micronaut(final String sessionId, final MicronautEvaluator evaluator, Configuration configuration) {
+    public Micronaut(final String sessionId,
+                     final MicronautEvaluator evaluator,
+                     TrackableKernelSocketsFactory kernelSocketsFactory,
+                     Configuration configuration) {
+        
         super(sessionId, evaluator, configuration)
 
         //store properties
@@ -88,16 +92,7 @@ public class Micronaut extends Groovy {
         BeakerXCommRepository beakerXCommRepository = new BeakerXCommRepository();
         NamespaceClient namespaceClient = NamespaceClient.create(id, configurationFile, beakerXCommRepository);
         MagicCommandConfiguration magicCommandTypesFactory = new MagicCommandConfigurationImpl();
-
-//        GroovyEvaluator evaluator = new GroovyEvaluator(
-//                id,
-//                id,
-//                getEvaluatorParameters(),
-//                namespaceClient,
-//                magicCommandTypesFactory.patterns(),
-//                new ClasspathScannerImpl()
-//        );
-
+        
         MicronautEvaluator evaluator = new MicronautEvaluator(
                 id,
                 getEvaluatorParameters(),
@@ -108,13 +103,7 @@ public class Micronaut extends Groovy {
         return new Micronaut(
                 id,
                 evaluator,
-//                new Configuration(kernelSocketsFactory,
-//                        new CustomMagicCommandsEmptyImpl(),
-//                        beakerXCommRepository,
-//                        new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
-//                        magicCommandTypesFactory,
-//                        new BeakerXJsonConfig())
-
+                kernelSocketsFactory,
                 new Configuration(
                         kernelSocketsFactory,
                         closeKernelAction,
@@ -124,8 +113,8 @@ public class Micronaut extends Groovy {
                         new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
                         magicCommandTypesFactory,
                         new BeakerXJsonConfig(),
+                        new MicronautRuntimeToolsImpl()
 //                        new RuntimetoolsImpl()
-                        new SpecifiedRuntimeToolsImpl("/Users/dstieglitz/idea-projects/beakerx-jlab2/beakerx_kernel_base/runtimetools/build/libs/runtimetools.jar")
                 )
         );
 
