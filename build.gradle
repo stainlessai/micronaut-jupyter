@@ -25,12 +25,10 @@ repositories {
     mavenCentral()
 }
 
-group "ai.stainless"
 version projectVersion
 
 subprojects { Project subproject ->
-
-    group "ai.stainless"
+    
     version project.projectVersion
 
     repositories {
