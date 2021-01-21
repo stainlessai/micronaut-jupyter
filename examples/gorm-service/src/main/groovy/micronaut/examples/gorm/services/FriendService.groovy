@@ -4,7 +4,10 @@ package micronaut.examples.gorm.services
 import grails.gorm.services.Service
 import micronaut.examples.gorm.domains.Person
 
+import grails.gorm.transactions.Transactional
+
 @Service(Person)
+@Transactional
 interface FriendService {
     Person get(Long id)
 
