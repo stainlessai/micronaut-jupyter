@@ -63,14 +63,15 @@ sourceSets {
 
 dependencies {
     annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
 
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
-    implementation "io.micronaut:micronaut-inject-groovy"
+
+    compileOnly "io.micronaut:micronaut-inject-java"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    compileOnly "io.micronaut:micronaut-inject"
+
     implementation "io.micronaut:micronaut-messaging"
-    implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-management"
 
     implementation "com.github.twosigma.beakerx:beaker-kernel-base:$beakerxVersion"
