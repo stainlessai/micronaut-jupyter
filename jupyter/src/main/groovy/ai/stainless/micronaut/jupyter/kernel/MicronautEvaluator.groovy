@@ -23,7 +23,8 @@ package ai.stainless.micronaut.jupyter.kernel
 import com.twosigma.beakerx.BeakerXClient;
 import com.twosigma.beakerx.TryResult;
 import com.twosigma.beakerx.autocomplete.AutocompleteResult;
-import com.twosigma.beakerx.autocomplete.MagicCommandAutocompletePatterns;
+import com.twosigma.beakerx.autocomplete.MagicCommandAutocompletePatterns
+import com.twosigma.beakerx.evaluator.ClasspathScannerImpl;
 import com.twosigma.beakerx.evaluator.JobDescriptor;
 import com.twosigma.beakerx.evaluator.TempFolderFactory;
 import com.twosigma.beakerx.evaluator.TempFolderFactoryImpl;
@@ -95,7 +96,8 @@ public class MicronautEvaluator extends GroovyEvaluator {
             tempFolderFactory,
             evaluatorParameters,
             beakerxClient,
-            autocompletePatterns
+            autocompletePatterns,
+            new ClasspathScannerImpl()
         )
     }
 

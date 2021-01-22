@@ -18,6 +18,7 @@ buildscript {
             exclude group:"com.github.jengelman.gradle.plugins"
         }
         classpath 'com.adarshr:gradle-test-logger-plugin:2.0.0'
+
     }
 }
 
