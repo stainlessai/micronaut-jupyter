@@ -11,7 +11,7 @@ import javax.inject.Inject
 public class KernelEndpoint {
 
     @Inject
-    KernelManager kernelManager
+    private KernelManager kernelManager
 
     @Write
     public Map start (Map request) {
