@@ -53,7 +53,7 @@ class MicronautCodeRunner implements Callable<TryResult> {
 
     @Override
     public TryResult call() {
-        // required to get Thread-bound hibernate session?
+        // required to get Thread-bound hibernate session
         //ClassLoader oldld = Thread.currentThread().getContextClassLoader();
         TryResult either;
         String scriptName = SCRIPT_NAME;
@@ -67,7 +67,7 @@ class MicronautCodeRunner implements Callable<TryResult> {
             );
             Object result = null;
             theOutput.setOutputHandler();
-            // required to get Thread-bound hibernate session?
+            // required to get Thread-bound hibernate session
             //Thread.currentThread().setContextClassLoader(micronautEvaluator.getGroovyClassLoader());
             scriptName += System.currentTimeMillis();
             Class<?> parsedClass = micronautEvaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
@@ -82,7 +82,7 @@ class MicronautCodeRunner implements Callable<TryResult> {
             either = handleError(scriptName, e);
         } finally {
             theOutput.clrOutputHandler();
-            // required to get Thread-bound hibernate session?
+            // required to get Thread-bound hibernate session
             //Thread.currentThread().setContextClassLoader(oldld);
         }
         return either;
