@@ -61,6 +61,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
 
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+    implementation "org.codehaus.groovy:groovy-xml:$groovyVersion"
 
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     implementation "io.micronaut:micronaut-inject-groovy"
@@ -68,8 +69,8 @@ dependencies {
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-management"
 
-    compile "com.github.twosigma.beakerx:beaker-kernel-base:$beakerxVersion"
-    compile "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
+    implementation "com.github.twosigma.beakerx:beaker-kernel-base:$beakerxVersion"
+    implementation "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
 
     testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
@@ -180,12 +181,11 @@ task integrationTest() {
     doLast createCheckTests()
 }
 
-task test(overwrite: true) {
-    dependsOn unitTest
-    dependsOn integrationTest
-
-    outputs.upToDateWhen { false }
-    doLast createCheckTests()
+test.dependsOn unitTest
+test.dependsOn integrationTest
+test.outputs.upToDateWhen { false }
+test.doLast {
+    createCheckTests()
 }
 
 task copyGroovydoc(type: Copy) {
