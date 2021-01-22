@@ -14,8 +14,8 @@ class SpecifiedRuntimeToolsImpl extends RuntimetoolsImpl {
     }
 
     public void configRuntimeJars(KernelFunctionality kernel) {
-//        kernel.addJarsToClasspath(Arrays.asList(new PathToJar(this.pathToJar)));
-//        kernel.addImport(new ImportPath("com.twosigma.beakerx.BxDriverManager"));
+        kernel.addJarsToClasspath(Arrays.asList(new PathToJar(this.pathToJar)));
+        kernel.addImport(new ImportPath("com.twosigma.beakerx.BxDriverManager"));
     }
 
 }
