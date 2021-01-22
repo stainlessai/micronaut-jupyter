@@ -1,7 +1,5 @@
 package ai.stainless.micronaut.jupyter.kernel
 
-import com.twosigma.beakerx.TryResult
-
 /*
  * Implementation of the GroovyWorkerThread class from BeakerX.
  * BeakerX license pasted below.
@@ -23,10 +21,11 @@ import com.twosigma.beakerx.TryResult
  *  limitations under the License.
  */
 
+import com.twosigma.beakerx.TryResult
 import com.twosigma.beakerx.evaluator.JobDescriptor
+import com.twosigma.beakerx.groovy.evaluator.GroovyCodeRunner
 import com.twosigma.beakerx.groovy.evaluator.GroovyNotFoundException
 import groovy.util.logging.Slf4j
-
 import java.util.concurrent.Callable
 
 @Slf4j
@@ -40,8 +39,8 @@ class MicronautWorkerThread implements Callable<TryResult> {
         this.j = j
     }
 
-    private def executeCode() {
-        return evaluator.executeTask(new MicronautCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject), j.getExecutionOptions())
+    private def executeCode () {
+        return (new MicronautCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject)).call()
     }
 
     @Override
@@ -57,10 +56,9 @@ class MicronautWorkerThread implements Callable<TryResult> {
                 try {
                     HibernateDatastore = "org.grails.orm.hibernate.HibernateDatastore" as Class
                 }
-                catch (Throwable e) {
-                }
+                catch (Throwable e) { }
                 if (!HibernateDatastore) {
-                    log.debug("Class org.grails.orm.hibernate.HibernateDatastore not found in classpath")
+                    log.debug ("Class org.grails.orm.hibernate.HibernateDatastore not found in classpath")
                     return executeCode()
                 }
                 log.debug "Found class org.grails.orm.hibernate.HibernateDatastore"
