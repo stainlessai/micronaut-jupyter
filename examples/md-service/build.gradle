@@ -57,8 +57,8 @@ dependencies {
         exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
     }
 
-    runtimeOnly "com.h2database:h2"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    runtime "com.h2database:h2"
+    runtime "ch.qos.logback:logback-classic:1.2.3"
 }
 
 test.classpath += configurations.developmentOnly

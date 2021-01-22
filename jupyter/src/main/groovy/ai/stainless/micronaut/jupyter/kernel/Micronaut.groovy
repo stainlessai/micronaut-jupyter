@@ -1,12 +1,23 @@
 package ai.stainless.micronaut.jupyter.kernel
 
 import com.twosigma.beakerx.BeakerXCommRepository
+import com.twosigma.beakerx.CommRepository
 import com.twosigma.beakerx.NamespaceClient
+import com.twosigma.beakerx.evaluator.Evaluator
+import com.twosigma.beakerx.groovy.evaluator.GroovyEvaluator
 import com.twosigma.beakerx.groovy.kernel.Groovy
 import com.twosigma.beakerx.groovy.kernel.GroovyBeakerXServer
-import com.twosigma.beakerx.kernel.*
+import com.twosigma.beakerx.kernel.BeakerXJson
+import com.twosigma.beakerx.kernel.BeakerXJsonConfig
+import com.twosigma.beakerx.kernel.CacheFolderFactory
+import com.twosigma.beakerx.kernel.CloseKernelAction
+import com.twosigma.beakerx.kernel.EnvCacheFolderFactory
+import com.twosigma.beakerx.kernel.KernelConfigurationFile
+import com.twosigma.beakerx.kernel.KernelRunner
+import com.twosigma.beakerx.kernel.Utils
 import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfiguration
 import com.twosigma.beakerx.kernel.magic.command.MagicCommandConfigurationImpl
+import com.twosigma.beakerx.kernel.restserver.BeakerXServer
 import com.twosigma.beakerx.kernel.restserver.impl.GetUrlArgHandler
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
@@ -20,36 +31,47 @@ public class Micronaut extends Groovy {
     ApplicationContext applicationContext
     StandardStreamHandler streamHandler
 
-    public Micronaut(
-            final String id,
-            final MicronautEvaluator evaluator,
-            final Configuration configuration
+    public Micronaut (
+        final String id,
+        final MicronautEvaluator evaluator,
+        TrackableKernelSocketsFactory kernelSocketsFactory,
+        CloseKernelAction closeKernelAction,
+        CacheFolderFactory cacheFolderFactory,
+        CommRepository commRepository,
+        BeakerXServer beakerXServer,
+        MagicCommandConfiguration magicCommandConfiguration,
+        BeakerXJson beakerXJson
     ) {
         super(
-                id,
-                evaluator,
-                configuration
+            id,
+            evaluator,
+            kernelSocketsFactory,
+            closeKernelAction,
+            cacheFolderFactory,
+            commRepository,
+            beakerXServer,
+            magicCommandConfiguration,
+            beakerXJson
         )
         //store properties
         this.kernelSocketsFactory = kernelSocketsFactory
         this.evaluator = evaluator
     }
 
-    public void init() {
+    public void init () {
         //load evaluator
         evaluator.kernel = this
         evaluator.init()
     }
 
-    public void kill() {
+    public void kill () {
         log.info "Killing kernel now!"
         // close sockets factory instances
         kernelSocketsFactory.instances.each {
             try {
                 it.shutdown()
             }
-            catch (NoSuchMethodError e) {
-            }
+            catch (NoSuchMethodError e) { }
         }
     }
 
@@ -58,8 +80,8 @@ public class Micronaut extends Groovy {
      * Use implementation of logic from Groovy.main() method in BeakerX project.
      * License from BeakerX pasted below.
      */
+    public static Micronaut createKernel (final String[] args) {
 
-    public static Micronaut createKernel(final String[] args) {
         log.info "Spinning up new Micronaut kernel"
         log.info "Received args: $args"
 
@@ -88,48 +110,28 @@ public class Micronaut extends Groovy {
         String id = Utils.uuid();
         KernelConfigurationFile configurationFile = new KernelConfigurationFile(args);
         TrackableKernelSocketsFactory kernelSocketsFactory = new TrackableKernelSocketsFactory(
-                configurationFile
+            configurationFile
         );
 
         BeakerXCommRepository beakerXCommRepository = new BeakerXCommRepository();
         NamespaceClient namespaceClient = NamespaceClient.create(id, configurationFile, beakerXCommRepository);
         MagicCommandConfiguration magicCommandTypesFactory = new MagicCommandConfigurationImpl();
         MicronautEvaluator evaluator = new MicronautEvaluator(
-                id,
-                getEvaluatorParameters(),
-                namespaceClient,
-                magicCommandTypesFactory.patterns()
+            id,
+            getEvaluatorParameters(),
+            namespaceClient,
+            magicCommandTypesFactory.patterns()
         );
-
-//        KernelSocketsFactory kernelSocketsFactory,
-//        CustomMagicCommandsFactory customMagicCommands,
-//        CommRepository commRepository,
-//        BeakerXServer beakerXServer,
-//        MagicCommandConfiguration magicCommandConfiguration,
-//        BeakerXJson beakerXJson
-
-        Configuration config = new Configuration(kernelSocketsFactory,
-                new CustomMagicCommandsEmptyImpl(),
-                beakerXCommRepository,
-                new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
-                magicCommandTypesFactory,
-                new BeakerXJsonConfig())
-
-//                kernelSocketsFactory,
-//                closeKernelAction,
-//                beakerXCommRepository,
-//                new EnvCacheFolderFactory(),
-//                new CustomMagicCommandsEmptyImpl(),
-//                beakerXCommRepository,
-//                new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
-//                magicCommandTypesFactory,
-//                new BeakerXJsonConfig(),
-//                new RuntimetoolsImpl())
-
         return new Micronaut(
-                id,
-                evaluator,
-                config
+            id,
+            evaluator,
+            kernelSocketsFactory,
+            closeKernelAction,
+            new EnvCacheFolderFactory(),
+            beakerXCommRepository,
+            new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
+            magicCommandTypesFactory,
+            new BeakerXJsonConfig()
         );
 
         /*
@@ -138,7 +140,7 @@ public class Micronaut extends Groovy {
 
     }
 
-    public static void main(final String[] args) {
+    public static void main (final String[] args) {
 
         KernelRunner.run({
             return createKernel(args)
