@@ -1,12 +1,12 @@
 package micronaut.examples.gorm.services
 
-
+import grails.gorm.services.Join
 import grails.gorm.services.Service
 import micronaut.examples.gorm.domains.Person
 
 @Service(Person)
 interface FriendService {
-    Person get(Long id)
+    Person get (Long id)
 
     /*
      * No need to use @Join here, since we are specifying a join in our domain
@@ -16,7 +16,7 @@ interface FriendService {
      * all of our dynamic finder queries.
      */
     //@Join('friends')
-    Person find(String firstName, String lastName)
+    Person find (String firstName, String lastName)
 
     List<Person> list(Map args)
 
