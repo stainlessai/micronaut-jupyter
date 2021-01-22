@@ -28,8 +28,8 @@ sourceSets {
         groovy.srcDir file('src/gormTest/groovy')
         groovy.srcDir file('src/integrationTest/groovy/ai/stainless/micronaut/jupyter/kernel')
         groovy.exclude { FileTreeElement elem ->
-            elem.file.absolutePath.contains ('src/integrationTest/groovy') &&
-                !elem.file.absolutePath.contains('KernelSpec.groovy')
+            elem.file.absolutePath.contains('src/integrationTest/groovy') &&
+                    !elem.file.absolutePath.contains('KernelSpec.groovy')
         }
         resources.srcDir file('src/test/resources')
         compileClasspath += sourceSets.main.output + configurations.testRuntime
@@ -40,8 +40,8 @@ sourceSets {
         groovy.srcDir file('src/mdTest/groovy')
         groovy.srcDir file('src/integrationTest/groovy/ai/stainless/micronaut/jupyter/kernel')
         groovy.exclude { FileTreeElement elem ->
-            elem.file.absolutePath.contains ('src/integrationTest/groovy') &&
-                !elem.file.absolutePath.contains('KernelSpec.groovy')
+            elem.file.absolutePath.contains('src/integrationTest/groovy') &&
+                    !elem.file.absolutePath.contains('KernelSpec.groovy')
         }
         resources.srcDir file('src/test/resources')
         compileClasspath += sourceSets.main.output + configurations.testRuntime
@@ -104,7 +104,7 @@ dependencies {
     // There must be some sort of transitive dependency that the gorm tests
     // need
     gormTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
-        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
+        exclude group: 'io.micronaut.configuration', module: 'micronaut-hibernate-jpa-spring'
     }
     gormTestRuntime "com.h2database:h2:1.4.200"
 }
@@ -120,16 +120,16 @@ def createCheckTests = { isTest ->
             return
         }
         def testTasks = taskDependencies.getDependencies()
-            .collect { [it, it.getDependsOn()] }
-            .flatten()
-            .findAll { it instanceof Test && it.didWork }
+                .collect { [it, it.getDependsOn()] }
+                .flatten()
+                .findAll { it instanceof Test && it.didWork }
         if (isTest && didWork) {
             testTasks.add([name: name])
         }
         // if any of our dependent test tasks ran
         if (testTasks.size()) {
             logger.warn(
-                "Warning: No tests found for the given includes: [$testsFilter] among tasks: ${ testTasks.collect { it.name } }"
+                    "Warning: No tests found for the given includes: [$testsFilter] among tasks: ${testTasks.collect { it.name }}"
             )
         }
     }
@@ -232,6 +232,6 @@ publishing {
     }
 }
 
-signing {
-    sign publishing.publications.jupyterConfigurationLibrary
-}
+//signing {
+//    sign publishing.publications.jupyterConfigurationLibrary
+//}
