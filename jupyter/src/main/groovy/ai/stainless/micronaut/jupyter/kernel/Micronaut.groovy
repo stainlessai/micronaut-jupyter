@@ -2,9 +2,6 @@ package ai.stainless.micronaut.jupyter.kernel
 
 import com.twosigma.beakerx.BeakerXCommRepository
 import com.twosigma.beakerx.NamespaceClient
-import com.twosigma.beakerx.evaluator.ClasspathScannerImpl
-import com.twosigma.beakerx.evaluator.Evaluator
-import com.twosigma.beakerx.groovy.evaluator.GroovyEvaluator
 import com.twosigma.beakerx.groovy.kernel.Groovy
 import com.twosigma.beakerx.groovy.kernel.GroovyBeakerXServer
 import com.twosigma.beakerx.kernel.*
@@ -18,13 +15,21 @@ import io.micronaut.context.ApplicationContext
 public class Micronaut extends Groovy {
 
     private TrackableKernelSocketsFactory kernelSocketsFactory
-    private Evaluator evaluator
+    private MicronautEvaluator evaluator
+
     ApplicationContext applicationContext
     StandardStreamHandler streamHandler
-    
-    public Micronaut(final String sessionId, final Evaluator evaluator, Configuration configuration) {
-        super(sessionId, evaluator, configuration)
 
+    public Micronaut(
+            final String id,
+            final MicronautEvaluator evaluator,
+            final Configuration configuration
+    ) {
+        super(
+                id,
+                evaluator,
+                configuration
+        )
         //store properties
         this.kernelSocketsFactory = kernelSocketsFactory
         this.evaluator = evaluator
@@ -32,20 +37,18 @@ public class Micronaut extends Groovy {
 
     public void init() {
         //load evaluator
-//        evaluator.kernel = this
-//        evaluator.init()
+        evaluator.kernel = this
+        evaluator.init()
     }
 
     public void kill() {
         log.info "Killing kernel now!"
         // close sockets factory instances
-        if (kernelSocketsFactory != null) {
-            kernelSocketsFactory.instances.each {
-                try {
-                    it.shutdown()
-                }
-                catch (NoSuchMethodError e) {
-                }
+        kernelSocketsFactory.instances.each {
+            try {
+                it.shutdown()
+            }
+            catch (NoSuchMethodError e) {
             }
         }
     }
@@ -91,30 +94,42 @@ public class Micronaut extends Groovy {
         BeakerXCommRepository beakerXCommRepository = new BeakerXCommRepository();
         NamespaceClient namespaceClient = NamespaceClient.create(id, configurationFile, beakerXCommRepository);
         MagicCommandConfiguration magicCommandTypesFactory = new MagicCommandConfigurationImpl();
-
-        GroovyEvaluator evaluator = new GroovyEvaluator(
-                id,
+        MicronautEvaluator evaluator = new MicronautEvaluator(
                 id,
                 getEvaluatorParameters(),
                 namespaceClient,
-                magicCommandTypesFactory.patterns(),
-                new ClasspathScannerImpl()
+                magicCommandTypesFactory.patterns()
         );
+
+//        KernelSocketsFactory kernelSocketsFactory,
+//        CustomMagicCommandsFactory customMagicCommands,
+//        CommRepository commRepository,
+//        BeakerXServer beakerXServer,
+//        MagicCommandConfiguration magicCommandConfiguration,
+//        BeakerXJson beakerXJson
+
+        Configuration config = new Configuration(kernelSocketsFactory,
+                new CustomMagicCommandsEmptyImpl(),
+                beakerXCommRepository,
+                new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
+                magicCommandTypesFactory,
+                new BeakerXJsonConfig())
+
+//                kernelSocketsFactory,
+//                closeKernelAction,
+//                beakerXCommRepository,
+//                new EnvCacheFolderFactory(),
+//                new CustomMagicCommandsEmptyImpl(),
+//                beakerXCommRepository,
+//                new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
+//                magicCommandTypesFactory,
+//                new BeakerXJsonConfig(),
+//                new RuntimetoolsImpl())
 
         return new Micronaut(
                 id,
                 evaluator,
-                new Configuration(
-                        kernelSocketsFactory,
-                        closeKernelAction,
-                        new EnvCacheFolderFactory(),
-                        new CustomMagicCommandsEmptyImpl(),
-                        beakerXCommRepository,
-                        new GroovyBeakerXServer(new GetUrlArgHandler(namespaceClient)),
-                        magicCommandTypesFactory,
-                        new BeakerXJsonConfig(),
-                        new SpecifiedRuntimeToolsImpl("/Users/dstieglitz/idea-projects/beakerx-jlab2/beakerx_kernel_base/runtimetools/build/libs/runtimetools.jar")
-                )
+                config
         );
 
         /*
