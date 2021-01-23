@@ -232,6 +232,6 @@ publishing {
     }
 }
 
-signing {
-    sign publishing.publications.jupyterConfigurationLibrary
-}
+//signing {
+//    sign publishing.publications.jupyterConfigurationLibrary
+//}
