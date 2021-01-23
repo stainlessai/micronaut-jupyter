@@ -95,7 +95,7 @@ dependencies {
     mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
     mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
     mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
-    mdTestRuntime "com.h2database:h2:1.4.200"
+    mdTestRuntimeOnly "com.h2database:h2:1.4.200"
 
     gormTestImplementation "io.micronaut.configuration:micronaut-hibernate-gorm:1.1.1"
     gormTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
@@ -106,7 +106,7 @@ dependencies {
     gormTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
         exclude group: 'io.micronaut.configuration', module: 'micronaut-hibernate-jpa-spring'
     }
-    gormTestRuntime "com.h2database:h2:1.4.200"
+    gormTestRuntimeOnly "com.h2database:h2:1.4.200"
 }
 
 // get tests filter
