@@ -113,17 +113,17 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
 
     private void sendMsg(ZMQ.Socket socket, List<Message> messages) {
         // causes StackOverflowException
-        logger.debug("sendMsg ("+messages.size()+")");
+        logger.trace("sendMsg ("+messages.size()+")");
         if (!isShutdown()) {
             messages.forEach(message -> {
                 String header = toJson(message.getHeader());
                 String parent = toJson(message.getParentHeader());
                 String meta = toJson(message.getMetadata());
                 String content = toJson(message.getContent());
-                logger.debug("header="+header);
-                logger.debug("parent="+parent);
-                logger.debug("meta="+meta);
-                logger.debug("content="+content);
+                logger.trace("header="+header);
+                logger.trace("parent="+parent);
+                logger.trace("meta="+meta);
+                logger.trace("content="+content);
                 String digest = hmac.sign(Arrays.asList(header, parent, meta, content));
 
                 ZMsg newZmsg = new ZMsg();
@@ -135,20 +135,20 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
                 newZmsg.add(meta.getBytes(StandardCharsets.UTF_8));
                 newZmsg.add(content.getBytes(StandardCharsets.UTF_8));
                 message.getBuffers().forEach(x -> newZmsg.add(x));
-                logger.debug("obtaining sendLock");
+                logger.trace("obtaining sendLock");
                 sendLock.lock();
                 try {
                     newZmsg.send(socket);
                 } catch (Exception e) {
                     logger.error(e.toString());
                 } finally {
-                    logger.debug("releasing sendLock");
+                    logger.trace("releasing sendLock");
                     sendLock.unlock();
                 }
-                logger.debug("sendLock stats: "+sendLock.getHoldCount()+" holding,"+sendLock.getQueueLength()+" queue length");
+                logger.trace("sendLock stats: "+sendLock.getHoldCount()+" holding,"+sendLock.getQueueLength()+" queue length");
             });
         }
-        logger.debug("leavin' sendMsg...");
+        logger.trace("leavin' sendMsg...");
     }
 
     private Message readMessage(ZMQ.Socket socket) {
@@ -232,7 +232,7 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
 
     private void handleControlMsg() {
         Message message = readMessage(controlSocket);
-        logger.debug("handleControlMsg: "+message.toString());
+        logger.trace("handleControlMsg: "+message.toString());
         JupyterMessages type = message.getHeader().getTypeEnum();
         if (type.equals(SHUTDOWN_REQUEST)) {
             Message reply = new Message(new Header(SHUTDOWN_REPLY, message.getHeader().getSession()));
@@ -245,7 +245,7 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
         if (handler != null) {
             handler.handle(message);
         }
-        logger.debug("leavin' handleControlMsg()");
+        logger.trace("leavin' handleControlMsg()");
   }
 
     private ZMQ.Socket getNewSocket(int type, int port, String connection, ZMQ.Context context) {

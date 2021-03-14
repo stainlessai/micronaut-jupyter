@@ -57,7 +57,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
 
     @Override
     public TryResult call() {
-        logger.debug("call()");
+        logger.trace("call()");
         ClassLoader oldld = Thread.currentThread().getContextClassLoader();
         TryResult either;
         String scriptName = SCRIPT_NAME;
@@ -91,7 +91,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
             evaluator.getKernel().getStreamHandler().clearOutputHandlers();
             Thread.currentThread().setContextClassLoader(oldld);
         }
-        logger.debug("call() returning "+either);
+        logger.trace("call() returning "+either);
         return either;
     }
 
@@ -115,7 +115,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
     }
 
     private Object runScript(Script script) {
-        logger.debug("runScript "+script);
+        logger.trace("runScript "+script);
         evaluator.getScriptBinding().setVariable(Evaluator.BEAKER_VARIABLE_NAME, evaluator.getBeakerX());
         script.setBinding(evaluator.getScriptBinding());
         return script.run();
