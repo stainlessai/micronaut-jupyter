@@ -23,6 +23,9 @@ configurations {
     integrationTestImplementation.extendsFrom testImplementation
 }
 
+sourceSets.main.java.srcDirs = []
+sourceSets.main.groovy.srcDirs += ["src/main/java"]
+
 sourceSets {
     gormTest {
         groovy.srcDir file('src/gormTest/groovy')
@@ -69,8 +72,8 @@ dependencies {
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-management"
 
-    implementation "com.github.twosigma.beakerx:beaker-kernel-base:$beakerxVersion"
-    implementation "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
+    implementation "com.twosigma:beakerx-kernel-base:$beakerxVersion"
+    implementation "com.twosigma:beakerx-kernel-groovy:$beakerxVersion"
 
     testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
