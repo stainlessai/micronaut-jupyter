@@ -114,12 +114,15 @@ public class MicronautEvaluator extends GroovyEvaluator {
     public TryResult evaluate(EvaluationObject seo, String code, ExecutionOptions executionOptions) {
         logger.debug("evaluate " + code);
         TryResult result = evaluate(seo, new MicronautWorkerThread(this, new JobDescriptor(code, seo, executionOptions)));
-        logger.debug("returning " + result);
-        logger.debug("isError? " + result.isError());
+        logger.debug("evaluate got: " + result);
         logger.debug("isResult? " + result.isResult());
-        logger.debug("result= " + result.result());
-        if (result.result() instanceof MIMEContainer) {
+        logger.debug("isError? " + result.isError());
+        if (result.isError()) {
+            TryResult.CellError cellError = (TryResult.CellError) result;
+            logger.error(cellError.error());
+        } else if (result.result() instanceof MIMEContainer) {
             MIMEContainer mimeResult = (MIMEContainer) result.result();
+            logger.debug("result= " + result.result());
             logger.debug("result data= " + mimeResult.getData());
         }
         return result;
