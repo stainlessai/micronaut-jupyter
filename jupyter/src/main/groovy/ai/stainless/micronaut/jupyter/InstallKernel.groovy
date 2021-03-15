@@ -118,7 +118,7 @@ public class InstallKernel {
         return """#!/bin/bash
 # Listen on all addresses, instead of just localhost
 # (opens up kernel coms publically)
-jq '.ip = "0.0.0.0"' \$1 > tmp.\$\$.json && mv tmp.\$\$.json \$1
+# jq '.ip = "0.0.0.0"' \$1 > tmp.\$\$.json && mv tmp.\$\$.json \$1
 
 # Send request to endpoint to start kernel
 curl -X POST $endpointUrl -H 'Content-Type: application/json' -d "{\\"file\\":\\"\$1\\"}" --trace -
