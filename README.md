@@ -33,7 +33,7 @@ libraries which have not yet been published by the BeakerX project team at the t
 libraries locally, follow these steps:
 
 ```
-git clone https://github.com/stainlessai/beakerx-jlab2  
+git clone --recurse-submodules https://github.com/stainlessai/beakerx-jlab2  
 
 cd beakerx-jlab2/beakerx_kernel_base
 ./gradlew install -xtest        
