@@ -27,7 +27,7 @@ dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
-    implementation "io.micronaut:micronaut-runtime-groovy"
+//    implementation "io.micronaut:micronaut-runtime-groovy"
     implementation "io.micronaut:micronaut-validation"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
 
