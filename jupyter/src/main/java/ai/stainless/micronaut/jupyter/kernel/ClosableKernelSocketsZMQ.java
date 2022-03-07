@@ -246,12 +246,8 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
         if (handler != null) {
             handler.handle(message);
         }
-<<<<<<< HEAD
-    }
-=======
         logger.trace("leavin' handleControlMsg()");
   }
->>>>>>> micronaut2
 
     private ZMQ.Socket getNewSocket(int type, int port, String connection, ZMQ.Context context) {
         ZMQ.Socket socket = context.socket(type);
