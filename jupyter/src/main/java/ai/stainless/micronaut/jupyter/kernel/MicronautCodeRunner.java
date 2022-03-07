@@ -29,6 +29,8 @@ import com.twosigma.beakerx.jvm.threads.BxInputStream;
 import com.twosigma.beakerx.jvm.threads.InputRequestMessageFactoryImpl;
 import groovy.lang.Script;
 import org.codehaus.groovy.runtime.StackTraceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -38,39 +40,43 @@ import java.util.concurrent.Callable;
 import static com.twosigma.beakerx.evaluator.BaseEvaluator.INTERUPTED_MSG;
 import static com.twosigma.beakerx.groovy.evaluator.GroovyStackTracePrettyPrinter.printStacktrace;
 
-class MicronautCodeRunner implements Callable<TryResult> {
+public class MicronautCodeRunner implements Callable<TryResult> {
+
+    public static final Logger logger = LoggerFactory.getLogger(MicronautCodeRunner.class);
 
     public static final String SCRIPT_NAME = "script";
-    private MicronautEvaluator micronautEvaluator;
+    private final MicronautEvaluator evaluator;
     private final String theCode;
     private final SimpleEvaluationObject theOutput;
 
     public MicronautCodeRunner(MicronautEvaluator groovyEvaluator, String code, SimpleEvaluationObject out) {
-        this.micronautEvaluator = groovyEvaluator;
+        this.evaluator = groovyEvaluator;
         theCode = code;
         theOutput = out;
     }
 
     @Override
     public TryResult call() {
-        // required to get Thread-bound hibernate session?
-        //ClassLoader oldld = Thread.currentThread().getContextClassLoader();
+        logger.trace("call()");
+        ClassLoader oldld = Thread.currentThread().getContextClassLoader();
         TryResult either;
         String scriptName = SCRIPT_NAME;
         try {
-            BxInputStream stdInHandler = new BxInputStream(micronautEvaluator.getKernel(), new InputRequestMessageFactoryImpl());
+            // create stdin (the one in the seo is private, but unused)
+            BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
+
             // set output handlers for this call
-            micronautEvaluator.getKernel().getStreamHandler().setOutputHandlers(
+            evaluator.getKernel().getStreamHandler().setOutputHandlers(
                     theOutput.getStdOutputHandler(),
                     theOutput.getStdErrorHandler(),
                     stdInHandler
             );
+
             Object result = null;
             theOutput.setOutputHandler();
-            // required to get Thread-bound hibernate session?
-            //Thread.currentThread().setContextClassLoader(micronautEvaluator.getGroovyClassLoader());
+            Thread.currentThread().setContextClassLoader(evaluator.getGroovyClassLoader());
             scriptName += System.currentTimeMillis();
-            Class<?> parsedClass = micronautEvaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
+            Class<?> parsedClass = evaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
             if (canBeInstantiated(parsedClass)) {
                 Object instance = parsedClass.newInstance();
                 if (instance instanceof Script) {
@@ -82,9 +88,10 @@ class MicronautCodeRunner implements Callable<TryResult> {
             either = handleError(scriptName, e);
         } finally {
             theOutput.clrOutputHandler();
-            // required to get Thread-bound hibernate session?
-            //Thread.currentThread().setContextClassLoader(oldld);
+            evaluator.getKernel().getStreamHandler().clearOutputHandlers();
+            Thread.currentThread().setContextClassLoader(oldld);
         }
+        logger.trace("call() returning "+either);
         return either;
     }
 
@@ -108,8 +115,9 @@ class MicronautCodeRunner implements Callable<TryResult> {
     }
 
     private Object runScript(Script script) {
-        micronautEvaluator.getScriptBinding().setVariable(Evaluator.BEAKER_VARIABLE_NAME, micronautEvaluator.getBeakerX());
-        script.setBinding(micronautEvaluator.getScriptBinding());
+        logger.trace("runScript "+script);
+        evaluator.getScriptBinding().setVariable(Evaluator.BEAKER_VARIABLE_NAME, evaluator.getBeakerX());
+        script.setBinding(evaluator.getScriptBinding());
         return script.run();
     }
 

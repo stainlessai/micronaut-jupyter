@@ -15,12 +15,12 @@ public class StandardStreamHandler {
     private ClassContextSecurityManager classContextSecurityManager = new ClassContextSecurityManager()
     private loggingSearchDepth = 50
     private Pattern loggingSearchPattern = Pattern.compile(
-        [
-            "org.apache.log4j", "org.slf4j", "org.jboss.logging",
-            "ch.qos.logback"
-        ]
-            .collect { "(${it.replaceAll('\\.', '\\.')})" }
-            .join("|")
+            [
+                    "org.apache.log4j", "org.slf4j", "org.jboss.logging",
+                    "ch.qos.logback"
+            ]
+                    .collect { "(${it.replaceAll('\\.', '\\.')})" }
+                    .join("|")
     )
 
     private Map<ThreadGroup, BeakerOutputHandlers> handlers = [:]
@@ -36,21 +36,21 @@ public class StandardStreamHandler {
         orig_in = System.in
         try {
             System.setOut(
-                new PrintStream(
-                    new ProxyOutputStream(handler: this, isOut: true),
-                    false,
-                    StandardCharsets.UTF_8.name()
-                )
+                    new PrintStream(
+                            new ProxyOutputStream(handler: this, isOut: true),
+                            false,
+                            StandardCharsets.UTF_8.name()
+                    )
             )
             System.setErr(
-                new PrintStream(
-                    new ProxyOutputStream(handler: this, isOut: false),
-                    false,
-                    StandardCharsets.UTF_8.name()
-                )
+                    new PrintStream(
+                            new ProxyOutputStream(handler: this, isOut: false),
+                            false,
+                            StandardCharsets.UTF_8.name()
+                    )
             )
             System.setIn(
-                new ProxyInputStream(handler: this)
+                    new ProxyInputStream(handler: this)
             )
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -64,18 +64,18 @@ public class StandardStreamHandler {
     }
 
     synchronized public void setOutputHandlers(
-        BeakerOutputHandler out,
-        BeakerOutputHandler err,
-        BeakerInputHandler stdin
+            BeakerOutputHandler out,
+            BeakerOutputHandler err,
+            BeakerInputHandler stdin
     ) {
         removeHandlersWithAllNoAliveThreads()
         //get current thread group
         ThreadGroup threadGroup = Thread.currentThread().getThreadGroup()
         //store handlers for current thread group
         handlers.put(threadGroup, new BeakerOutputHandlers(
-            out_handler: out,
-            err_handler: err,
-            in_handler:stdin
+                out_handler: out,
+                err_handler: err,
+                in_handler:stdin
         ))
     }
 

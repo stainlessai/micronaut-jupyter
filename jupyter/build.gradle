@@ -11,11 +11,11 @@ repositories {
 
 configurations {
     gormTestCompile.extendsFrom integrationTestCompile
-    gormTestRuntimeOnly.extendsFrom integrationTestRuntimeOnly
+    gormTestRuntime.extendsFrom integrationTestRuntime
     gormTestImplementation.extendsFrom integrationTestImplementation
 
     mdTestCompile.extendsFrom integrationTestCompile
-    mdTestRuntimeOnly.extendsFrom integrationTestRuntimeOnly
+    mdTestRuntime.extendsFrom integrationTestRuntime
     mdTestImplementation.extendsFrom integrationTestImplementation
 
     integrationTestCompile.extendsFrom testCompile
@@ -23,12 +23,10 @@ configurations {
     integrationTestImplementation.extendsFrom testImplementation
 }
 
-sourceSets {
-    main {
-        java { srcDirs = [] }    // no source dirs for the java compiler
-        groovy { srcDirs = ["src/main/java", "src/main/groovy"] }  // compile   everything in src/ with groovy
-    }
+sourceSets.main.java.srcDirs = []
+sourceSets.main.groovy.srcDirs += ["src/main/java"]
 
+sourceSets {
     gormTest {
         groovy.srcDir file('src/gormTest/groovy')
         groovy.srcDir file('src/integrationTest/groovy/ai/stainless/micronaut/jupyter/kernel')
@@ -66,6 +64,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
 
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+    implementation "org.codehaus.groovy:groovy-xml:$groovyVersion"
 
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     implementation "io.micronaut:micronaut-inject-groovy"
@@ -73,8 +72,8 @@ dependencies {
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-management"
 
-    implementation "com.github.twosigma.beakerx:beaker-kernel-base:$beakerxVersion"
-    implementation "com.github.twosigma.beakerx:beaker-kernel-groovy:$beakerxVersion"
+    implementation "com.twosigma:beakerx-kernel-base:$beakerxVersion"
+    implementation "com.twosigma:beakerx-kernel-groovy:$beakerxVersion"
 
     testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
@@ -99,7 +98,7 @@ dependencies {
     mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
     mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
     mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
-    mdTestRuntimeOnly "com.h2database:h2:1.4.200"
+    mdTestRuntime "com.h2database:h2:1.4.200"
 
     gormTestImplementation "io.micronaut.configuration:micronaut-hibernate-gorm:1.1.1"
     gormTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
@@ -110,7 +109,7 @@ dependencies {
     gormTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
         exclude group: 'io.micronaut.configuration', module: 'micronaut-hibernate-jpa-spring'
     }
-    gormTestRuntimeOnly "com.h2database:h2:1.4.200"
+    gormTestRuntime "com.h2database:h2:1.4.200"
 }
 
 // get tests filter
@@ -185,13 +184,12 @@ task integrationTest() {
     doLast createCheckTests()
 }
 
-//task test(overwrite: true) {
-//    dependsOn unitTest
-//    dependsOn integrationTest
-//
-//    outputs.upToDateWhen { false }
-//    doLast createCheckTests()
-//}
+test.dependsOn unitTest
+test.dependsOn integrationTest
+test.outputs.upToDateWhen { false }
+test.doLast {
+    createCheckTests()
+}
 
 task copyGroovydoc(type: Copy) {
     from "${project.buildDir}/docs/groovydoc"

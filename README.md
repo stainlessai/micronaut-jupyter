@@ -3,6 +3,7 @@ micronaut-jupyter
 
 [![Build Status](https://travis-ci.org/stainlessai/micronaut-jupyter.svg?branch=master)](https://travis-ci.org/stainlessai/micronaut-jupyter)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/ai.stainless/micronaut-jupyter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/ai.stainless/micronaut-jupyter)
+[![](https://jitpack.io/v/stainlessai/micronaut-jupyter.svg)](https://jitpack.io/#stainlessai/micronaut-jupyter)
 
 A Micronaut configuration that integrates your app with an existing Jupyter
 installation.
@@ -25,6 +26,39 @@ kernel
 
 ## Setup
 
+### Micronaut 2 Compatibility
+
+The `micronaut2` branch of this repository has been updated to support Micronaut 2.0+, however, it requires BeakerX 2.0
+libraries which have not yet been published by the BeakerX project team at the time of this writing. To build the required
+libraries locally, follow these steps:
+
+```
+git clone --recurse-submodules https://github.com/stainlessai/beakerx-jlab2  
+
+cd beakerx-jlab2/beakerx_kernel_base
+./gradlew install -xtest        
+
+cd ../beakerx_kernel_groovy
+./gradlew install -xtest
+```              
+
+The beakerx-*-2.0-SNAPSHOT jars should now be in your local maven cache, e.g.:
+```
+~/.m2/repository/com/twosigma/beakerx-kernel-base/2.0-SNAPSHOT/beakerx-kernel-base-2.0-SNAPSHOT.jar 
+``` 
+
+### Building
+Build the library and publish to local maven:
+```bash
+./gradlew publishToMavenLocal
+```                          
+
+To set a specific version on your library:
+```bash
+./gradlew publishToMavenLocal -PprojectVersion=0.0.1-mysemanticversion
+```
+
+### Usage
 #### Add Build Dependency (Gradle)
 Ensure the following repositories are added to your gradle build:
 ```Groovy
@@ -110,10 +144,7 @@ the tests:
 ./gradlew integrationTest -Ptests=*Finder*
 ```
 
-#### Building
-```bash
-./gradlew build
-```
+
 
 #### Planned Features
 - [x] Import classes on app classpath in Jupyter script

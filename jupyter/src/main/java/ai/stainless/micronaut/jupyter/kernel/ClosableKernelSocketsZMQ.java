@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.twosigma.beakerx.kernel.msg.JupyterMessages.SHUTDOWN_REPLY;
 import static com.twosigma.beakerx.kernel.msg.JupyterMessages.SHUTDOWN_REQUEST;
@@ -68,6 +69,7 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
     private ZMQ.Socket stdinSocket;
     private ZMQ.Poller sockets;
     private ZMQ.Context context;
+    private ReentrantLock sendLock;
 
     private boolean shutdownSystem = false;
 
@@ -76,6 +78,7 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
         this.kernel = kernel;
         this.hmac = new HashedMessageAuthenticationCode(configuration.getKey());
         this.context = ZMQ.context(1);
+        this.sendLock = new ReentrantLock();
         configureSockets(configuration);
     }
 
@@ -108,13 +111,19 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
         return handleStdIn();
     }
 
-    private synchronized void sendMsg(ZMQ.Socket socket, List<Message> messages) {
+    private void sendMsg(ZMQ.Socket socket, List<Message> messages) {
+        // causes StackOverflowException
+        logger.trace("sendMsg ("+messages.size()+")");
         if (!isShutdown()) {
             messages.forEach(message -> {
                 String header = toJson(message.getHeader());
                 String parent = toJson(message.getParentHeader());
                 String meta = toJson(message.getMetadata());
                 String content = toJson(message.getContent());
+                logger.trace("header="+header);
+                logger.trace("parent="+parent);
+                logger.trace("meta="+meta);
+                logger.trace("content="+content);
                 String digest = hmac.sign(Arrays.asList(header, parent, meta, content));
 
                 ZMsg newZmsg = new ZMsg();
@@ -126,9 +135,20 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
                 newZmsg.add(meta.getBytes(StandardCharsets.UTF_8));
                 newZmsg.add(content.getBytes(StandardCharsets.UTF_8));
                 message.getBuffers().forEach(x -> newZmsg.add(x));
-                newZmsg.send(socket);
+                logger.trace("obtaining sendLock");
+                sendLock.lock();
+                try {
+                    newZmsg.send(socket);
+                } catch (Exception e) {
+                    logger.error(e.toString());
+                } finally {
+                    logger.trace("releasing sendLock");
+                    sendLock.unlock();
+                }
+                logger.trace("sendLock stats: "+sendLock.getHoldCount()+" holding,"+sendLock.getQueueLength()+" queue length");
             });
         }
+        logger.trace("leavin' sendMsg...");
     }
 
     private Message readMessage(ZMQ.Socket socket) {
@@ -162,6 +182,7 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
             }
         }
 
+        logger.debug("readMessage="+message.getContent());
         return message;
     }
 
@@ -211,6 +232,7 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
 
     private void handleControlMsg() {
         Message message = readMessage(controlSocket);
+        logger.trace("handleControlMsg: "+message.toString());
         JupyterMessages type = message.getHeader().getTypeEnum();
         if (type.equals(SHUTDOWN_REQUEST)) {
             Message reply = new Message(new Header(SHUTDOWN_REPLY, message.getHeader().getSession()));
@@ -219,7 +241,12 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
             sendMsg(controlSocket, Collections.singletonList(reply));
             shutdown();
         }
-    }
+        Handler<Message> handler = kernel.getHandler(message.type());
+        if (handler != null) {
+            handler.handle(message);
+        }
+        logger.trace("leavin' handleControlMsg()");
+  }
 
     private ZMQ.Socket getNewSocket(int type, int port, String connection, ZMQ.Context context) {
         ZMQ.Socket socket = context.socket(type);
