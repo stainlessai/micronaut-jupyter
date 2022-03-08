@@ -50,6 +50,8 @@ dependencies {
 //    implementation "io.micronaut.configuration:jdbc-tomcat:1.0.0.RC2"
 
     runtimeOnly "com.h2database:h2"
+    // Use Tomcat connection pool
+    runtime 'org.apache.tomcat:tomcat-jdbc'
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
 
     //compile "org.grails:grails-datastore-gorm-hibernate5:7.0.1.RELEASE"

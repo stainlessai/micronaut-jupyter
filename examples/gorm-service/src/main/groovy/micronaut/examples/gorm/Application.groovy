@@ -1,12 +1,15 @@
 package micronaut.examples.gorm
 
-import io.micronaut.runtime.Micronaut
 import groovy.transform.CompileStatic
+import io.micronaut.runtime.Micronaut
 
 @CompileStatic
 class Application {
     static void main(String[] args) {
-        Micronaut.run(Application, args)
+        Micronaut.build(args)
+                .packages("micronaut.example.gorm.domains")
+                .mainClass(Application.class)
+                .start()
     }
 
 }
