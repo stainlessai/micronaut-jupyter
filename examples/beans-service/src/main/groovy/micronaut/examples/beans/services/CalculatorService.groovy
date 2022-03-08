@@ -1,6 +1,6 @@
 package micronaut.examples.beans.services
 
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 
 @Singleton
 class CalculatorService {

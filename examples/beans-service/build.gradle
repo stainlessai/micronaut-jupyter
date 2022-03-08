@@ -22,16 +22,12 @@ group "beans.service"
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
-    maven { url "https://jcenter.bintray.com" }
+//   maven { url "https://jcenter.bintray.com" }
 }
 
 configurations {
     // for dependencies that are needed for development only
     developmentOnly 
-}
-
-ext {
-    micronautDataVersion = "1.0.0.M3"
 }
 
 dependencies {
@@ -54,7 +50,7 @@ dependencies {
 
     implementation "io.micronaut.groovy:micronaut-runtime-groovy"
 
-    implementation "io.micronaut.configuration:jdbc-tomcat:1.0.0.RC2"
+//    implementation "io.micronaut.configuration:jdbc-tomcat:1.0.0.RC2"
 
     implementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
     implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
