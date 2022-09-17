@@ -62,23 +62,23 @@ public class MicronautCodeRunner implements Callable<TryResult> {
         TryResult either;
         String scriptName = SCRIPT_NAME;
         try {
-            // create stdin (the one in the seo is private, but unused)
-            BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
-
-            // set output handlers for this call
-            evaluator.getKernel().getStreamHandler().setOutputHandlers(
-                    theOutput.getStdOutputHandler(),
-                    theOutput.getStdErrorHandler(),
-                    stdInHandler
-            );
-
+//            // create stdin (the one in the seo is private, but unused)
+//            BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
+//
+//            // set output handlers for this call
+//            evaluator.getKernel().getStreamHandler().setOutputHandlers(
+//                    theOutput.getStdOutputHandler(),
+//                    theOutput.getStdErrorHandler(),
+//                    stdInHandler
+//            );
+//
             Object result = null;
             theOutput.setOutputHandler();
             Thread.currentThread().setContextClassLoader(evaluator.getGroovyClassLoader());
             scriptName += System.currentTimeMillis();
             Class<?> parsedClass = evaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
             if (canBeInstantiated(parsedClass)) {
-                Object instance = parsedClass.newInstance();
+                Object instance = parsedClass.getDeclaredConstructor().newInstance();
                 if (instance instanceof Script) {
                     result = runScript((Script) instance);
                 }
