@@ -62,18 +62,24 @@ public class MicronautCodeRunner implements Callable<TryResult> {
         TryResult either;
         String scriptName = SCRIPT_NAME;
         try {
-//            // create stdin (the one in the seo is private, but unused)
-//            BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
-//
-//            // set output handlers for this call
-//            evaluator.getKernel().getStreamHandler().setOutputHandlers(
-//                    theOutput.getStdOutputHandler(),
-//                    theOutput.getStdErrorHandler(),
-//                    stdInHandler
-//            );
-//
-            Object result = null;
             theOutput.setOutputHandler();
+
+              // this is needed to redirect output to the correct place. Just need to figure out why it breaks sometimes?
+            // create stdin (the one in the seo is private, but unused)
+            BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
+
+            // set output handlers for this call
+            evaluator.getKernel().getStreamHandler().setOutputHandlers(
+                    theOutput.getStdOutputHandler(),
+                    theOutput.getStdErrorHandler(),
+                    stdInHandler
+            );
+
+            logger.trace("stdInHandler="+stdInHandler);
+            logger.trace("stdOutputHandler="+theOutput.getStdOutputHandler());
+            logger.trace("stdErrorHandler="+theOutput.getStdErrorHandler());
+
+            Object result = null;
             Thread.currentThread().setContextClassLoader(evaluator.getGroovyClassLoader());
             scriptName += System.currentTimeMillis();
             Class<?> parsedClass = evaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
@@ -91,7 +97,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
             evaluator.getKernel().getStreamHandler().clearOutputHandlers();
             Thread.currentThread().setContextClassLoader(oldld);
         }
-        logger.trace("call() returning "+either);
+        logger.trace("call() returning "+either.result());
         return either;
     }
 
