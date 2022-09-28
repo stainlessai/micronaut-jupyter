@@ -23,8 +23,8 @@ import java.lang.reflect.UndeclaredThrowableException
 /**
  * Manages the Jupyter kernel instances that are created.
  */
-@Refreshable
-@Singleton
+//@Refreshable  // removed because refreshing calls destroy which resets streams but doesn't actually destroy the app
+//@Singleton   // instantiate plainly 
 public class KernelManager {
     private class KernelSecurityManager extends NoExitSecurityManager {
 
@@ -39,8 +39,8 @@ public class KernelManager {
     // use custom logger property that can be overwritten by test
     public static Logger log = LoggerFactory.getLogger(KernelManager.class)
 
-    @Inject
-    ApplicationContext applicationContext
+//    @Inject
+//    ApplicationContext applicationContext
 
     @Value('${jupyter.kernel.redirectLogOutput:true}')
     Boolean redirectLogOutput
@@ -51,13 +51,14 @@ public class KernelManager {
     private SecurityManager originalSecurityManager
     private StandardStreamHandler streamHandler
 
-    public KernelManager () {
+    public KernelManager() {
         // create an set new security manager to manage BeakerX System.exit() calls
         setSecurityManager()
 
         // start redirecting STDOUT, STDERR, and STDIN now
         streamHandler = new StandardStreamHandler(redirectLogOutput: true)
         streamHandler.init()
+        log.info("KernelManager started")
     }
 
     @PostConstruct
@@ -72,6 +73,12 @@ public class KernelManager {
 
     @PreDestroy
     public void destroy () {
+        log.info("destroy called")
+        if (log.isDebugEnabled() || log.isTraceEnabled()) {
+            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+                log.debug("${ste.className}(${ste.fileName}:${ste.lineNumber})".toString())
+            }
+        }
         // if were overrode a security manager
         if (originalSecurityManager) {
             //restore it
@@ -124,7 +131,7 @@ public class KernelManager {
                 try {
                     // create and run kernel
                     kernel = kernelClass.createKernel([connectionFile] as String[])
-                    kernel.applicationContext = applicationContext
+                    kernel.applicationContext = ApplicationContext.run()
                     kernel.streamHandler = streamHandler
                     kernelInstances << kernel
                     kernel.init()
@@ -138,8 +145,7 @@ public class KernelManager {
                         throw new RuntimeException("Received UndeclaredThrowableException with no cause.", e)
                     }
                 }
-            }
-            catch (KernelExitException e) {
+            } catch (KernelExitException e) {
                 log.debug "Kernel exited, ending thread."
                 log.trace "Recevied KernelExitException:", e
             }

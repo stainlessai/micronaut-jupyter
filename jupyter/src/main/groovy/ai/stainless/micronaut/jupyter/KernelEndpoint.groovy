@@ -10,8 +10,8 @@ import jakarta.inject.Inject
 @Endpoint(id = 'jupyterkernel', defaultSensitive = false)
 public class KernelEndpoint {
 
-    @Inject
-    KernelManager kernelManager
+//    @Inject
+    KernelManager kernelManager = new KernelManager()
 
     @Write
     public Map start (Map request) {

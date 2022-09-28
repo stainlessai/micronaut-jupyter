@@ -64,7 +64,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
         try {
             theOutput.setOutputHandler();
 
-              // this is needed to redirect output to the correct place. Just need to figure out why it breaks sometimes?
+            // this is needed to redirect output to the correct place. Just need to figure out why it breaks sometimes?
             // create stdin (the one in the seo is private, but unused)
             BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
 
@@ -97,7 +97,8 @@ public class MicronautCodeRunner implements Callable<TryResult> {
             evaluator.getKernel().getStreamHandler().clearOutputHandlers();
             Thread.currentThread().setContextClassLoader(oldld);
         }
-        logger.trace("call() returning "+either.result());
+        // might be CellError which doesn't have result
+        // logger.trace("call() returning "+either.result());
         return either;
     }
 

@@ -3,6 +3,8 @@ package ai.stainless.micronaut.jupyter.kernel
 import com.twosigma.beakerx.jvm.threads.BeakerInputHandler
 import com.twosigma.beakerx.jvm.threads.BeakerOutputHandler
 import com.twosigma.beakerx.widget.OutputManager
+import groovy.util.logging.Slf4j
+
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
@@ -10,6 +12,7 @@ import java.util.regex.Pattern
  * Based on BeakerX's BeakerStdInOutErrHandler class:
  * https://github.com/twosigma/beakerx/blob/master/kernel/base/src/main/java/com/twosigma/beakerx/jvm/threads/BeakerStdInOutErrHandler.java
  */
+@Slf4j
 public class StandardStreamHandler {
 
     private ClassContextSecurityManager classContextSecurityManager = new ClassContextSecurityManager()
@@ -57,7 +60,10 @@ public class StandardStreamHandler {
         }
     }
 
-    public void restore () {
+    // this will be called when the KernelManager is refreshed.
+    // NOTE will destroy the streams when it happens
+    public void restore() {
+        log.trace("restore")
         System.setOut(orig_out)
         System.setErr(orig_err)
         System.setIn(orig_in)
@@ -68,6 +74,7 @@ public class StandardStreamHandler {
             BeakerOutputHandler err,
             BeakerInputHandler stdin
     ) {
+        log.trace("setOutputHandlers")
         removeHandlersWithAllNoAliveThreads()
         //get current thread group
         ThreadGroup threadGroup = Thread.currentThread().getThreadGroup()
@@ -80,6 +87,7 @@ public class StandardStreamHandler {
     }
 
     synchronized public void clearOutputHandlers () {
+        log.trace("clearOutputHandlers")
         removeHandlersWithAllNoAliveThreads()
     }
 
@@ -116,11 +124,13 @@ public class StandardStreamHandler {
         handlers.findAll { it.key.activeCount() == 0 }.each {
             it.value.destroy()
             handlers.remove(it.key)
+            log.trace("destroyed/removed handler "+it.key)
         }
     }
 
     synchronized public void writeStream(String text, Boolean isOut) throws IOException {
         // get stream info (out or err)
+        log.trace("writeStream '"+text+"', isOut="+isOut);
         Boolean sendStream
         String handlerName
         PrintStream systemStream
@@ -142,13 +152,17 @@ public class StandardStreamHandler {
 
         if (!sendStream) {
             BeakerOutputHandlers hrs = handlers.get(Thread.currentThread().getThreadGroup())
+            // FIXME "hrs" can be null, trying to debug why, but that means the streams will be messed up
+            log.trace("isLoggingCall="+isLoggingCall())
+            log.trace("hrs="+hrs)
             // if we have registered handlers, and this is NOT a logging call that we are to redirect
             if (hrs != null && hrs."$handlerName" != null && (!redirectLogOutput || !isLoggingCall())) {
                 // write to our handlers
+                log.trace("writing to handler: $handlerName")
                 hrs."$handlerName".write(text)
             } else {
                 // write to this system stream
-                systemStream.write(text.getBytes(StandardCharsets.UTF_8))
+                systemStream.write(text)
             }
         }
     }
@@ -180,6 +194,7 @@ public class StandardStreamHandler {
 
         @Override
         public void write(int b) throws IOException {
+            log.trace("write: "+Byte.toString(b))
             byte[] ba = new byte[1]
             ba[0] = (byte) b
             String s = new String(ba, StandardCharsets.UTF_8)
@@ -188,17 +203,20 @@ public class StandardStreamHandler {
 
         @Override
         public void write(byte[] b) throws IOException {
+            log.trace("write: "+new String(b))
             String s = new String(b, StandardCharsets.UTF_8)
             writeStream(s)
         }
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
+            log.trace("write: "+new String(b)+","+off+","+len)
             String s = new String(b, off, len, StandardCharsets.UTF_8)
             writeStream(s)
         }
 
         private void writeStream(String s) throws IOException {
+            log.trace("writeStream: "+s)
             handler.writeStream(s, isOut)
         }
     }

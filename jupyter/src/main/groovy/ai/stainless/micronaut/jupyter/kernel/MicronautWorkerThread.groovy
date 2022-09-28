@@ -25,6 +25,7 @@ import com.twosigma.beakerx.TryResult
 import com.twosigma.beakerx.evaluator.JobDescriptor
 import com.twosigma.beakerx.groovy.evaluator.GroovyCodeRunner
 import com.twosigma.beakerx.groovy.evaluator.GroovyNotFoundException
+import com.twosigma.beakerx.jvm.object.SimpleEvaluationObject
 import groovy.util.logging.Slf4j
 import java.util.concurrent.Callable
 
@@ -40,7 +41,7 @@ class MicronautWorkerThread implements Callable<TryResult> {
     }
 
     private def executeCode () {
-        return (new MicronautCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject)).call()
+        return (new MicronautCodeRunner(evaluator, j.codeToBeExecuted, j.outputObject as SimpleEvaluationObject)).call()
     }
 
     @Override
