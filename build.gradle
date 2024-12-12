@@ -30,7 +30,6 @@ group "ai.stainless"
 version projectVersion
 
 subprojects { Project subproject ->
-
     group "ai.stainless"
     version project.projectVersion
 
@@ -154,4 +153,23 @@ task rsync {
 
 task build {
     dependsOn rsync
+}
+
+task printBeakerXDeps {
+    doLast {
+        configurations.compileClasspath.files.findAll { file ->
+            file.name.contains('beakerx')
+        }.each { file ->
+            println "BeakerX dependency: ${file.name}"
+        }
+
+        configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.findAll { dep ->
+            dep.module.id.group == 'com.twosigma'
+        }.each { dep ->
+            println "\nBeakerX transitive dependencies:"
+            dep.children.each { child ->
+                println "  - ${child.module.id}"
+            }
+        }
+    }
 }

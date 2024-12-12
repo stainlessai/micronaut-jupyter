@@ -1,5 +1,8 @@
 gorm-service
 ===
+                 
+**NOTE**: Micronaut 4 does not support GORM
+https://github.com/micronaut-projects/micronaut-starter/issues/1858
 
 Demonstrates the ability to use GORM functionality inside a notebook.
 

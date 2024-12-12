@@ -27,17 +27,17 @@ sourceSets.main.java.srcDirs = []
 sourceSets.main.groovy.srcDirs += ["src/main/java"]
 
 sourceSets {
-    gormTest {
-        groovy.srcDir file('src/gormTest/groovy')
-        groovy.srcDir file('src/integrationTest/groovy/ai/stainless/micronaut/jupyter/kernel')
-        groovy.exclude { FileTreeElement elem ->
-            elem.file.absolutePath.contains('src/integrationTest/groovy') &&
-                    !elem.file.absolutePath.contains('KernelSpec.groovy')
-        }
-        resources.srcDir file('src/test/resources')
-        compileClasspath += sourceSets.main.output + configurations.testRuntime
-        runtimeClasspath += output + compileClasspath
-    }
+//    gormTest {
+//        groovy.srcDir file('src/gormTest/groovy')
+//        groovy.srcDir file('src/integrationTest/groovy/ai/stainless/micronaut/jupyter/kernel')
+//        groovy.exclude { FileTreeElement elem ->
+//            elem.file.absolutePath.contains('src/integrationTest/groovy') &&
+//                    !elem.file.absolutePath.contains('KernelSpec.groovy')
+//        }
+//        resources.srcDir file('src/test/resources')
+//        compileClasspath += sourceSets.main.output + configurations.testRuntime
+//        runtimeClasspath += output + compileClasspath
+//    }
 
     mdTest {
         groovy.srcDir file('src/mdTest/groovy')
@@ -77,6 +77,9 @@ dependencies {
     implementation "com.twosigma:beakerx-kernel-base:$beakerxVersion"
     implementation "com.twosigma:beakerx-kernel-groovy:$beakerxVersion"
 
+    implementation "com.twosigma:beakerx-kernel-base-api:$beakerxVersion"
+    implementation 'org.zeromq:jeromq:0.6.0'
+
     testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 
@@ -102,16 +105,16 @@ dependencies {
     mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
     mdTestRuntimeOnly "com.h2database:h2:1.4.200"
 
-    gormTestImplementation "io.micronaut.configuration:micronaut-hibernate-gorm:1.1.1"
-    gormTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
-    // For some reason, the gorm tests would fail with a NullPointerException
-    // if this dependency wasn't included
-    // There must be some sort of transitive dependency that the gorm tests
-    // need
-    gormTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
-        exclude group: 'io.micronaut.configuration', module: 'micronaut-hibernate-jpa-spring'
-    }
-    gormTestRuntimeOnly "com.h2database:h2:1.4.200"
+//    gormTestImplementation "io.micronaut.configuration:micronaut-hibernate-gorm:1.1.1"
+//    gormTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
+//    // For some reason, the gorm tests would fail with a NullPointerException
+//    // if this dependency wasn't included
+//    // There must be some sort of transitive dependency that the gorm tests
+//    // need
+//    gormTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
+//        exclude group: 'io.micronaut.configuration', module: 'micronaut-hibernate-jpa-spring'
+//    }
+//    gormTestRuntimeOnly "com.h2database:h2:1.4.200"
 }
 
 // get tests filter
@@ -157,10 +160,10 @@ tasks.withType(Test) {
     doLast createCheckTests(true)
 }
 
-task gormTest(type: Test) {
-    testClassesDirs = sourceSets.gormTest.output.classesDirs
-    classpath = sourceSets.gormTest.runtimeClasspath
-}
+//task gormTest(type: Test) {
+//    testClassesDirs = sourceSets.gormTest.output.classesDirs
+//    classpath = sourceSets.gormTest.runtimeClasspath
+//}
 
 task mdTest(type: Test) {
     testClassesDirs = sourceSets.mdTest.output.classesDirs
@@ -179,7 +182,7 @@ task unitTest(type: Test) {
 
 task integrationTest() {
     dependsOn basicIntegrationTest
-    dependsOn gormTest
+    // dependsOn gormTest
     dependsOn mdTest
 
     outputs.upToDateWhen { false }

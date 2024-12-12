@@ -39,7 +39,7 @@ dependencies {
 
 //    implementation "io.micronaut:micronaut-runtime-groovy"
 //    implementation "io.micronaut.configuration:micronaut-jdbc-tomcat"
-    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     implementation "io.micronaut:micronaut-graal:$micronautVersion"
     implementation "io.micronaut.validation:micronaut-validation:$micronautVersion"
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
