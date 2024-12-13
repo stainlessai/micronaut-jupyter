@@ -77,9 +77,6 @@ dependencies {
     implementation "com.twosigma:beakerx-kernel-base:$beakerxVersion"
     implementation "com.twosigma:beakerx-kernel-groovy:$beakerxVersion"
 
-    implementation "com.twosigma:beakerx-kernel-base-api:$beakerxVersion"
-    implementation 'org.zeromq:jeromq:0.6.0'
-
     testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 

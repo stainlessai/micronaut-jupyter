@@ -8,7 +8,7 @@ import io.micronaut.context.annotation.Value
 import io.micronaut.management.endpoint.annotation.Endpoint
 import io.micronaut.runtime.server.EmbeddedServer
 
-import javax.annotation.PostConstruct
+import jakarta.annotation.PostConstruct
 import jakarta.inject.Inject
 import java.nio.file.Files
 
