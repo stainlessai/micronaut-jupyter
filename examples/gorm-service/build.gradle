@@ -22,7 +22,7 @@ group "gorm.service"
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
-    maven { url "https://jcenter.bintray.com" }
+    // maven { url "https://jcenter.bintray.com" }
 }
 
 configurations {
@@ -47,9 +47,11 @@ dependencies {
     implementation "io.micronaut.groovy:micronaut-runtime-groovy"
     implementation "io.micronaut.groovy:micronaut-hibernate-gorm"
 
-    implementation "io.micronaut.configuration:jdbc-tomcat:1.0.0.RC2"
+//    implementation "io.micronaut.configuration:jdbc-tomcat:1.0.0.RC2"
 
     runtimeOnly "com.h2database:h2"
+    // Use Tomcat connection pool
+    runtime 'org.apache.tomcat:tomcat-jdbc'
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
 
     //compile "org.grails:grails-datastore-gorm-hibernate5:7.0.1.RELEASE"

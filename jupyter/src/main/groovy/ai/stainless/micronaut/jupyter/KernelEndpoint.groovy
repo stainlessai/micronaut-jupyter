@@ -4,14 +4,14 @@ import groovy.util.logging.Slf4j
 import io.micronaut.management.endpoint.annotation.Endpoint
 import io.micronaut.management.endpoint.annotation.Write
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @Slf4j
 @Endpoint(id = 'jupyterkernel', defaultSensitive = false)
 public class KernelEndpoint {
 
-    @Inject
-    KernelManager kernelManager
+//    @Inject
+    KernelManager kernelManager = new KernelManager()
 
     @Write
     public Map start (Map request) {

@@ -5,12 +5,12 @@ import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import ai.stainless.micronaut.jupyter.kernel.KernelExitException
 import groovy.json.JsonSlurper
 import io.micronaut.context.ApplicationContext
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import org.slf4j.Logger
 
 @MicronautTest

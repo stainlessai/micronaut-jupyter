@@ -1,6 +1,6 @@
 package ai.stainless.micronaut.jupyter.kernel
 
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 
 @MicronautTest(environments = ["gorm"], packages = ["ai.stainless.micronaut.jupyter.gorm"])
 class GormFindersTest extends KernelSpec {

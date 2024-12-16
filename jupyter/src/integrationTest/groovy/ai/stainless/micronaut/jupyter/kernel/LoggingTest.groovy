@@ -1,7 +1,7 @@
 package ai.stainless.micronaut.jupyter.kernel
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 
 @MicronautTest
 class LoggingTest extends KernelSpec {

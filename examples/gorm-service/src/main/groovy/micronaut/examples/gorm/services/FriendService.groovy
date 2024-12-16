@@ -2,8 +2,10 @@ package micronaut.examples.gorm.services
 
 import grails.gorm.services.Join
 import grails.gorm.services.Service
+import groovy.transform.CompileStatic
 import micronaut.examples.gorm.domains.Person
 
+@CompileStatic
 @Service(Person)
 interface FriendService {
     Person get (Long id)

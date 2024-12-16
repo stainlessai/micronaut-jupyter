@@ -7,12 +7,12 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.server.EmbeddedServer
-import io.micronaut.test.annotation.MicronautTest
-import io.micronaut.http.client.RxHttpClient
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
+import io.micronaut.rxjava2.http.client.RxHttpClient
 import io.micronaut.test.annotation.MockBean
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 class KernelEndpointTest extends Specification {

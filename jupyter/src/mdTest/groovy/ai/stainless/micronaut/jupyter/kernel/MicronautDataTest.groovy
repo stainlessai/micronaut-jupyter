@@ -1,6 +1,6 @@
 package ai.stainless.micronaut.jupyter.kernel
 
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 
 @MicronautTest(environments = ["md"], packages = ["ai.stainless.micronaut.jupyter.md"])
 class MicronautDataTest extends KernelSpec {

@@ -62,6 +62,8 @@ sourceSets {
 dependencies {
     annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
     annotationProcessor "io.micronaut:micronaut-inject-java"
+    implementation("io.micronaut.rxjava2:micronaut-rxjava2:1.2.0")
+    implementation("io.micronaut.rxjava2:micronaut-rxjava2-http-client:1.2.0")
 
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
     implementation "org.codehaus.groovy:groovy-xml:$groovyVersion"
