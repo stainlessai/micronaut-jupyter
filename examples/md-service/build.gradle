@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id "groovy"
     id "java-library"
-    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     id "application"
 }
 
@@ -34,9 +34,9 @@ dependencies {
     //implementation "ai.stainless:micronaut-jupyter:+"
     implementation project(':jupyter')
 
-    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     implementation "io.micronaut:micronaut-graal:$micronautVersion"
-    implementation "io.micronaut:micronaut-validation:$micronautVersion"
+    implementation "io.micronaut.validation:micronaut-validation:$micronautVersion"
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
     implementation "io.micronaut:micronaut-runtime:$micronautVersion"
     implementation "io.micronaut:micronaut-http-client:$micronautVersion"

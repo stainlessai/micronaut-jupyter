@@ -23,8 +23,6 @@ package ai.stainless.micronaut.jupyter.kernel
 
 import com.twosigma.beakerx.TryResult
 import com.twosigma.beakerx.evaluator.JobDescriptor
-import com.twosigma.beakerx.groovy.evaluator.GroovyCodeRunner
-import com.twosigma.beakerx.groovy.evaluator.GroovyNotFoundException
 import com.twosigma.beakerx.jvm.object.SimpleEvaluationObject
 import groovy.util.logging.Slf4j
 import java.util.concurrent.Callable
@@ -84,7 +82,7 @@ class MicronautWorkerThread implements Callable<TryResult> {
                 }
             } as Callable, j.getExecutionOptions())
         } catch (Throwable e) {
-            if (e instanceof GroovyNotFoundException) {
+            if (e.class.name.endsWith('GroovyNotFoundException')) {
                 logger.warn(e.getLocalizedMessage())
                 r = TryResult.createError(e.getLocalizedMessage())
             } else {

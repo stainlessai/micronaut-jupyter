@@ -10,12 +10,12 @@ import io.micronaut.context.annotation.Value
 import io.micronaut.runtime.context.scope.Refreshable
 import io.micronaut.runtime.context.scope.refresh.RefreshEvent
 import io.micronaut.runtime.event.annotation.EventListener
-import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
+import org.apache.groovy.groovysh.util.NoExitSecurityManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import javax.annotation.PostConstruct
-import javax.annotation.PreDestroy
+import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import java.lang.reflect.UndeclaredThrowableException
