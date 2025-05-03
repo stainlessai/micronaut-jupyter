@@ -7,7 +7,6 @@ import com.twosigma.beakerx.evaluator.ClasspathScannerImpl;
 import com.twosigma.beakerx.evaluator.BxInspect;
 import com.twosigma.beakerx.groovy.kernel.Groovy;
 import com.twosigma.beakerx.groovy.kernel.GroovyBeakerXServer;
-import com.twosigma.beakerx.inspect.Inspect;
 import com.twosigma.beakerx.kernel.*;
 import com.twosigma.beakerx.kernel.magic.autocomplete.MagicCommandAutocompletePatternsImpl;
 import com.twosigma.beakerx.kernel.magic.command.FileServiceImpl;
@@ -69,29 +68,95 @@ public class Micronaut extends Groovy {
         this.applicationContext = ctx;
     }
 
+    /**
+     * Get the stream handler, creating one if it doesn't exist
+     *
+     * @return The StandardStreamHandler instance
+     */
     public StandardStreamHandler getStreamHandler() {
+        if (streamHandler == null) {
+            log.warn("StreamHandler was null when getStreamHandler was called, creating new instance");
+            streamHandler = createDefaultStreamHandler();
+        }
         return streamHandler;
     }
 
+    /**
+     * Set the stream handler
+     *
+     * @param streamHandler The StandardStreamHandler to use
+     */
     public void setStreamHandler(StandardStreamHandler streamHandler) {
         this.streamHandler = streamHandler;
     }
 
+    /**
+     * Create a default StandardStreamHandler
+     *
+     * @return New StandardStreamHandler instance
+     */
+    private StandardStreamHandler createDefaultStreamHandler() {
+        // Create handler without setting redirectLogOutput - initialize with default values
+        StandardStreamHandler handler = new StandardStreamHandler();
+        handler.init();
+        return handler;
+    }
+
+    /**
+     * Initialize the kernel
+     */
     public void init() {
+        log.info("Initializing Micronaut kernel");
+
+        // Ensure we have a valid stream handler
+        if (streamHandler == null) {
+            log.warn("No StreamHandler provided, creating default");
+            if (applicationContext != null) {
+                try {
+                    streamHandler = applicationContext.getBean(StandardStreamHandler.class);
+                    log.info("Retrieved StandardStreamHandler from application context");
+                } catch (Exception e) {
+                    log.warn("Could not get StandardStreamHandler from context, creating new instance");
+                    log.debug("Exception when trying to get StandardStreamHandler from context", e);
+                    streamHandler = createDefaultStreamHandler();
+                }
+            } else {
+                streamHandler = createDefaultStreamHandler();
+            }
+        }
+
         //load evaluator
         evaluator.setKernel(this);
         evaluator.init();
+
+        Kernel.showNullExecutionResult = false;
+
+        log.info("Micronaut kernel initialized successfully");
     }
 
+    /**
+     * Kill this kernel
+     */
     public void kill() {
         log.info("Killing kernel now!");
         // close sockets factory instances
         for (KernelSockets it : kernelSocketsFactory.getInstances()) {
             try {
-                ((ClosableKernelSocketsZMQ)it).shutdown();
+                ((ClosableKernelSocketsZMQ) it).shutdown();
             } catch (NoSuchMethodError e) {
                 log.error(e.toString());
+            } catch (Exception e) {
+                log.error("Error shutting down kernel socket", e);
             }
+        }
+
+        // Clean up stream handler
+        try {
+            if (streamHandler != null) {
+                streamHandler.restore();
+            }
+        } catch (Exception e) {
+            log.error("Error restoring streams during kernel shutdown", e);
         }
     }
 
@@ -100,11 +165,14 @@ public class Micronaut extends Groovy {
      * Use implementation of logic from Groovy.main() method in BeakerX project.
      * License from BeakerX pasted below.
      */
-
     public static Micronaut createKernel(final String[] args) {
-
         log.info("Spinning up new Micronaut kernel");
-        log.info("Received args: $args");
+
+        if (args != null && args.length > 0) {
+            log.info("Received args: {}", String.join(", ", args));
+        } else {
+            log.warn("No args provided to kernel");
+        }
 
         // create kernel close handler
         CloseKernelAction closeKernelAction = new CloseKernelAction() {
@@ -158,17 +226,11 @@ public class Micronaut extends Groovy {
                 magicCommandTypesFactory,
                 new BeakerXJsonConfig()
         );
-
-        /*
-         * End BeakerX implementation.
-         */
-
     }
 
     public static void main(final String[] args) {
         new BxKernelRunner().run(() -> {
             return Micronaut.createKernel(args);
-        } );
+        });
     }
-
 }
