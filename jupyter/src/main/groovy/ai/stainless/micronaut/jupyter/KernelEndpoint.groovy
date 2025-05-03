@@ -4,8 +4,6 @@ import groovy.util.logging.Slf4j
 import io.micronaut.management.endpoint.annotation.Endpoint
 import io.micronaut.management.endpoint.annotation.Write
 
-import jakarta.inject.Inject
-
 @Slf4j
 @Endpoint(id = 'jupyterkernel', defaultSensitive = false)
 public class KernelEndpoint {
@@ -14,16 +12,16 @@ public class KernelEndpoint {
     KernelManager kernelManager = new KernelManager()
 
     @Write
-    public Map start (Map request) {
-        log.info ("Received start request: $request")
+    public Map start(String file) {
+        log.info("Received connection file: $file")
         // get connection file
-        String connectionFile = request.file as String
+//        String connectionFile = request.file as String
 
         // start kernel
-        kernelManager.startNewKernel(connectionFile)
+        kernelManager.startNewKernel(file)
 
         return [
-            "message": "Kernel start request received!"
+                "message": "Kernel start request received!"
         ]
     }
 
