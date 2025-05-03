@@ -1,42 +1,77 @@
-package ai.stainless.micronaut.jupyter.kernel
+package ai.stainless.micronaut.jupyter.kernel;
 
-import com.twosigma.beakerx.jvm.threads.BeakerInputHandler
-import com.twosigma.beakerx.jvm.threads.BeakerOutputHandler
-import com.twosigma.beakerx.widget.OutputManager
-import groovy.util.logging.Slf4j
+import com.twosigma.beakerx.jvm.threads.BeakerInputHandler;
+import com.twosigma.beakerx.jvm.threads.BeakerOutputHandler;
+import com.twosigma.beakerx.widget.OutputManager;
+import groovy.util.logging.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets
-import java.util.regex.Pattern
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/*
- * Based on BeakerX's BeakerStdInOutErrHandler class:
- * https://github.com/twosigma/beakerx/blob/master/kernel/base/src/main/java/com/twosigma/beakerx/jvm/threads/BeakerStdInOutErrHandler.java
+/**
+ * Handles standard stream redirection and management for Jupyter notebooks.
+ * Based on BeakerX's BeakerStdInOutErrHandler class.
  */
 @Slf4j
 public class StandardStreamHandler {
+    private static final int MAX_STACK_DEPTH = 50;
 
-    private ClassContextSecurityManager classContextSecurityManager = new ClassContextSecurityManager()
-    private loggingSearchDepth = 50
-    private Pattern loggingSearchPattern = Pattern.compile(
-            [
+    private static final Pattern LOGGING_SEARCH_PATTERN = Pattern.compile(
+            Stream.of(
                     "org.apache.log4j", "org.slf4j", "org.jboss.logging",
                     "ch.qos.logback"
-            ]
-                    .collect { "(${it.replaceAll('\\.', '\\.')})" }
-                    .join("|")
-    )
+            )
+                    .map(pkg -> "(" + pkg.replaceAll("\\.", "\\\\.") + ")")
+                    .collect(Collectors.joining("|"))
+    );
 
-    private Map<ThreadGroup, BeakerOutputHandlers> handlers = [:]
-    private PrintStream orig_out
-    private PrintStream orig_err
-    private InputStream orig_in
+    // Thread-safe map for handlers
+    private final Map<ThreadGroup, BeakerOutputHandlers> handlers = new ConcurrentHashMap<>();
 
-    Boolean redirectLogOutput
+    // Original stream references
+    private PrintStream orig_out;
+    private PrintStream orig_err;
+    private InputStream orig_in;
 
-    public void init () {
-        orig_out = System.out
-        orig_err = System.err
-        orig_in = System.in
+    // Configuration property
+    private Boolean redirectLogOutput = true;
+
+    /**
+     * Get the redirectLogOutput setting
+     * @return true if log output should be redirected, false otherwise
+     */
+    public Boolean getRedirectLogOutput() {
+        return redirectLogOutput;
+    }
+
+    /**
+     * Set the redirectLogOutput setting
+     * @param redirectLogOutput true to redirect log output, false otherwise
+     */
+    public void setRedirectLogOutput(Boolean redirectLogOutput) {
+        this.redirectLogOutput = redirectLogOutput;
+    }
+
+    /**
+     * Initialize the stream handler by capturing and redirecting system streams
+     */
+    public void init() {
+        log.debug("Initializing StandardStreamHandler");
+        orig_out = System.out;
+        orig_err = System.err;
+        orig_in = System.in;
+
         try {
             System.setOut(
                     new PrintStream(
@@ -44,201 +79,237 @@ public class StandardStreamHandler {
                             false,
                             StandardCharsets.UTF_8.name()
                     )
-            )
+            );
             System.setErr(
                     new PrintStream(
                             new ProxyOutputStream(handler: this, isOut: false),
                             false,
                             StandardCharsets.UTF_8.name()
                     )
-            )
+            );
             System.setIn(
                     new ProxyInputStream(handler: this)
-            )
+            );
+            log.debug("System streams successfully redirected");
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            log.error("Failed to initialize stream handler", e);
+            throw new RuntimeException("Failed to initialize stream handler", e);
         }
     }
 
-    // this will be called when the KernelManager is refreshed.
-    // NOTE will destroy the streams when it happens
+    /**
+     * Restore original system streams
+     */
     public void restore() {
-        log.trace("restore")
-        System.setOut(orig_out)
-        System.setErr(orig_err)
-        System.setIn(orig_in)
+        log.debug("Restoring original system streams");
+        System.setOut(orig_out);
+        System.setErr(orig_err);
+        System.setIn(orig_in);
     }
 
-    synchronized public void setOutputHandlers(
-            BeakerOutputHandler out,
-            BeakerOutputHandler err,
-            BeakerInputHandler stdin
-    ) {
-        log.trace("setOutputHandlers")
-        removeHandlersWithAllNoAliveThreads()
-        //get current thread group
-        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup()
-        //store handlers for current thread group
+    /**
+     * Set output handlers for the current thread group
+     *
+     * @param out Output handler for stdout
+     * @param err Output handler for stderr
+     * @param stdin Input handler for stdin
+     */
+    public void setOutputHandlers(BeakerOutputHandler out, BeakerOutputHandler err, BeakerInputHandler stdin) {
+        log.debug("Setting output handlers for thread group: {}", Thread.currentThread().getThreadGroup().getName());
+
+        // Remove handlers for thread groups with no active threads
+        removeHandlersWithAllNoAliveThreads();
+
+        // Store handlers for current thread group
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
         handlers.put(threadGroup, new BeakerOutputHandlers(
                 out_handler: out,
                 err_handler: err,
-                in_handler:stdin
-        ))
+                in_handler: stdin
+        ));
     }
 
-    synchronized public void clearOutputHandlers () {
-        log.trace("clearOutputHandlers")
-        removeHandlersWithAllNoAliveThreads()
-    }
-
-    /*
-     * In order to redirect logging output to a different stream, we need to
-     * determine whether or not the output came from a logging platform.
-     *
-     * Currently supported logging platforms:
-     * - Log4j
-     * - Slf4j
-     * - Logback
-     *
-     * The current method for doing this is to inspect the call stack. Have a
-     * better way? Comment at: https://github.com/stainlessai/micronaut-jupyter/issues/6
-     * The chosen for method for inspecting the call stack is to use a security
-     * manager, because this answer indicates it is fastest:
-     * https://stackoverflow.com/a/2924426/3727785
+    /**
+     * Clear all output handlers
      */
-    private Boolean isLoggingCall () {
-        // get class context
-        Class[] classContext = classContextSecurityManager.getCallerClassContext()
-        Long classContextSize = classContext.size()
-        String classContextCombined = ""
-        // do a for loop to try and boost performance (not profiled)
-        for (int i=1; i<classContextSize && i<loggingSearchDepth; i++) {
-            classContextCombined += classContext[i].name
-        }
-        // it is theorized that regexing the combined class array will be
-        // faster (not profiled)
-        return (classContextCombined =~ loggingSearchPattern).size() > 0
+    public void clearOutputHandlers() {
+        log.debug("Clearing output handlers");
+        removeHandlersWithAllNoAliveThreads();
     }
 
-    synchronized private void removeHandlersWithAllNoAliveThreads() {
-        handlers.findAll { it.key.activeCount() == 0 }.each {
-            it.value.destroy()
-            handlers.remove(it.key)
-            log.trace("destroyed/removed handler "+it.key)
+    /**
+     * Check if the current call originated from a logging framework
+     *
+     * @return true if call came from logging framework, false otherwise
+     */
+    private Boolean isLoggingCall() {
+        // Get call stack
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+
+        // Build string of class names for pattern matching
+        StringBuilder classNames = new StringBuilder();
+        int limit = Math.min(stackTrace.length, MAX_STACK_DEPTH);
+
+        for (int i = 1; i < limit; i++) {
+            classNames.append(stackTrace[i].getClassName());
         }
+
+        // Check if any logging framework classes are in the call stack
+        return (classNames.toString() =~ LOGGING_SEARCH_PATTERN).size() > 0;
     }
 
-    synchronized public void writeStream(String text, Boolean isOut) throws IOException {
-        // get stream info (out or err)
-        log.trace("writeStream '"+text+"', isOut="+isOut);
-        Boolean sendStream
-        String handlerName
-        PrintStream systemStream
+    /**
+     * Remove handlers for thread groups that have no active threads
+     */
+    private void removeHandlersWithAllNoAliveThreads() {
+        handlers.entrySet().removeIf(entry -> {
+            ThreadGroup group = entry.getKey();
+            if (group.activeCount() == 0) {
+                entry.getValue().destroy();
+                log.trace("Removed handler for inactive thread group: {}", group.getName());
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Write text to the appropriate stream
+     *
+     * @param text Text to write
+     * @param isOut true for stdout, false for stderr
+     */
+    public void writeStream(String text, Boolean isOut) throws IOException {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+
+        log.trace("writeStream: '{}', isOut={}", text, isOut);
+
+        // Determine stream properties
+        Boolean sendStream;
+        String handlerName;
+        PrintStream systemStream;
+
         if (isOut) {
             sendStream = OutputManager.sendStdout(text);
-            handlerName = "out_handler"
-            systemStream = orig_out
-        }
-        else {
-            sendStream = OutputManager.sendStderr(text);
-            handlerName = "err_handler"
-            systemStream = orig_err
-        }
-        // if we the output manager accepted this text
-        if (sendStream) {
-            // then don't write this string
-            return
-        }   // else, go ahead and write to stream
-
-        if (!sendStream) {
-            BeakerOutputHandlers hrs = handlers.get(Thread.currentThread().getThreadGroup())
-            // FIXME "hrs" can be null, trying to debug why, but that means the streams will be messed up
-            log.trace("isLoggingCall="+isLoggingCall())
-            log.trace("hrs="+hrs)
-            // if we have registered handlers, and this is NOT a logging call that we are to redirect
-            if (hrs != null && hrs."$handlerName" != null && (!redirectLogOutput || !isLoggingCall())) {
-                // write to our handlers
-                log.trace("writing to handler: $handlerName")
-                hrs."$handlerName".write(text)
-            } else {
-                // write to this system stream
-                systemStream.write(text)
-            }
-        }
-    }
-
-    synchronized public int readStdin() {
-        BeakerOutputHandlers hrs = handlers.get(Thread.currentThread().getThreadGroup())
-        if (hrs != null && hrs.in_handler != null) {
-            return hrs.in_handler.read()
+            handlerName = "out_handler";
+            systemStream = orig_out;
         } else {
-            return orig_in.read()
+            sendStream = OutputManager.sendStderr(text);
+            handlerName = "err_handler";
+            systemStream = orig_err;
+        }
+
+        // If OutputManager accepted the text, we're done
+        if (sendStream) {
+            return;
+        }
+
+        // Get handlers for current thread group
+        ThreadGroup currentThreadGroup = Thread.currentThread().getThreadGroup();
+        BeakerOutputHandlers hrs = handlers.get(currentThreadGroup);
+
+        // Determine if this is a logging call that should be redirected
+        boolean isLoggingCallToRedirect = redirectLogOutput && isLoggingCall();
+
+        if (hrs != null && hrs."$handlerName" != null && !isLoggingCallToRedirect) {
+            // Write to custom handler
+            try {
+                hrs."$handlerName".write(text);
+            } catch (Exception e) {
+                log.warn("Error writing to handler, falling back to system stream", e);
+                systemStream.print(text);
+            }
+        } else {
+            // Write to system stream
+            systemStream.print(text);
         }
     }
 
+    /**
+     * Read from stdin
+     *
+     * @return The character read, or -1 if the end of the stream has been reached
+     */
+    public int readStdin() {
+        ThreadGroup currentThreadGroup = Thread.currentThread().getThreadGroup();
+        BeakerOutputHandlers hrs = handlers.get(currentThreadGroup);
 
+        if (hrs != null && hrs.in_handler != null) {
+            try {
+                return hrs.in_handler.read();
+            } catch (Exception e) {
+                log.warn("Error reading from input handler, falling back to system input", e);
+                return orig_in.read();
+            }
+        } else {
+            return orig_in.read();
+        }
+    }
+
+    /**
+     * InputStream implementation that delegates to StandardStreamHandler
+     */
     private class ProxyInputStream extends InputStream {
-
-        StandardStreamHandler handler
+        StandardStreamHandler handler;
 
         @Override
         public int read() throws IOException {
-            return handler.readStdin()
+            return handler.readStdin();
         }
     }
 
+    /**
+     * OutputStream implementation that delegates to StandardStreamHandler
+     */
     private class ProxyOutputStream extends OutputStream {
-
-        private boolean isOut
-        StandardStreamHandler handler
+        private boolean isOut;
+        StandardStreamHandler handler;
 
         @Override
         public void write(int b) throws IOException {
-            log.trace("write: "+Byte.toString(b))
-            byte[] ba = new byte[1]
-            ba[0] = (byte) b
-            String s = new String(ba, StandardCharsets.UTF_8)
-            writeStream(s)
+            byte[] ba = new byte[1];
+            ba[0] = (byte) b;
+            String s = new String(ba, StandardCharsets.UTF_8);
+            writeStream(s);
         }
 
         @Override
         public void write(byte[] b) throws IOException {
-            log.trace("write: "+new String(b))
-            String s = new String(b, StandardCharsets.UTF_8)
-            writeStream(s)
+            if (b == null || b.length == 0) {
+                return;
+            }
+            String s = new String(b, StandardCharsets.UTF_8);
+            writeStream(s);
         }
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            log.trace("write: "+new String(b)+","+off+","+len)
-            String s = new String(b, off, len, StandardCharsets.UTF_8)
-            writeStream(s)
+            if (b == null || len <= 0 || off < 0 || off >= b.length) {
+                return;
+            }
+            String s = new String(b, off, len, StandardCharsets.UTF_8);
+            writeStream(s);
         }
 
         private void writeStream(String s) throws IOException {
-            log.trace("writeStream: "+s)
-            handler.writeStream(s, isOut)
+            handler.writeStream(s, isOut);
         }
     }
 
+    /**
+     * Container for output and input handlers
+     */
     public static class BeakerOutputHandlers {
+        BeakerOutputHandler out_handler;
+        BeakerOutputHandler err_handler;
+        BeakerInputHandler in_handler;
 
-        BeakerOutputHandler out_handler
-        BeakerOutputHandler err_handler
-        BeakerInputHandler in_handler
-
-        public void destroy () {
-            out_handler = null
-            err_handler = null
-            in_handler = null
-        }
-
-    }
-
-    private class ClassContextSecurityManager extends SecurityManager {
-        public Class[] getCallerClassContext () {
-            return getClassContext()
+        public void destroy() {
+            out_handler = null;
+            err_handler = null;
+            in_handler = null;
         }
     }
-
 }
