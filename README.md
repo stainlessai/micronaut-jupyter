@@ -26,9 +26,29 @@ kernel
 
 ## Setup
 
-### Micronaut 2 Compatibility
+### JupyterLab
 
-The `micronaut2` branch of this repository has been updated to support Micronaut 2.0+, however, it requires BeakerX 2.0
+This kernel has been tested against the following configuration (it may work with later versions as well):
+
+```
+ipykernel==6.29.5
+notebook==6.5.7
+tornado==6.4.1
+jupyter-client==7.4.9
+jupyterlab==3.5.3
+```
+
+### Micronaut 4 Compatibility
+
+At the time of this release the tested versions are:
+
+```
+micronautVersion=4.7.1
+groovyVersion=4.0.26
+micronautDataVersion=4.12.0
+```
+
+The project has been updated to support Micronaut 4.0+, however, it requires BeakerX 2.0
 libraries which have not yet been published by the BeakerX project team at the time of this writing. To build the required
 libraries locally, follow these steps:
 
