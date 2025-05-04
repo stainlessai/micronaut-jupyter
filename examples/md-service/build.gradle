@@ -41,6 +41,7 @@ dependencies {
     implementation "io.micronaut:micronaut-runtime:$micronautVersion"
     implementation "io.micronaut:micronaut-http-client:$micronautVersion"
     implementation "io.micronaut:micronaut-http-server-netty:$micronautVersion"
+    implementation("io.micronaut:micronaut-jackson-databind")
     implementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
     
     implementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
@@ -48,6 +49,7 @@ dependencies {
 //    implementation "io.micronaut.configuration:jdbc-tomcat:1.0.0.RC2"
 
     implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
+    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
 
     runtimeOnly "com.h2database:h2"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
@@ -62,7 +64,7 @@ shadowJar {
 }
 
 run.classpath += configurations.developmentOnly
-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+run.jvmArgs('-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote', '-Dmicronaut.environments=local')
 tasks.withType(GroovyCompile) {
     groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
 }

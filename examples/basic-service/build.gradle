@@ -29,6 +29,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut.groovy:micronaut-runtime-groovy"
     implementation "io.micronaut.validation:micronaut-validation"
+    implementation("io.micronaut:micronaut-jackson-databind")
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
 
     testCompileOnly platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
@@ -51,7 +52,7 @@ shadowJar {
 }
 
 run.classpath += configurations.developmentOnly
-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+run.jvmArgs('-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote', '-Dmicronaut.environments=local')
 tasks.withType(GroovyCompile) {
     groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
 }
