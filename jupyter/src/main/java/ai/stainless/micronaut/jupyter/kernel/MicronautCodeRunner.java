@@ -64,20 +64,24 @@ public class MicronautCodeRunner implements Callable<TryResult> {
         try {
             theOutput.setOutputHandler();
 
-            // this is needed to redirect output to the correct place. Just need to figure out why it breaks sometimes?
-            // create stdin (the one in the seo is private, but unused)
+            // Create stdin handler for input
             BxInputStream stdInHandler = new BxInputStream(evaluator.getKernel(), new InputRequestMessageFactoryImpl());
 
-            // set output handlers for this call
-            evaluator.getKernel().getStreamHandler().setOutputHandlers(
-                    theOutput.getStdOutputHandler(),
-                    theOutput.getStdErrorHandler(),
-                    stdInHandler
-            );
+            // Check if kernel and streamHandler are available
+            if (evaluator.getKernel() != null && evaluator.getKernel().getStreamHandler() != null) {
+                // Set output handlers for this call
+                evaluator.getKernel().getStreamHandler().setOutputHandlers(
+                        theOutput.getStdOutputHandler(),
+                        theOutput.getStdErrorHandler(),
+                        stdInHandler
+                );
 
-            logger.trace("stdInHandler="+stdInHandler);
-            logger.trace("stdOutputHandler="+theOutput.getStdOutputHandler());
-            logger.trace("stdErrorHandler="+theOutput.getStdErrorHandler());
+                logger.trace("stdInHandler={}", stdInHandler);
+                logger.trace("stdOutputHandler={}", theOutput.getStdOutputHandler());
+                logger.trace("stdErrorHandler={}", theOutput.getStdErrorHandler());
+            } else {
+                logger.warn("Unable to set output handlers - kernel or streamHandler is null");
+            }
 
             Object result = null;
             Thread.currentThread().setContextClassLoader(evaluator.getGroovyClassLoader());
@@ -94,11 +98,18 @@ public class MicronautCodeRunner implements Callable<TryResult> {
             either = handleError(scriptName, e);
         } finally {
             theOutput.clrOutputHandler();
-            evaluator.getKernel().getStreamHandler().clearOutputHandlers();
+
+            // Safe cleanup of output handlers
+            try {
+                if (evaluator.getKernel() != null && evaluator.getKernel().getStreamHandler() != null) {
+                    evaluator.getKernel().getStreamHandler().clearOutputHandlers();
+                }
+            } catch (Exception e) {
+                logger.warn("Error clearing output handlers", e);
+            }
+
             Thread.currentThread().setContextClassLoader(oldld);
         }
-        // might be CellError which doesn't have result
-        // logger.trace("call() returning "+either.result());
         return either;
     }
 
@@ -122,7 +133,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
     }
 
     private Object runScript(Script script) {
-        logger.trace("runScript "+script);
+        logger.trace("runScript {}", script);
         evaluator.getScriptBinding().setVariable(Evaluator.BEAKER_VARIABLE_NAME, evaluator.getBeakerX());
         script.setBinding(evaluator.getScriptBinding());
         return script.run();
@@ -131,5 +142,4 @@ public class MicronautCodeRunner implements Callable<TryResult> {
     private boolean canBeInstantiated(Class<?> parsedClass) {
         return !parsedClass.isEnum();
     }
-
 }
