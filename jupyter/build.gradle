@@ -204,7 +204,7 @@ groovydoc {
 
 publishing {
     publications {
-        jupyterConfigurationLibrary(MavenPublication) {
+        micronautJupyter(MavenPublication) {
             artifactId = 'micronaut-jupyter'
             from components.java
             artifact sourcesJar

@@ -12,10 +12,10 @@ buildscript {
         classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
         classpath 'io.github.groovylang.groovydoc:groovydoc-gradle-plugin:1.0.1'
         classpath "io.micronaut.docs:micronaut-docs-asciidoc-extensions:$micronautDocsVersion", {
-            exclude group:"com.github.jengelman.gradle.plugins"
+            exclude group: "com.github.jengelman.gradle.plugins"
         }
         classpath "io.micronaut.docs:micronaut-docs-gradle-plugins:$micronautDocsVersion", {
-            exclude group:"com.github.jengelman.gradle.plugins"
+            exclude group: "com.github.jengelman.gradle.plugins"
         }
         classpath 'com.adarshr:gradle-test-logger-plugin:2.0.0'
     }
@@ -26,11 +26,9 @@ repositories {
 }
 
 group "ai.stainless"
-version projectVersion
 
 subprojects { Project subproject ->
     group "ai.stainless"
-    version project.projectVersion
 
     repositories {
         mavenLocal()
@@ -54,7 +52,7 @@ subprojects { Project subproject ->
     jar {
         manifest {
             attributes('Automatic-Module-Name': "${subproject.group}.${subproject.name}".replaceAll('[^\\w\\.\\$_]', "_"))
-            attributes('Implementation-Version':project.projectVersion)
+            attributes('Implementation-Version': version)
             attributes('Implementation-Title': 'Micronaut Jupyter')
         }
     }
@@ -84,7 +82,7 @@ subprojects { Project subproject ->
     }
 
     javadoc {
-        if(JavaVersion.current().isJava9Compatible()) {
+        if (JavaVersion.current().isJava9Compatible()) {
             options.addBooleanOption('html5', true)
         }
     }
@@ -92,9 +90,9 @@ subprojects { Project subproject ->
     publishing {
         repositories {
             def ossUser = System.getenv("SONATYPE_USERNAME") ?:
-                project.hasProperty("sonatypeOssUsername") ? project.sonatypeOssUsername : ''
+                    project.hasProperty("sonatypeOssUsername") ? project.sonatypeOssUsername : ''
             def ossPass = System.getenv("SONATYPE_PASSWORD") ?:
-                project.hasProperty("sonatypeOssPassword") ? project.sonatypeOssPassword : ''
+                    project.hasProperty("sonatypeOssPassword") ? project.sonatypeOssPassword : ''
 
             maven {
                 name = "mavenCentral"
@@ -128,7 +126,7 @@ subprojects { Project subproject ->
         File signingKeyFile = new File("$rootProject.projectDir/SIGNING_GPG_KEY")
         String signingKey = signingKeyFile.exists() ? signingKeyFile.text : ""
         def signingPassword = System.getenv("SIGNING_GPG_PASSWORD") ?:
-            findProperty("signingPassword") ?: ''
+                findProperty("signingPassword") ?: ''
         useInMemoryPgpKeys(signingKey, signingPassword)
     }
 

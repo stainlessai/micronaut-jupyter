@@ -73,11 +73,6 @@ Build the library and publish to local maven:
 ./gradlew publishToMavenLocal
 ```                          
 
-To set a specific version on your library:
-```bash
-./gradlew publishToMavenLocal -PprojectVersion=0.0.1-mysemanticversion
-```
-
 ### Usage
 #### Add Build Dependency (Gradle)
 Ensure the following repositories are added to your gradle build:
