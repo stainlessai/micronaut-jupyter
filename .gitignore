@@ -25,3 +25,6 @@ out/
 *.iml
 *.ipr
 *.iws
+
+application-local.yml
+**/.ipynb_checkpoints
