@@ -1,5 +1,6 @@
 package ai.stainless.micronaut.jupyter.kernel;
 
+import ai.stainless.micronaut.jupyter.DefaultPackageCompilerConfiguration;
 import com.twosigma.beakerx.BeakerXClient;
 import com.twosigma.beakerx.TryResult;
 import com.twosigma.beakerx.autocomplete.AutocompleteResult;
@@ -238,6 +239,7 @@ public class MicronautEvaluator extends GroovyEvaluator {
         }
 
         CompilerConfiguration config = (new CompilerConfiguration()).addCompilationCustomizers(icz);
+        //CompilerConfiguration config = (new DefaultPackageCompilerConfiguration()).addCompilationCustomizers(icz);
 
         String gjp = String.join(""+File.pathSeparatorChar, getClasspath().getPathsAsStrings());
         config.setClasspath(gjp);

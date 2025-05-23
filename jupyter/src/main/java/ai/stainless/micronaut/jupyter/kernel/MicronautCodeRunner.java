@@ -22,11 +22,13 @@ package ai.stainless.micronaut.jupyter.kernel;
  *  limitations under the License.
  */
 
+import ai.stainless.micronaut.jupyter.DefaultPackageCompilerConfiguration;
 import com.twosigma.beakerx.TryResult;
 import com.twosigma.beakerx.evaluator.Evaluator;
 import com.twosigma.beakerx.jvm.object.SimpleEvaluationObject;
 import com.twosigma.beakerx.jvm.threads.BxInputStream;
 import com.twosigma.beakerx.jvm.threads.InputRequestMessageFactoryImpl;
+import groovy.lang.GroovyClassLoader;
 import groovy.lang.Script;
 import org.codehaus.groovy.runtime.StackTraceUtils;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
     private final MicronautEvaluator evaluator;
     private final String theCode;
     private final SimpleEvaluationObject theOutput;
+    private final EnsureScriptPackage ensureScriptPackage = new EnsureScriptPackage();
 
     public MicronautCodeRunner(MicronautEvaluator groovyEvaluator, String code, SimpleEvaluationObject out) {
         this.evaluator = groovyEvaluator;
@@ -86,7 +89,15 @@ public class MicronautCodeRunner implements Callable<TryResult> {
             Object result = null;
             Thread.currentThread().setContextClassLoader(evaluator.getGroovyClassLoader());
             scriptName += System.currentTimeMillis();
-            Class<?> parsedClass = evaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
+
+            // Class<?> parsedClass = evaluator.getGroovyClassLoader().parseClass(theCode, scriptName);
+
+            // workaround for BUG! packageName is null thrown in Groovy 4.0.28 when no
+            // package name is defined on a class
+            Class<?> parsedClass = evaluator.getGroovyClassLoader().parseClass(
+                    ensureScriptPackage.ensurePackageMicronautJupyter(theCode),
+                    scriptName);
+
             if (canBeInstantiated(parsedClass)) {
                 Object instance = parsedClass.getDeclaredConstructor().newInstance();
                 if (instance instanceof Script) {
