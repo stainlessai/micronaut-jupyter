@@ -1,28 +1,34 @@
 package ai.stainless.micronaut.jupyter
 
 import groovy.util.logging.Slf4j
-import io.micronaut.management.endpoint.annotation.Endpoint
-import io.micronaut.management.endpoint.annotation.Write
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Post
+import jakarta.inject.Inject
 
 @Slf4j
-@Endpoint(id = 'jupyterkernel', defaultSensitive = false)
+@Controller("/jupyterkernel")
 public class KernelEndpoint {
 
-//    @Inject
-    KernelManager kernelManager = new KernelManager()
+    @Inject
+    KernelManager kernelManager
 
-    @Write
-    public Map start(String file) {
-        log.info("Received connection file: $file")
-        // get connection file
-//        String connectionFile = request.file as String
+    @Post("/start")
+    public Map start(@Body StartRequest request) {
+        log.info("Received connection file: ${request.file}")
 
-        // start kernel
-        kernelManager.startNewKernel(file)
+        if (this.kernelManager == null) {
+            throw new IllegalStateException("KernelManager was not injected")
+        }
+
+        kernelManager.startNewKernel(request.file)
 
         return [
                 "message": "Kernel start request received!"
         ]
     }
 
+    static class StartRequest {
+        String file
+    }
 }

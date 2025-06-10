@@ -76,11 +76,7 @@ public class InstallKernel {
     }
 
     private getEndpointPath () {
-        applicationContext
-            .getBeanDefinition(KernelEndpoint)
-            .getAnnotation(Endpoint)
-            .stringValue("id")
-            .get()
+        return "jupyterkernel/start"
     }
 
     private getServerUrl () {
