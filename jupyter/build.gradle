@@ -224,7 +224,13 @@ publishing {
                         name = "Joshua Carter"
                         email = "jcarter@stainless.ai"
                         organization = "Stainless.Ai"
-                        organizationUrl = "http://www.stainless.ai"
+                        organizationUrl = "https://stainless.ai"
+                    }
+                    developer {
+                        name = "Dan Stieglitz"
+                        email = "dstieglitz@stainless.ai"
+                        organization = "Stainless.Ai"
+                        organizationUrl = "https://stainless.ai"
                     }
                 }
                 scm {
