@@ -4,9 +4,12 @@ import groovy.util.logging.Slf4j
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
+import io.micronaut.security.rules.SecurityRule
+import io.micronaut.security.annotation.Secured
 import jakarta.inject.Inject
 
 @Slf4j
+@Secured(SecurityRule.IS_ANONYMOUS)
 @Controller("/jupyterkernel")
 public class KernelEndpoint {
 

@@ -73,7 +73,8 @@ dependencies {
     implementation "io.micronaut:micronaut-messaging"
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-management"
-
+    annotationProcessor("io.micronaut.security:micronaut-security-annotations")
+    implementation "io.micronaut.security:micronaut-security"
     implementation "com.twosigma:beakerx-kernel-base:$beakerxVersion"
     implementation "com.twosigma:beakerx-kernel-groovy:$beakerxVersion"
 
