@@ -157,6 +157,11 @@ public class KernelManager {
             throw new IllegalArgumentException("Connection file path cannot be null or empty")
         }
 
+        if (kernelExecutor == null || kernelExecutor.isShutdown()) {
+            log.warn("Kernel executor was shut down. Re-initializing for new kernel request.")
+            initializeExecutor()
+        }
+
         log.info("Starting new Micronaut kernel with connection file: ${connectionFile}")
 
         kernelExecutor.submit(() -> {
