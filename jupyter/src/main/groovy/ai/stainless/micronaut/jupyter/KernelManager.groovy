@@ -84,6 +84,7 @@ public class KernelManager {
         log.debug("PostConstruct: Initializing stream handler")
         streamHandler.redirectLogOutput = redirectLogOutput
         streamHandler.init()
+        ShutdownForensics.install()
     }
 
     @EventListener
@@ -247,12 +248,6 @@ public class KernelManager {
                 } catch (Exception e) {
                     log.error("Failed to kill kernel during exit prevention", e)
                 }
-            }
-
-            // Throw exception to parent thread
-            Thread parent = Thread.currentThread().getThreadGroup().getParent();
-            if (parent != null) {
-                parent.interrupt();
             }
 
             log.info("Exit prevention hook completed: {}", threadName)
