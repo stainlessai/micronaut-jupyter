@@ -13,7 +13,7 @@ import spock.util.concurrent.PollingConditions
 import jakarta.inject.Inject
 import org.slf4j.Logger
 
-@MicronautTest
+@MicronautTest(packages = "ai.stainless.micronaut.jupyter")
 class KernelManagerTest extends Specification {
 
     @Inject
@@ -63,6 +63,7 @@ class KernelManagerTest extends Specification {
     def "bean exists"() {
         expect:
         //bean should have been created
+        applicationContext != null
         applicationContext.containsBean(KernelManager)
     }
 

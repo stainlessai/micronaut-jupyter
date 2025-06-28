@@ -14,7 +14,7 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
+@MicronautTest(packages = "ai.stainless.micronaut.jupyter")
 class KernelEndpointTest extends Specification {
 
     @Inject
@@ -22,12 +22,6 @@ class KernelEndpointTest extends Specification {
 
     @Inject
     EmbeddedServer embeddedServer
-
-    @Inject
-    KernelEndpoint kernelEndpoint
-
-    @Inject
-    KernelManager kernelManager
 
     @MockBean(KernelManager)
     KernelManager kernelManager() {
@@ -37,12 +31,14 @@ class KernelEndpointTest extends Specification {
     def "bean exists"() {
         expect:
         //bean should have been created
+        applicationContext != null
         applicationContext.containsBean(KernelEndpoint)
     }
 
     def "starts kernel on request"() {
         given:
         //create http client
+        embeddedServer != null
         URL server = embeddedServer.getURL()
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, server)
         // set connection file value
@@ -53,7 +49,7 @@ class KernelEndpointTest extends Specification {
             .toBlocking()
             .exchange(
             HttpRequest.POST(
-                "/jupyterkernel",
+                "/jupyterkernel/start",
                 [
                     file: connectionFile
                 ]
@@ -69,6 +65,6 @@ class KernelEndpointTest extends Specification {
         result.message.contains("start")
         result.message.contains("received")
         // check that kernel manager was called
-        1 * kernelManager.startNewKernel(connectionFile)
+        1 * kernelManager().startNewKernel(connectionFile)
     }
 }
