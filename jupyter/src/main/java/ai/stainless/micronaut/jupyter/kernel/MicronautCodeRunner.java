@@ -62,8 +62,15 @@ public class MicronautCodeRunner implements Callable<TryResult> {
     public TryResult call() {
         logger.trace("call()");
         ClassLoader oldld = Thread.currentThread().getContextClassLoader();
+        Thread.UncaughtExceptionHandler originalHandler = Thread.currentThread().getUncaughtExceptionHandler();
         TryResult either;
         String scriptName = SCRIPT_NAME;
+        
+        // Set up uncaught exception handler for this execution
+        Thread.currentThread().setUncaughtExceptionHandler(
+            new GlobalUncaughtExceptionHandler(evaluator.getKernel(), theOutput)
+        );
+        
         try {
             theOutput.setOutputHandler();
 
@@ -119,6 +126,8 @@ public class MicronautCodeRunner implements Callable<TryResult> {
                 logger.warn("Error clearing output handlers", e);
             }
 
+            // Restore original uncaught exception handler
+            Thread.currentThread().setUncaughtExceptionHandler(originalHandler);
             Thread.currentThread().setContextClassLoader(oldld);
         }
         return either;

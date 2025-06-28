@@ -71,6 +71,10 @@ public class KernelManager {
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r, "Jupyter-Kernel-" + threadNumber.getAndIncrement())
                 thread.setDaemon(false) // Allow JVM to exit when these threads are running
+                // Set default uncaught exception handler for all threads created by this factory
+                thread.setUncaughtExceptionHandler(
+                    ai.stainless.micronaut.jupyter.kernel.GlobalUncaughtExceptionHandler.createLoggingOnlyHandler()
+                )
                 return thread
             }
         }
@@ -168,6 +172,11 @@ public class KernelManager {
         kernelExecutor.submit(() -> {
             String threadName = Thread.currentThread().getName()
             log.debug("Kernel thread started: {}", threadName)
+
+            // Set up global uncaught exception handler for this thread
+            Thread.currentThread().setUncaughtExceptionHandler(
+                ai.stainless.micronaut.jupyter.kernel.GlobalUncaughtExceptionHandler.createLoggingOnlyHandler()
+            )
 
             Micronaut kernel = null
             try {

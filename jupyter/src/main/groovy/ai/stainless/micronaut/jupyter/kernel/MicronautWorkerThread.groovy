@@ -44,6 +44,15 @@ class MicronautWorkerThread implements Callable<TryResult> {
 
     @Override
     public TryResult call() {
+        // Set up uncaught exception handler for this worker thread
+        def originalHandler = Thread.currentThread().getUncaughtExceptionHandler()
+        Thread.currentThread().setUncaughtExceptionHandler(
+            new ai.stainless.micronaut.jupyter.kernel.GlobalUncaughtExceptionHandler(
+                evaluator.kernel, 
+                j.outputObject as com.twosigma.beakerx.jvm.object.SimpleEvaluationObject
+            )
+        )
+        
         TryResult r
         try {
             j.outputObject.started()
@@ -89,6 +98,9 @@ class MicronautWorkerThread implements Callable<TryResult> {
                 e.printStackTrace()
                 r = TryResult.createError(e.getLocalizedMessage())
             }
+        } finally {
+            // Restore original uncaught exception handler
+            Thread.currentThread().setUncaughtExceptionHandler(originalHandler)
         }
         return r
     }
