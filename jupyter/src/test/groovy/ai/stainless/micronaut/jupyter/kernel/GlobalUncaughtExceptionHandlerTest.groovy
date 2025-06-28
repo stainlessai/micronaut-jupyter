@@ -82,10 +82,11 @@ class GlobalUncaughtExceptionHandlerTest extends Specification {
         when: "an uncaught exception occurs"
         handler.uncaughtException(Thread.currentThread(), testException)
 
-        then: "the evaluation object should receive a formatted error message"
-        1 * mockEvaluationObject.finished({ String error ->
-            error.contains("IllegalArgumentException") && 
-            error.contains("Test formatting exception")
+        then: "the evaluation object should receive a formatted error result"
+        1 * mockEvaluationObject.finished({ result ->
+            String resultStr = result.toString()
+            resultStr.contains("IllegalArgumentException") && 
+            resultStr.contains("Test formatting exception")
         })
     }
 }
