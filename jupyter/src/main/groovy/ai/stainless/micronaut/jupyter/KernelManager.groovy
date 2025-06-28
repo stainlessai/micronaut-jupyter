@@ -244,10 +244,10 @@ public class KernelManager {
                 }
             }
 
-            // Throw exception to parent thread
-            Thread parent = Thread.currentThread().getThreadGroup().getParent();
-            if (parent != null) {
-                parent.interrupt();
+            // Interrupt parent thread group
+            ThreadGroup parentGroup = Thread.currentThread().getThreadGroup().getParent();
+            if (parentGroup != null) {
+                parentGroup.interrupt();
             }
 
             log.info("Exit prevention hook completed: {}", threadName)

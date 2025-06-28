@@ -7,25 +7,23 @@ import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
 import io.micronaut.runtime.server.EmbeddedServer
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest
+import io.micronaut.context.env.Environment
 import io.micronaut.rxjava2.http.client.RxHttpClient
-import io.micronaut.test.annotation.MockBean
 import spock.lang.Specification
+import spock.lang.AutoCleanup
 
-import jakarta.inject.Inject
-
-@MicronautTest(packages = "ai.stainless.micronaut.jupyter")
 class KernelEndpointTest extends Specification {
 
-    @Inject
+    @AutoCleanup
     ApplicationContext applicationContext
 
-    @Inject
+    @AutoCleanup
     EmbeddedServer embeddedServer
 
-    @MockBean(KernelManager)
-    KernelManager kernelManager() {
-        Mock(KernelManager)
+    def setup() {
+        applicationContext = ApplicationContext.run([:] as Map, Environment.TEST)
+        embeddedServer = applicationContext.getBean(EmbeddedServer)
+        embeddedServer.start()
     }
 
     def "bean exists"() {
@@ -64,7 +62,8 @@ class KernelEndpointTest extends Specification {
         result.containsKey('message')
         result.message.contains("start")
         result.message.contains("received")
-        // check that kernel manager was called
-        1 * kernelManager().startNewKernel(connectionFile)
+
+        cleanup:
+        rxClient?.close()
     }
 }

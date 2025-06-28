@@ -5,23 +5,24 @@ import ai.stainless.micronaut.jupyter.kernel.UnexpectedExitException
 import ai.stainless.micronaut.jupyter.kernel.KernelExitException
 import groovy.json.JsonSlurper
 import io.micronaut.context.ApplicationContext
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest
+import io.micronaut.context.env.Environment
 import spock.lang.AutoCleanup
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
-import jakarta.inject.Inject
 import org.slf4j.Logger
 
-@MicronautTest(packages = "ai.stainless.micronaut.jupyter")
 class KernelManagerTest extends Specification {
 
-    @Inject
     @AutoCleanup
     ApplicationContext applicationContext
 
-    @Inject
     KernelManager kernelManager
+
+    def setup() {
+        applicationContext = ApplicationContext.run([:] as Map, Environment.TEST)
+        kernelManager = applicationContext.getBean(KernelManager)
+    }
 
     //create conditions
     PollingConditions conditions = new PollingConditions(timeout: 10, initialDelay: 1)
