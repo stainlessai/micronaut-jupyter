@@ -142,6 +142,7 @@ def createCheckTests = { isTest ->
 }
 
 tasks.withType(Test) {
+    useJUnitPlatform()
     testLogging {
         showStandardStreams = true
     }
