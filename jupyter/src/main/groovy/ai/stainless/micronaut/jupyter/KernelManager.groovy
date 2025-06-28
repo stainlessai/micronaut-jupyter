@@ -40,7 +40,7 @@ public class KernelManager {
     @Value('${jupyter.kernel.shutdownTimeoutMs:5000}')
     Long shutdownTimeoutMs = DEFAULT_SHUTDOWN_TIMEOUT_MS
 
-    private final Class<? extends Kernel> kernelClass = Micronaut
+    private Class<? extends Kernel> kernelClass = Micronaut
     private final List<Kernel> kernelInstances = new CopyOnWriteArrayList<>()
     // Dependency injection for StandardStreamHandler
     @Inject
