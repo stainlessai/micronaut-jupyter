@@ -6,7 +6,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.BindMode
 import org.testcontainers.images.builder.ImageFromDockerfile
 import spock.lang.Shared
-import org.testcontainers.spock.Testcontainers
+import spock.lang.Specification
 import java.nio.file.Paths
 
 /**
@@ -31,8 +31,7 @@ class NotebookExecResult {
 
 }
 
-@Testcontainers
-class KernelSpec {
+class KernelSpec extends Specification {
 
     @Shared
     ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter", false)
@@ -42,11 +41,22 @@ class KernelSpec {
             .withFileFromClasspath("kernel.sh", "kernel.sh")
 
     @Shared
-    GenericContainer jupyterContainer = new GenericContainer(jupyterImage)
-            .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
-            .withFileSystemBind("/tmp", "/tmp", BindMode.READ_WRITE)
-            .withExtraHost("host.testcontainers.internal", "host-gateway")
-            .withExtraHost("host.docker.internal", "host-gateway")
+    GenericContainer jupyterContainer
+    
+    def setupSpec() {
+        jupyterContainer = new GenericContainer(jupyterImage)
+                .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
+                .withFileSystemBind("/tmp", "/tmp", BindMode.READ_WRITE)
+                .withExtraHost("host.testcontainers.internal", "host-gateway")
+                .withExtraHost("host.docker.internal", "host-gateway")
+        jupyterContainer.start()
+    }
+    
+    def cleanupSpec() {
+        if (jupyterContainer != null) {
+            jupyterContainer.stop()
+        }
+    }
 
     protected NotebookExecResult executeNotebook (String notebookName) {
         // create new result

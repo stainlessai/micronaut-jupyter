@@ -98,7 +98,20 @@ dependencies {
     testImplementation "org.objenesis:objenesis:1.4"
     testImplementation "ch.qos.logback:logback-classic:1.2.3"
 
-    integrationTestImplementation "org.testcontainers:spock:1.12.3"
+    integrationTestImplementation platform("org.testcontainers:testcontainers-bom:1.20.3")
+    integrationTestImplementation "org.testcontainers:testcontainers"
+    integrationTestImplementation "org.testcontainers:spock"
+    integrationTestImplementation "org.testcontainers:junit-jupiter"
+    
+    // Copy essential test dependencies to integration test
+    integrationTestImplementation "org.spockframework:spock-core:$spockVersion"
+    integrationTestImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+    integrationTestImplementation "io.micronaut:micronaut-http-client"
+    integrationTestImplementation "ch.qos.logback:logback-classic:1.2.3"
+    
+    // Add JUnit 5 dependencies needed for @Testcontainers
+    integrationTestImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
+    integrationTestImplementation "org.junit.jupiter:junit-jupiter-engine:5.8.2"
 
     mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
     mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
@@ -170,6 +183,19 @@ task mdTest(type: Test) {
 task basicIntegrationTest(type: Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
+    
+    // Ensure test discovery works
+    useJUnitPlatform()
+    
+    // Explicit test logging
+    testLogging {
+        events "passed", "skipped", "failed", "started"
+        showStandardStreams = true
+        exceptionFormat = "full"
+    }
+    
+    // Force test execution
+    outputs.upToDateWhen { false }
 }
 
 task unitTest(type: Test) {
