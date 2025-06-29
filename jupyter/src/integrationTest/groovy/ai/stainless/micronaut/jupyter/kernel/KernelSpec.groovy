@@ -32,7 +32,7 @@ class NotebookExecResult {
 }
 
 @Testcontainers
-class KernelSpec extends MicronautKernelSpec {
+class KernelSpec {
 
     @Shared
     ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter", false)
@@ -45,6 +45,8 @@ class KernelSpec extends MicronautKernelSpec {
     GenericContainer jupyterContainer = new GenericContainer(jupyterImage)
             .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
             .withFileSystemBind("/tmp", "/tmp", BindMode.READ_WRITE)
+            .withExtraHost("host.testcontainers.internal", "host-gateway")
+            .withExtraHost("host.docker.internal", "host-gateway")
 
     protected NotebookExecResult executeNotebook (String notebookName) {
         // create new result
