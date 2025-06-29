@@ -7,7 +7,7 @@
 FROM jupyter/base-notebook
 COPY ./notebooks/ /notebooks
 USER root
-RUN apt update && apt install -y iptables iproute2 curl jq dos2unix dnsutils iputils-ping net-tools socat
+RUN apt update && apt install -y iptables iproute2 curl jq dos2unix dnsutils iputils-ping net-tools socat procps
 
 # Create the jupyter kernel directory structure
 RUN mkdir -p /tmp/test-location/jupyter/kernels/micronaut
