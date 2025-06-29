@@ -149,10 +149,6 @@ tasks.withType(Test) {
         showStandardStreams = true
     }
     failFast = false
-    filter {
-        includeTestsMatching testsFilter
-        failOnNoMatchingTests = false
-    }
     afterSuite { desc, result ->
         if (!desc.parent) {
             testCount += result.testCount

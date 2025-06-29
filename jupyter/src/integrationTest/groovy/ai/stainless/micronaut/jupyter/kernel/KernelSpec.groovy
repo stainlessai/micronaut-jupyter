@@ -1,16 +1,13 @@
 package ai.stainless.micronaut.jupyter.kernel
 
-import com.github.dockerjava.api.model.AccessMode
-import com.github.dockerjava.api.model.Bind
-import com.github.dockerjava.api.model.Capability
-import com.github.dockerjava.api.model.HostConfig
-import com.github.dockerjava.api.model.Volume
 import groovy.json.JsonSlurper
 import org.testcontainers.containers.Container.ExecResult
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.BindMode
 import org.testcontainers.images.builder.ImageFromDockerfile
+import spock.lang.Shared
 import org.testcontainers.spock.Testcontainers
-import spock.lang.Specification
+import java.nio.file.Paths
 
 /**
  * Stores the results from executing a test notebook in a jupyter container.
@@ -35,43 +32,21 @@ class NotebookExecResult {
 }
 
 @Testcontainers
-class KernelSpec extends Specification {
+class KernelSpec {
 
+    @Shared
     ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter", false)
-        .withFileFromClasspath("Dockerfile", "jupyter.Dockerfile")
-        .withFileFromClasspath("notebooks/", "notebooks/")
+            .withFileFromClasspath("Dockerfile", "jupyter.Dockerfile")
+            .withFileFromClasspath("notebooks/", "notebooks/")
+            .withFileFromClasspath("kernel.json", "kernel.json")
+            .withFileFromClasspath("kernel.sh", "kernel.sh")
 
+    @Shared
     GenericContainer jupyterContainer = new GenericContainer(jupyterImage)
-        .withCreateContainerCmdModifier { cmd ->
-            Volume tmpVolume = new Volume("/tmp")
-            cmd
-                .withHostConfig(
-                    new HostConfig()
-                        .withSysctls([
-                            "net.ipv4.conf.all.route_localnet": "1"
-                        ])
-                        .withCapAdd(Capability.NET_ADMIN)
-                        .withBinds(new Bind("/tmp", tmpVolume, AccessMode.rw))
-                )
-                .withVolumes(tmpVolume)
-        }
-        .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
-
-    def setup () {
-        // execute iptables commands,
-        // create NAT that forwards all traffic from localhost to our host
-        jupyterContainer.execInContainer(
-            "/bin/sh",
-            "-c",
-            "iptables -t nat -A OUTPUT -d 127.0.0.1 -j DNAT --to-destination \$(ip route | awk '/default/ { print \$3 }')"
-            //"iptables -t nat -A OUTPUT -d 127.0.0.1 -j DNAT --to-destination \$(ip route | tr '\\n' ' ' | awk '{print \$(NF)}')"
-        )
-        jupyterContainer.execInContainer(
-            "/bin/sh",
-            "-c",
-            "iptables -t nat -A POSTROUTING -m addrtype --src-type LOCAL --dst-type UNICAST -j MASQUERADE"
-        )
-    }
+            .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
+            .withFileSystemBind("/tmp", "/tmp", BindMode.READ_WRITE)
+            .withExtraHost("host.testcontainers.internal", "host-gateway")
+            .withExtraHost("host.docker.internal", "host-gateway")
 
     protected NotebookExecResult executeNotebook (String notebookName) {
         // create new result

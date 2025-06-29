@@ -13,6 +13,11 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="io.micronaut.http" level="TRACE"/>
-
+    <logger name="io.micronaut.http" level="${IO_MICRONAUT_HTTP_LOG_LEVEL:-INFO}"/>
+    <logger name="ai.stainless.micronaut.jupyter.kernel" level="${AI_STAINLESS_MICRONAUT_JUPYTER_KERNEL_LOG_LEVEL:-INFO}"/>
+    <logger name="ai.stainless.micronaut.jupyter" level="${AI_STAINLESS_MICRONAUT_JUPYTER_LOG_LEVEL:-INFO}"/>
+    <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautCodeRunner" level="${MICRONAUT_CODE_RUNNER_LOG_LEVEL:-INFO}"/>
+    <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautEvaluator" level="${MICRONAUT_EVALUATOR_LOG_LEVEL:-INFO}"/>
+    <logger name="com.twosigma.beakerx.jvm.threads" level="${BEAKERX_JVM_THREADS_LOG_LEVEL:-INFO}"/>
+    <logger name="com.twosigma.beakerx.groovy.evaluator" level="${BEAKERX_GROOVY_EVALUATOR_LOG_LEVEL:-INFO}"/>
 </configuration>

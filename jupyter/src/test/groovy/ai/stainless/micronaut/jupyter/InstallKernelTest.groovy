@@ -19,7 +19,7 @@ class InstallKernelTest extends Specification {
     def kernelShName = "kernel.sh"
     def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory"
     def testKernelLocation = "$testKernels/$defaultKernelDirectory"
-    def serverUrl = "http://localhost:9999"
+    def serverUrl = "http://localhost:8080"
 
     def "bean is created"() {
         given:
@@ -36,14 +36,17 @@ class InstallKernelTest extends Specification {
 
     def "default location"() {
         given:
-        // create application context
-        ApplicationContext applicationContext = ApplicationContext.build([
-            'jupyter.kernel.install': false
-        ] as Map).deduceEnvironment(false).start()
+        // create application context with no custom location
+        ApplicationContext applicationContext = ApplicationContext.run([
+            'jupyter.kernel.install': false,
+            'jupyter.kernel.location': null
+        ])
 
-        expect:
-        //bean should have been created
-        applicationContext.getBean(InstallKernel).getKernelLocation() == "/usr/local/share/jupyter/kernels"
+        when:
+        applicationContext.getBean(InstallKernel)
+
+        then:
+        thrown(io.micronaut.context.exceptions.NoSuchBeanException)
 
         cleanup:
         applicationContext.close()

@@ -1,6 +1,7 @@
 micronaut:
   server:
-    port: 9999
+    port: 8080
+
 jupyter:
   kernel:
     location: /tmp/test-location/jupyter/kernels
