@@ -19,7 +19,7 @@ class InstallKernelTest extends Specification {
     def kernelShName = "kernel.sh"
     def defaultKernelLocation = "$defaultKernels/$defaultKernelDirectory"
     def testKernelLocation = "$testKernels/$defaultKernelDirectory"
-    def serverUrl = "http://localhost:9999"
+    def serverUrl = "http://localhost:8080"
 
     def "bean is created"() {
         given:

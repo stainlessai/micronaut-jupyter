@@ -1,10 +1,7 @@
 micronaut:
-  application:
-    name: micronaut-jupyter-test
   server:
-    port: 9999
+    port: 8080
+
 jupyter:
   kernel:
-    install: true
     location: /tmp/test-location/jupyter/kernels
-  server-url: http://localhost:9999

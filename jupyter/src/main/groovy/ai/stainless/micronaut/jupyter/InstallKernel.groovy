@@ -4,6 +4,7 @@ import groovy.json.JsonBuilder
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Context
+import io.micronaut.context.annotation.Requires
 import io.micronaut.context.annotation.Value
 import io.micronaut.management.endpoint.annotation.Endpoint
 import io.micronaut.runtime.server.EmbeddedServer
@@ -17,6 +18,7 @@ import java.nio.file.Files
  */
 @Slf4j
 @Context
+@Requires(property = "jupyter.kernel.install", value = "true", defaultValue = "true")
 public class InstallKernel {
 
     @Inject
