@@ -170,6 +170,15 @@ public class Micronaut extends Groovy {
 
         if (args != null && args.length > 0) {
             log.info("Received args: {}", String.join(", ", args));
+            
+            // Print contents of the first arg if it's a file path
+            String filePath = args[0];
+            try {
+                java.io.File file = new java.io.File(filePath);
+                log.info("Contents of file '{}': {}", filePath, java.nio.file.Files.readString(java.nio.file.Path.of(filePath)));
+            } catch (Exception e) {
+                log.warn("Could not read file '{}': {}", filePath, e.getMessage());
+            }
         } else {
             log.warn("No args provided to kernel");
         }

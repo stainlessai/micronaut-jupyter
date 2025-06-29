@@ -67,7 +67,9 @@ class KernelSpec extends Specification {
         if (!basicServiceJar.exists()) {
             throw new RuntimeException("Required JAR file not found: ${basicServiceJarPath}. Run 'gradle assemble' to build the test jars before running integration tests.")
         }
-        
+
+        def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "tmp", "test-location", "jupyter", "kernels", "micronaut").toString()
+
         micronautContainer = new GenericContainer("openjdk:17-jdk-slim", )
                 .withNetwork(testNetwork)
                 .withNetworkAliases("micronaut-server")
@@ -79,6 +81,9 @@ class KernelSpec extends Specification {
                         testStartupScriptPath,
                         0774),
                         "/app/test-startup.sh")
+                .withFileSystemBind(
+                        kernelDir,
+                        "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
                 .withWorkingDirectory("/app")
                 .withCommand("/bin/sh", "-c", "apt-get update && apt-get install -y net-tools procps && /app/test-startup.sh")
                 .withExposedPorts(8080)
@@ -120,7 +125,6 @@ class KernelSpec extends Specification {
         // into the container.
         // X Dockerfile COPY and .withFileFromPath <- Not working
         // X withCopyToContainer <- Not working
-        def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "tmp", "test-location", "jupyter", "kernels", "micronaut").toString()
         jupyterContainer = new GenericContainer(jupyterImage)
                 .withNetwork(testNetwork)
                 .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
@@ -143,7 +147,7 @@ class KernelSpec extends Specification {
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
         def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${micronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
-        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout + " stderr=" + socatResult.stderr)
+        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
 
         // Give socat a moment to start
         Thread.sleep(2000)
@@ -180,17 +184,9 @@ class KernelSpec extends Specification {
     }
 
     protected NotebookExecResult executeNotebook(String notebookName) {
-        //
-        // FIXME NETWORK CHANGES WHEN THIS IS CALLED AND SUDDENLY THINGS AREN'T RESPONDING
-        //
         // create new result
         NotebookExecResult result = new NotebookExecResult()
 
-        // Debug: Check container states
-        System.err.println("DEBUG: === Container State Check ===")
-        System.err.println("DEBUG: Micronaut container running: " + micronautContainer.isRunning())
-        System.err.println("DEBUG: Jupyter container running: " + jupyterContainer.isRunning())
-        
         // Debug: Check current Micronaut container IP
         def networkSettings = micronautContainer.getContainerInfo().getNetworkSettings()
         String currentMicronautIp = networkSettings.getNetworks()
@@ -199,7 +195,16 @@ class KernelSpec extends Specification {
                 .next()
                 .getIpAddress()
         System.err.println("DEBUG: Current Micronaut IP: " + currentMicronautIp)
-        
+
+        //
+        // UNCOMMENT THIS SECTION TO DEBUG CONTAINER AND NETWORK STATES
+        //
+
+        // Debug: Check container states
+//        System.err.println("DEBUG: === Container State Check ===")
+//        System.err.println("DEBUG: Micronaut container running: " + micronautContainer.isRunning())
+//        System.err.println("DEBUG: Jupyter container running: " + jupyterContainer.isRunning())
+
         // Debug: Check if anything is listening on port 8080 in Micronaut container
 //        def netstatResult = micronautContainer.execInContainer("/bin/sh", "-c", "netstat -ln 2>/dev/null || ss -ln 2>/dev/null || echo 'No netstat/ss available'")
 //        System.err.println("DEBUG: Network listening ports in Micronaut container:")
@@ -275,10 +280,14 @@ class KernelSpec extends Specification {
 //            }
 //        }
 
+        //
+        // END - UNCOMMENT THIS SECTION TO DEBUG CONTAINER AND NETWORK STATES
+        //
+
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
         def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${currentMicronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
-        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout + " stderr=" + socatResult.stderr)
+        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
 
         // Give socat a moment to start
         Thread.sleep(2000)
@@ -297,9 +306,9 @@ class KernelSpec extends Specification {
         System.err.println("DEBUG: Starting jupyter nb-convert in background to trigger kernel startup...")
         
         // Start nbconvert in background with a timeout
-//        def nbconvertCmd = "timeout 30 jupyter nbconvert --debug --to notebook --execute /notebooks/${notebookName}.ipynb"
-//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
-//        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
+        def nbconvertCmd = "timeout 30 jupyter nbconvert --debug --to notebook --execute /notebooks/${notebookName}.ipynb --output /notebooks/${notebookName}.nbconvert.ipynb"
+        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
+        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
         
         // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
         Thread.sleep(10000)
@@ -311,11 +320,11 @@ class KernelSpec extends Specification {
         
         // Only check ports if Micronaut container is still running
         if (micronautContainer.isRunning()) {
-            def netstatAfterKernel = micronautContainer.execInContainer("/bin/sh", "-c", "netstat -ln")
-            System.err.println("DEBUG: All network ports after kernel start request:")
-            System.err.println(netstatAfterKernel.stdout)
+//            def netstatAfterKernel = micronautContainer.execInContainer("/bin/sh", "-c", "netstat -ln")
+//            System.err.println("DEBUG: All network ports after kernel start request:")
+//            System.err.println(netstatAfterKernel.stdout)
         } else {
-            System.err.println("DEBUG: Micronaut container has stopped - cannot check ports")
+            System.err.println("ERROR: Micronaut container has stopped - cannot check ports")
             // Get final logs before it died
             String finalLogs = micronautContainer.getLogs()
             System.err.println("DEBUG: Final Micronaut container logs:")
@@ -334,13 +343,16 @@ class KernelSpec extends Specification {
         Thread.sleep(10000)
         
         // Check if the background process completed successfully
-//        def processCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "pgrep -f 'jupyter nbconvert' || echo 'process completed'")
-//        System.err.println("DEBUG: Background process check: " + processCheck.stdout)
+        def processCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "pgrep -f 'jupyter nbconvert' || echo 'process completed'")
+        System.err.println("DEBUG: Background process check: " + processCheck.stdout)
         
         // Check final nbconvert logs again after waiting
-//        def finalNbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
-//        System.err.println("DEBUG: Final nbconvert logs after waiting:")
-//        System.err.println(finalNbconvertLogs.stdout)
+        //
+        // FIXME Micronaut is expecting this file on the local machine, it's why we shared /tmp before...
+        //
+        def finalNbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
+        System.err.println("DEBUG: Final nbconvert logs after waiting:")
+        System.err.println(finalNbconvertLogs.stdout)
         
         // List all files in notebooks directory to see what was created
 //        def notebookFiles = jupyterContainer.execInContainer("ls", "-la", "/notebooks/")
