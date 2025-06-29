@@ -118,6 +118,8 @@ dependencies {
     mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
     mdTestRuntimeOnly "com.h2database:h2:1.4.200"
 
+    testRuntimeOnly("org.yaml:snakeyaml")
+
 //    gormTestImplementation "io.micronaut.configuration:micronaut-hibernate-gorm:1.1.1"
 //    gormTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
 //    // For some reason, the gorm tests would fail with a NullPointerException

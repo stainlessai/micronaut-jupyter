@@ -54,17 +54,30 @@ class KernelSpec extends Specification {
         // Create shared network for containers to communicate
         testNetwork = Network.newNetwork()
 
+        //
+        // FIXME remove hardcoded developer path
+        // FIXME build new jar or put on classpath
+        //
         // Start Micronaut server in container using basic-service example
-        micronautContainer = new GenericContainer("openjdk:17-jdk-slim")
+        micronautContainer = new GenericContainer("openjdk:17-jdk-slim", )
                 .withNetwork(testNetwork)
                 .withNetworkAliases("micronaut-server")
                 .withClasspathResourceMapping("application-integration.yml", "/app/application.yml", BindMode.READ_ONLY)
-                .withFileSystemBind("/Users/dstieglitz/idea-projects/micronaut-jupyter/examples/basic-service/build/libs", "/app/libs", BindMode.READ_ONLY)
+                .withCopyFileToContainer(
+                        MountableFile.forHostPath("/Users/dstieglitz/idea-projects/micronaut-jupyter/examples/basic-service/build/libs/basic-service-0.1-all.jar",),
+                        "/app/libs/basic-service-0.1-all.jar")
+                .withCopyFileToContainer(MountableFile.forHostPath(
+                        "/Users/dstieglitz/idea-projects/micronaut-jupyter/jupyter/src/test/resources/test-startup.sh",
+                        0774),
+                        "/app/test-startup.sh")
                 .withWorkingDirectory("/app")
-                .withCommand("java", "-jar", "libs/basic-service-0.1-all.jar")
+                .withCommand("/app/test-startup.sh")
                 .withExposedPorts(8080)
                 .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
         micronautContainer.start()
+
+        // FIXME the container needs to start to copy the files in, but Micronaut may start before
+        //  that's possible
 
         // Get the container IP from the shared network
         def networkSettings = micronautContainer.getContainerInfo().getNetworkSettings()
@@ -78,47 +91,47 @@ class KernelSpec extends Specification {
 
         System.err.println("DEBUG: Micronaut container IP: " + micronautIp)
 
-        // Create custom application config with correct server URL
-        String customConfig = """
-micronaut:
-  server:
-    port: 8080
-    host: 0.0.0.0
-  management:
-    endpoints:
-      health:
-        enabled: true
-        sensitive: false
-      all:
-        enabled: true
-        sensitive: false
-
-jupyter:
-  kernel:
-    install: true
-    location: /tmp/test-location/jupyter/kernels
-  server-url: http://${micronautIp}:8080
-"""
-
-        // Write config to temporary file
-        File tempConfigFile = File.createTempFile("micronaut-config-", ".yml")
-        tempConfigFile.write(customConfig)
-        tempConfigFile.deleteOnExit()
-
-        // Stop the container to restart with correct config
-        micronautContainer.stop()
-
-        // Restart with custom config
-        micronautContainer = new GenericContainer("openjdk:17-jdk-slim")
-                .withNetwork(testNetwork)
-                .withNetworkAliases("micronaut-server")
-                .withFileSystemBind(tempConfigFile.absolutePath, "/app/application.yml", BindMode.READ_ONLY)
-                .withFileSystemBind("/Users/dstieglitz/idea-projects/micronaut-jupyter/examples/basic-service/build/libs", "/app/libs", BindMode.READ_ONLY)
-                .withWorkingDirectory("/app")
-                .withCommand("java", "-jar", "libs/basic-service-0.1-all.jar")
-                .withExposedPorts(8080)
-                .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
-        micronautContainer.start()
+//        // Create custom application config with correct server URL
+//        String customConfig = """
+//micronaut:
+//  server:
+//    port: 8080
+//    host: 0.0.0.0
+//  management:
+//    endpoints:
+//      health:
+//        enabled: true
+//        sensitive: false
+//      all:
+//        enabled: true
+//        sensitive: false
+//
+//jupyter:
+//  kernel:
+//    install: true
+//    location: /tmp/test-location/jupyter/kernels
+//  server-url: http://${micronautIp}:8080
+//"""
+//
+//        // Write config to temporary file
+//        File tempConfigFile = File.createTempFile("micronaut-config-", ".yml")
+//        tempConfigFile.write(customConfig)
+//        tempConfigFile.deleteOnExit()
+//
+//        // Stop the container to restart with correct config
+//        micronautContainer.stop()
+//
+//        // Restart with custom config
+//        micronautContainer = new GenericContainer("openjdk:17-jdk-slim")
+//                .withNetwork(testNetwork)
+//                .withNetworkAliases("micronaut-server")
+//                .withFileSystemBind(tempConfigFile.absolutePath, "/app/application.yml", BindMode.READ_ONLY)
+//                .withFileSystemBind("/Users/dstieglitz/idea-projects/micronaut-jupyter/examples/basic-service/build/libs", "/app/libs", BindMode.READ_ONLY)
+//                .withWorkingDirectory("/app")
+//                .withCommand("java", "-jar", "libs/basic-service-0.1-all.jar")
+//                .withExposedPorts(8080)
+//                .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
+//        micronautContainer.start()
 
         // Debug: Check Micronaut logs to see if InstallKernel ran
         String micronautLogs = micronautContainer.getLogs()
@@ -129,9 +142,14 @@ jupyter:
 //        def kernelFilesCheck = micronautContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
 //        System.err.println("DEBUG: Kernel files in Micronaut container: " + kernelFilesCheck.stdout + kernelFilesCheck.stderr)
 //
-//        // Check the shared /tmp directory
-//        def sharedTmpCheck = micronautContainer.execInContainer("ls", "-la", "/tmp")
-//        System.err.println("DEBUG: /tmp directory in Micronaut container: " + sharedTmpCheck.stdout)
+        // Check the shared /tmp directory
+        def whoami = micronautContainer.execInContainer("whoami")
+        System.err.println("DEBUG: whoami: " + whoami.stdout)
+
+        def sharedTmpCheck = micronautContainer.execInContainer("ls", "-la", "/app")
+        System.err.println("DEBUG: /app directory in Micronaut container: " + sharedTmpCheck.stdout)
+        def app_config_check = micronautContainer.execInContainer("cat", "/app/application.yml")
+        System.err.println("DEBUG: /app/application.yml: " + app_config_check.stdout)
 
         // Start Jupyter container connected to same network
         // the "withFileSystemBind" was the ONLY WAY to get kernel.json and kernel.sh
