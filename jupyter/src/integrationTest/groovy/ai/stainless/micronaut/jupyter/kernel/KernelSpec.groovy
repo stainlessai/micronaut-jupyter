@@ -85,80 +85,35 @@ class KernelSpec extends Specification {
                 .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
         micronautContainer.start()
 
-        // FIXME the container needs to start to copy the files in, but Micronaut may start before
-        //  that's possible
-
         // Get the container IP from the shared network
         def networkSettings = micronautContainer.getContainerInfo().getNetworkSettings()
-        System.err.println("DEBUG: Available networks: " + networkSettings.getNetworks().keySet())
-
+//        System.err.println("DEBUG: Available networks: " + networkSettings.getNetworks().keySet())
+//
         String micronautIp = networkSettings.getNetworks()
                 .values()
                 .iterator()
                 .next()
                 .getIpAddress()
-
-        System.err.println("DEBUG: Micronaut container IP: " + micronautIp)
-
-//        // Create custom application config with correct server URL
-//        String customConfig = """
-//micronaut:
-//  server:
-//    port: 8080
-//    host: 0.0.0.0
-//  management:
-//    endpoints:
-//      health:
-//        enabled: true
-//        sensitive: false
-//      all:
-//        enabled: true
-//        sensitive: false
 //
-//jupyter:
-//  kernel:
-//    install: true
-//    location: /tmp/test-location/jupyter/kernels
-//  server-url: http://${micronautIp}:8080
-//"""
+//        System.err.println("DEBUG: Micronaut container IP: " + micronautIp)
 //
-//        // Write config to temporary file
-//        File tempConfigFile = File.createTempFile("micronaut-config-", ".yml")
-//        tempConfigFile.write(customConfig)
-//        tempConfigFile.deleteOnExit()
-//
-//        // Stop the container to restart with correct config
-//        micronautContainer.stop()
-//
-//        // Restart with custom config
-//        micronautContainer = new GenericContainer("openjdk:17-jdk-slim")
-//                .withNetwork(testNetwork)
-//                .withNetworkAliases("micronaut-server")
-//                .withFileSystemBind(tempConfigFile.absolutePath, "/app/application.yml", BindMode.READ_ONLY)
-//                .withFileSystemBind("/Users/dstieglitz/idea-projects/micronaut-jupyter/examples/basic-service/build/libs", "/app/libs", BindMode.READ_ONLY)
-//                .withWorkingDirectory("/app")
-//                .withCommand("java", "-jar", "libs/basic-service-0.1-all.jar")
-//                .withExposedPorts(8080)
-//                .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
-//        micronautContainer.start()
-
-        // Debug: Check Micronaut logs to see if InstallKernel ran
-        String micronautLogs = micronautContainer.getLogs()
-        System.err.println("DEBUG: Micronaut container logs:")
-        System.err.println(micronautLogs)
+//        // Debug: Check Micronaut logs to see if InstallKernel ran
+//        String micronautLogs = micronautContainer.getLogs()
+//        System.err.println("DEBUG: Micronaut container logs:")
+//        System.err.println(micronautLogs)
 
 //        // Debug: Check if kernel files were created by InstallKernel
 //        def kernelFilesCheck = micronautContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
 //        System.err.println("DEBUG: Kernel files in Micronaut container: " + kernelFilesCheck.stdout + kernelFilesCheck.stderr)
 //
         // Check the shared /tmp directory
-        def whoami = micronautContainer.execInContainer("whoami")
-        System.err.println("DEBUG: whoami: " + whoami.stdout)
+//        def whoami = micronautContainer.execInContainer("whoami")
+//        System.err.println("DEBUG: whoami: " + whoami.stdout)
 
-        def sharedTmpCheck = micronautContainer.execInContainer("ls", "-la", "/app")
-        System.err.println("DEBUG: /app directory in Micronaut container: " + sharedTmpCheck.stdout)
-        def app_config_check = micronautContainer.execInContainer("cat", "/app/application.yml")
-        System.err.println("DEBUG: /app/application.yml: " + app_config_check.stdout)
+//        def sharedTmpCheck = micronautContainer.execInContainer("ls", "-la", "/app")
+//        System.err.println("DEBUG: /app directory in Micronaut container: " + sharedTmpCheck.stdout)
+//        def app_config_check = micronautContainer.execInContainer("cat", "/app/application.yml")
+//        System.err.println("DEBUG: /app/application.yml: " + app_config_check.stdout)
 
         // Start Jupyter container connected to same network
         // the "withFileSystemBind" was the ONLY WAY to get kernel.json and kernel.sh
@@ -182,8 +137,8 @@ class KernelSpec extends Specification {
         System.err.println("DEBUG: Setting up port forwarding from localhost:8080 to micronaut-server:8080")
 
         // Test direct connection to micronaut-server first
-        def directTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
-        System.err.println("DEBUG: Direct connection test: exitCode=" + directTest.exitCode + " stdout=" + directTest.stdout + " stderr=" + directTest.stderr)
+        // def directTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
+        // System.err.println("DEBUG: Direct connection test: exitCode=" + directTest.exitCode + " stdout=" + directTest.stdout + " stderr=" + directTest.stderr)
 
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
@@ -194,9 +149,9 @@ class KernelSpec extends Specification {
         Thread.sleep(2000)
 
         // Test the port forwarding
-        System.err.println("DEBUG: Test port forwarding from localhost:8080 to micronaut-server:8080")
-        def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
-        System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
+        // System.err.println("DEBUG: Test port forwarding from localhost:8080 to micronaut-server:8080")
+        // def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
+        // System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
 
         // Test the Jupiter kernel endpoint specifically
 //        System.err.println("DEBUG: Test calling jupyterkernel start")
@@ -204,12 +159,12 @@ class KernelSpec extends Specification {
 //        System.err.println("DEBUG: Kernel endpoint test: exitCode=" + kernelEndpointTest.exitCode + " stdout=" + kernelEndpointTest.stdout + " stderr=" + kernelEndpointTest.stderr)
 
         // Debug: Check shared /tmp directory in Jupyter container
-        def jupyterTmpCheck = jupyterContainer.execInContainer("ls", "-la", "/tmp")
-        System.err.println("DEBUG: /tmp directory in Jupyter container: " + jupyterTmpCheck.stdout)
+        // def jupyterTmpCheck = jupyterContainer.execInContainer("ls", "-la", "/tmp")
+        // System.err.println("DEBUG: /tmp directory in Jupyter container: " + jupyterTmpCheck.stdout)
 
         // Debug: Check if the kernel files exist in the Jupyter container
-        def jupyterKernelCheck = jupyterContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
-        System.err.println("DEBUG: Kernel files in Jupyter container: " + jupyterKernelCheck.stdout + jupyterKernelCheck.stderr)
+        // def jupyterKernelCheck = jupyterContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
+        // System.err.println("DEBUG: Kernel files in Jupyter container: " + jupyterKernelCheck.stdout + jupyterKernelCheck.stderr)
     }
 
     def cleanupSpec() {
@@ -246,79 +201,79 @@ class KernelSpec extends Specification {
         System.err.println("DEBUG: Current Micronaut IP: " + currentMicronautIp)
         
         // Debug: Check if anything is listening on port 8080 in Micronaut container
-        def netstatResult = micronautContainer.execInContainer("/bin/sh", "-c", "netstat -ln 2>/dev/null || ss -ln 2>/dev/null || echo 'No netstat/ss available'")
-        System.err.println("DEBUG: Network listening ports in Micronaut container:")
-        System.err.println(netstatResult.stdout)
+//        def netstatResult = micronautContainer.execInContainer("/bin/sh", "-c", "netstat -ln 2>/dev/null || ss -ln 2>/dev/null || echo 'No netstat/ss available'")
+//        System.err.println("DEBUG: Network listening ports in Micronaut container:")
+//        System.err.println(netstatResult.stdout)
         
         // Debug: Check current Micronaut container logs
-        String currentMicronautLogs = micronautContainer.getLogs()
-        System.err.println("DEBUG: Current Micronaut container logs:")
-        System.err.println(currentMicronautLogs.split('\n').takeRight(20).join('\n')) // Last 20 lines
+//        String currentMicronautLogs = micronautContainer.getLogs()
+//        System.err.println("DEBUG: Current Micronaut container logs:")
+//        System.err.println(currentMicronautLogs.split('\n').takeRight(20).join('\n')) // Last 20 lines
         
         // Debug: Check if Java process is running
-        def javaProcessCheck = micronautContainer.execInContainer("/bin/sh", "-c", "pgrep java || echo 'No java process found'")
-        System.err.println("DEBUG: Java process check in Micronaut container:")
-        System.err.println(javaProcessCheck.stdout)
+//        def javaProcessCheck = micronautContainer.execInContainer("/bin/sh", "-c", "pgrep java || echo 'No java process found'")
+//        System.err.println("DEBUG: Java process check in Micronaut container:")
+//        System.err.println(javaProcessCheck.stdout)
         
         // Debug: Check existing socat processes in Jupyter container
-        def socatCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "ps aux | grep socat || echo 'No socat processes found'")
-        System.err.println("DEBUG: Existing socat processes in Jupyter container:")
-        System.err.println(socatCheck.stdout)
+//        def socatCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "ps aux | grep socat || echo 'No socat processes found'")
+//        System.err.println("DEBUG: Existing socat processes in Jupyter container:")
+//        System.err.println(socatCheck.stdout)
         
         // Debug: Test DNS resolution for micronaut-server
-        def nslookupResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nslookup micronaut-server || echo 'DNS lookup failed'")
-        System.err.println("DEBUG: DNS resolution for micronaut-server:")
-        System.err.println(nslookupResult.stdout)
+//        def nslookupResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nslookup micronaut-server || echo 'DNS lookup failed'")
+//        System.err.println("DEBUG: DNS resolution for micronaut-server:")
+//        System.err.println(nslookupResult.stdout)
         
         // Debug: Test direct connectivity to new IP
-        def directIpTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://${currentMicronautIp}:8080/health")
-        System.err.println("DEBUG: Direct IP connection test to ${currentMicronautIp}: exitCode=" + directIpTest.exitCode + " stdout=" + directIpTest.stdout + " stderr=" + directIpTest.stderr)
+//        def directIpTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://${currentMicronautIp}:8080/health")
+//        System.err.println("DEBUG: Direct IP connection test to ${currentMicronautIp}: exitCode=" + directIpTest.exitCode + " stdout=" + directIpTest.stdout + " stderr=" + directIpTest.stderr)
         
         // Debug: Test micronaut-server hostname connectivity  
-        def hostnameTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
-        System.err.println("DEBUG: Hostname connection test to micronaut-server: exitCode=" + hostnameTest.exitCode + " stdout=" + hostnameTest.stdout + " stderr=" + hostnameTest.stderr)
+//        def hostnameTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
+//        System.err.println("DEBUG: Hostname connection test to micronaut-server: exitCode=" + hostnameTest.exitCode + " stdout=" + hostnameTest.stdout + " stderr=" + hostnameTest.stderr)
 
         // Debug: check environment variables
-        def envCheck = jupyterContainer.execInContainer("env")
-        System.err.println("DEBUG: Container environment variables:")
-        System.err.println(envCheck.stdout)
+//        def envCheck = jupyterContainer.execInContainer("env")
+//        System.err.println("DEBUG: Container environment variables:")
+//        System.err.println(envCheck.stdout)
 
-        def kernelspecCheck = jupyterContainer.execInContainer("/bin/sh",
-                "-c", "jupyter kernelspec list")
-        System.err.println("DEBUG: Kernelspec check:")
-        System.err.println(kernelspecCheck.stdout)
+//        def kernelspecCheck = jupyterContainer.execInContainer("/bin/sh",
+//                "-c", "jupyter kernelspec list")
+//        System.err.println("DEBUG: Kernelspec check:")
+//        System.err.println(kernelspecCheck.stdout)
 
         // Debug: dump contents of all files in kernels directory
-        def kernelDirsCheck = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "d")
-        System.err.println("DEBUG: Kernel directories:")
-        System.err.println(kernelDirsCheck.stdout)
+//        def kernelDirsCheck = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "d")
+//        System.err.println("DEBUG: Kernel directories:")
+//        System.err.println(kernelDirsCheck.stdout)
 
-        def allKernelFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "f")
-        System.err.println("DEBUG: All kernel files:")
-        System.err.println(allKernelFiles.stdout)
+//        def allKernelFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "f")
+//        System.err.println("DEBUG: All kernel files:")
+//        System.err.println(allKernelFiles.stdout)
 
         // Dump content of each file
-        def kernelShFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.sh")
-        def shFiles = kernelShFiles.stdout.trim().split('\n')
-        for (String shFile : shFiles) {
-            if (shFile.trim()) {
-                def shContent = jupyterContainer.execInContainer("cat", shFile.trim())
-                System.err.println("DEBUG: Content of ${shFile}:")
-                System.err.println(shContent.stdout)
-                System.err.println("-----")
-            }
-        }
+//        def kernelShFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.sh")
+//        def shFiles = kernelShFiles.stdout.trim().split('\n')
+//        for (String shFile : shFiles) {
+//            if (shFile.trim()) {
+//                def shContent = jupyterContainer.execInContainer("cat", shFile.trim())
+//                System.err.println("DEBUG: Content of ${shFile}:")
+//                System.err.println(shContent.stdout)
+//                System.err.println("-----")
+//            }
+//        }
 
-        def kernelJsonFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.json")
-        def jsonFiles = kernelJsonFiles.stdout.trim().split('\n')
-        for (String jsonFile : jsonFiles) {
-            if (jsonFile.trim()) {
-                def jsonContent = jupyterContainer.execInContainer("cat", jsonFile.trim())
-                System.err.println("DEBUG: Content of ${jsonFile}:")
-                System.err.println(jsonContent.stdout)
-                System.err.println("-----")
-            }
-        }
+//        def kernelJsonFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.json")
+//        def jsonFiles = kernelJsonFiles.stdout.trim().split('\n')
+//        for (String jsonFile : jsonFiles) {
+//            if (jsonFile.trim()) {
+//                def jsonContent = jupyterContainer.execInContainer("cat", jsonFile.trim())
+//                System.err.println("DEBUG: Content of ${jsonFile}:")
+//                System.err.println(jsonContent.stdout)
+//                System.err.println("-----")
+//            }
+//        }
 
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
@@ -328,31 +283,31 @@ class KernelSpec extends Specification {
         // Give socat a moment to start
         Thread.sleep(2000)
 
-        def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
-        System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
+//        def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
+//        System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
 
         // Test health endpoint specifically with verbose output
-        def healthTest = jupyterContainer.execInContainer("curl", "-v", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
-        System.err.println("DEBUG: Health endpoint test: exitCode=" + healthTest.exitCode + " stdout=" + healthTest.stdout + " stderr=" + healthTest.stderr)
-
-        if (healthTest.exitCode != 0) {
-            throw new Exception("Health check failed, can't connect to micronaut-server from jupyter server")
-        }
+//        def healthTest = jupyterContainer.execInContainer("curl", "-v", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
+//        System.err.println("DEBUG: Health endpoint test: exitCode=" + healthTest.exitCode + " stdout=" + healthTest.stdout + " stderr=" + healthTest.stderr)
+//
+//        if (healthTest.exitCode != 0) {
+//            throw new Exception("Health check failed, can't connect to micronaut-server from jupyter server")
+//        }
 
         System.err.println("DEBUG: Starting jupyter nb-convert in background to trigger kernel startup...")
         
         // Start nbconvert in background with a timeout
-        def nbconvertCmd = "timeout 30 jupyter nbconvert --debug --to notebook --execute /notebooks/${notebookName}.ipynb"
-        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
-        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
+//        def nbconvertCmd = "timeout 30 jupyter nbconvert --debug --to notebook --execute /notebooks/${notebookName}.ipynb"
+//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
+//        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
         
         // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
         Thread.sleep(10000)
         
         // Check container states before attempting netstat
-        System.err.println("DEBUG: Container states after kernel start attempt:")
-        System.err.println("DEBUG: Micronaut container running: " + micronautContainer.isRunning())
-        System.err.println("DEBUG: Jupyter container running: " + jupyterContainer.isRunning())
+//        System.err.println("DEBUG: Container states after kernel start attempt:")
+//        System.err.println("DEBUG: Micronaut container running: " + micronautContainer.isRunning())
+//        System.err.println("DEBUG: Jupyter container running: " + jupyterContainer.isRunning())
         
         // Only check ports if Micronaut container is still running
         if (micronautContainer.isRunning()) {
@@ -368,34 +323,34 @@ class KernelSpec extends Specification {
         }
         
         // Check nbconvert logs from the asynchronous call
-        def nbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
-        System.err.println("DEBUG: nbconvert logs from asynchronous execution:")
-        System.err.println(nbconvertLogs.stdout)
-        System.err.println("DEBUG: nbconvert stderr from asynchronous execution:")
-        System.err.println(nbconvertLogs.stderr)
+//        def nbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
+//        System.err.println("DEBUG: nbconvert logs from asynchronous execution:")
+//        System.err.println(nbconvertLogs.stdout)
+//        System.err.println("DEBUG: nbconvert stderr from asynchronous execution:")
+//        System.err.println(nbconvertLogs.stderr)
         
         // Wait longer for the asynchronous notebook execution to complete
         System.err.println("DEBUG: Waiting for asynchronous notebook execution to complete...")
-        Thread.sleep(20000)
+        Thread.sleep(10000)
         
         // Check if the background process completed successfully
-        def processCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "pgrep -f 'jupyter nbconvert' || echo 'process completed'")
-        System.err.println("DEBUG: Background process check: " + processCheck.stdout)
+//        def processCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "pgrep -f 'jupyter nbconvert' || echo 'process completed'")
+//        System.err.println("DEBUG: Background process check: " + processCheck.stdout)
         
         // Check final nbconvert logs again after waiting
-        def finalNbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
-        System.err.println("DEBUG: Final nbconvert logs after waiting:")
-        System.err.println(finalNbconvertLogs.stdout)
+//        def finalNbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
+//        System.err.println("DEBUG: Final nbconvert logs after waiting:")
+//        System.err.println(finalNbconvertLogs.stdout)
         
         // List all files in notebooks directory to see what was created
-        def notebookFiles = jupyterContainer.execInContainer("ls", "-la", "/notebooks/")
-        System.err.println("DEBUG: All files in /notebooks/ directory:")
-        System.err.println(notebookFiles.stdout)
+//        def notebookFiles = jupyterContainer.execInContainer("ls", "-la", "/notebooks/")
+//        System.err.println("DEBUG: All files in /notebooks/ directory:")
+//        System.err.println(notebookFiles.stdout)
         
         // Check for any .ipynb files with different names
-        def ipynbFiles = jupyterContainer.execInContainer("/bin/sh", "-c", "find /notebooks/ -name '*.ipynb' -type f")
-        System.err.println("DEBUG: All .ipynb files found:")
-        System.err.println(ipynbFiles.stdout)
+//        def ipynbFiles = jupyterContainer.execInContainer("/bin/sh", "-c", "find /notebooks/ -name '*.ipynb' -type f")
+//        System.err.println("DEBUG: All .ipynb files found:")
+//        System.err.println(ipynbFiles.stdout)
         
         // Try to get output from the expected file first, then try other possible names
         result.outResult = jupyterContainer.execInContainer("cat", "/notebooks/${notebookName}.nbconvert.ipynb")
