@@ -1,8 +1,5 @@
 package ai.stainless.micronaut.jupyter.kernel
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-
-@MicronautTest
 class BasicGroovyTest extends KernelSpec {
 
     def "executes a Groovy notebook" () {
