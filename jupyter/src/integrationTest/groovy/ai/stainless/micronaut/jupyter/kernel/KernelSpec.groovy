@@ -54,20 +54,29 @@ class KernelSpec extends Specification {
         // Create shared network for containers to communicate
         testNetwork = Network.newNetwork()
 
-        //
-        // FIXME remove hardcoded developer path
-        // FIXME build new jar or put on classpath
-        //
         // Start Micronaut server in container using basic-service example
+        // Use relative paths from project root
+        def currentDir = System.getProperty("user.dir")
+        // When running from gradle, working directory is the jupyter subproject, so go up one level
+        def projectRoot = currentDir.endsWith("/jupyter") ? new File(currentDir).getParent() : currentDir
+        def basicServiceJarPath = Paths.get(projectRoot, "examples", "basic-service", "build", "libs", "basic-service-0.1-all.jar").toString()
+        def testStartupScriptPath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "test-startup.sh").toString()
+        
+        // Check if the basic-service JAR exists
+        def basicServiceJar = new File(basicServiceJarPath)
+        if (!basicServiceJar.exists()) {
+            throw new RuntimeException("Required JAR file not found: ${basicServiceJarPath}. Run 'gradle assemble' to build the test jars before running integration tests.")
+        }
+        
         micronautContainer = new GenericContainer("openjdk:17-jdk-slim", )
                 .withNetwork(testNetwork)
                 .withNetworkAliases("micronaut-server")
                 .withClasspathResourceMapping("application-integration.yml", "/app/application.yml", BindMode.READ_ONLY)
                 .withCopyFileToContainer(
-                        MountableFile.forHostPath("/Users/dstieglitz/idea-projects/micronaut-jupyter/examples/basic-service/build/libs/basic-service-0.1-all.jar",),
+                        MountableFile.forHostPath(basicServiceJarPath),
                         "/app/libs/basic-service-0.1-all.jar")
                 .withCopyFileToContainer(MountableFile.forHostPath(
-                        "/Users/dstieglitz/idea-projects/micronaut-jupyter/jupyter/src/test/resources/test-startup.sh",
+                        testStartupScriptPath,
                         0774),
                         "/app/test-startup.sh")
                 .withWorkingDirectory("/app")
@@ -156,13 +165,13 @@ class KernelSpec extends Specification {
         // into the container.
         // X Dockerfile COPY and .withFileFromPath <- Not working
         // X withCopyToContainer <- Not working
+        def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "tmp", "test-location", "jupyter", "kernels", "micronaut").toString()
         jupyterContainer = new GenericContainer(jupyterImage)
                 .withNetwork(testNetwork)
                 .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
                 .withEnv("JUPYTER_SERVER", "http://${micronautIp}:8080")
                 .withFileSystemBind(
-                        Paths.get("src/test/resources/tmp/test-location/jupyter/kernels/micronaut")
-                                .toAbsolutePath().toString(),
+                        kernelDir,
                         "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
         jupyterContainer.start()
 
