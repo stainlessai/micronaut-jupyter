@@ -196,6 +196,10 @@ class KernelSpec extends Specification {
         def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
         System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
 
+        // Test the Jupiter kernel endpoint specifically
+        def kernelEndpointTest = jupyterContainer.execInContainer("curl", "-v", "--connect-timeout", "5", "--max-time", "10", "-X", "POST", "http://micronaut-server:8080/jupyterkernel/start", "-H", "Content-Type: application/json", "-d", "{\"file\":\"/dummy/path\"}")
+        System.err.println("DEBUG: Kernel endpoint test: exitCode=" + kernelEndpointTest.exitCode + " stdout=" + kernelEndpointTest.stdout + " stderr=" + kernelEndpointTest.stderr)
+
         // Debug: Check shared /tmp directory in Jupyter container
         def jupyterTmpCheck = jupyterContainer.execInContainer("ls", "-la", "/tmp")
         System.err.println("DEBUG: /tmp directory in Jupyter container: " + jupyterTmpCheck.stdout)
