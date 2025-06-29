@@ -1,0 +1,16 @@
+micronaut:
+  server:
+    port: 8080
+    host: 0.0.0.0
+  management:
+    endpoints:
+      health:
+        enabled: true
+        sensitive: false
+      all:
+        enabled: true
+        sensitive: false
+
+jupyter:
+  kernel:
+    install: false
