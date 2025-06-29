@@ -78,11 +78,17 @@ public class GlobalUncaughtExceptionHandler implements UncaughtExceptionHandler 
      */
     private void reportExceptionToNotebook(String formattedError) {
         if (evaluationObject != null) {
-            // Create an error result and publish it
-            TryResult errorResult = TryResult.createError(formattedError);
-            evaluationObject.finished(errorResult.result());
-            
-            logger.debug("Reported uncaught exception to notebook via evaluation object");
+            try {
+                // Create an error result and publish it
+                TryResult errorResult = TryResult.createError(formattedError);
+                evaluationObject.finished(errorResult);
+                
+                logger.debug("Reported uncaught exception to notebook via evaluation object");
+            } catch (Exception e) {
+                logger.error("Failed to create TryResult for exception reporting", e);
+                // Fallback: just report the formatted error directly
+                evaluationObject.finished(formattedError);
+            }
         } else {
             // If no evaluation object available, just log the exception
             // The kernel's logging will still be visible to users through the console
