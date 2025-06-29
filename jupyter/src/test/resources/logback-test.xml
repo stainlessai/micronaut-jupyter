@@ -16,6 +16,14 @@
     <logger name="com.twosigma.beakerx.kernel" level="INFO" />
     <logger name="ai.stainless" level="DEBUG" />
 
+    <!-- Debug logging for Testcontainers -->
+    <logger name="org.testcontainers" level="INFO"/>
+    <logger name="tc" level="INFO"/>
+    <logger name="com.github.dockerjava" level="INFO"/>
+
+    <!-- Silence excessive HTTP wire logging -->
+    <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http" level="OFF"/>
+
     <!--
     <logger name="org.hibernate.orm.deprecation" level="OFF" />
     <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautWorkerThread" level="INFO" />

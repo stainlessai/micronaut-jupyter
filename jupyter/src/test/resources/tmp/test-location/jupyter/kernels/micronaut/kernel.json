@@ -1,0 +1,8 @@
+{
+    "language": "groovy",
+    "argv": [
+        "/tmp/test-location/jupyter/kernels/micronaut/kernel.sh",
+        "{connection_file}"
+    ],
+    "display_name": "Micronaut"
+}

@@ -7,6 +7,7 @@ import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.images.builder.ImageFromDockerfile
+import org.testcontainers.utility.MountableFile
 import spock.lang.Shared
 import spock.lang.Specification
 import java.nio.file.Paths
@@ -42,7 +43,7 @@ class KernelSpec extends Specification {
     GenericContainer micronautContainer
 
     @Shared
-    ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter", false)
+    ImageFromDockerfile jupyterImage = new ImageFromDockerfile("micronaut-jupyter-base", true)
             .withFileFromClasspath("Dockerfile", "jupyter.Dockerfile")
             .withFileFromClasspath("notebooks/", "notebooks/")
 
@@ -124,13 +125,57 @@ jupyter:
         System.err.println("DEBUG: Micronaut container logs:")
         System.err.println(micronautLogs)
 
+//        // Debug: Check if kernel files were created by InstallKernel
+//        def kernelFilesCheck = micronautContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
+//        System.err.println("DEBUG: Kernel files in Micronaut container: " + kernelFilesCheck.stdout + kernelFilesCheck.stderr)
+//
+//        // Check the shared /tmp directory
+//        def sharedTmpCheck = micronautContainer.execInContainer("ls", "-la", "/tmp")
+//        System.err.println("DEBUG: /tmp directory in Micronaut container: " + sharedTmpCheck.stdout)
+
         // Start Jupyter container connected to same network
+        // the "withFileSystemBind" was the ONLY WAY to get kernel.json and kernel.sh
+        // into the container.
+        // X Dockerfile COPY and .withFileFromPath <- Not working
+        // X withCopyToContainer <- Not working
         jupyterContainer = new GenericContainer(jupyterImage)
                 .withNetwork(testNetwork)
                 .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
                 .withEnv("JUPYTER_SERVER", "http://${micronautIp}:8080")
-                .withFileSystemBind("/tmp", "/tmp", BindMode.READ_WRITE)
+                .withFileSystemBind(
+                        Paths.get("src/test/resources/tmp/test-location/jupyter/kernels/micronaut")
+                                .toAbsolutePath().toString(),
+                        "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
         jupyterContainer.start()
+
+        jupyterContainer.execInContainer("chmod", "+x", "/tmp/test-location/jupyter/kernels/micronaut/kernel.sh");
+
+        // Set up port forwarding using socat in the Jupyter container
+        System.err.println("DEBUG: Setting up port forwarding from localhost:8080 to micronaut-server:8080")
+
+        // Test direct connection to micronaut-server first
+        def directTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
+        System.err.println("DEBUG: Direct connection test: exitCode=" + directTest.exitCode + " stdout=" + directTest.stdout + " stderr=" + directTest.stderr)
+
+        // Start socat port forwarder for HTTP port 8080 only
+        // ZMQ ports will be forwarded dynamically by kernel.sh
+        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:micronaut-server:8080 </dev/null >/dev/null 2>&1 & echo \$!")
+        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout + " stderr=" + socatResult.stderr)
+
+        // Give socat a moment to start
+        Thread.sleep(2000)
+
+        // Test the port forwarding
+        def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
+        System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
+
+        // Debug: Check shared /tmp directory in Jupyter container
+        def jupyterTmpCheck = jupyterContainer.execInContainer("ls", "-la", "/tmp")
+        System.err.println("DEBUG: /tmp directory in Jupyter container: " + jupyterTmpCheck.stdout)
+
+        // Debug: Check if the kernel files exist in the Jupyter container
+        def jupyterKernelCheck = jupyterContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
+        System.err.println("DEBUG: Kernel files in Jupyter container: " + jupyterKernelCheck.stdout + jupyterKernelCheck.stderr)
     }
 
     def cleanupSpec() {
@@ -159,16 +204,44 @@ jupyter:
         System.err.println("DEBUG: Kernelspec check:")
         System.err.println(kernelspecCheck.stdout)
 
-        // Debug: check if the kernel.sh was generated correctly
-        def kernelCheck = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.sh", "-exec", "cat", "{}", "\\;")
-        System.err.println("DEBUG: Generated kernel.sh content:")
-        System.err.println(kernelCheck.stdout)
+        // Debug: dump contents of all files in kernels directory
+        def kernelDirsCheck = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "d")
+        System.err.println("DEBUG: Kernel directories:")
+        System.err.println(kernelDirsCheck.stdout)
 
+        def allKernelFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "f")
+        System.err.println("DEBUG: All kernel files:")
+        System.err.println(allKernelFiles.stdout)
+
+        // Dump content of each file
+        def kernelShFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.sh")
+        def shFiles = kernelShFiles.stdout.trim().split('\n')
+        for (String shFile : shFiles) {
+            if (shFile.trim()) {
+                def shContent = jupyterContainer.execInContainer("cat", shFile.trim())
+                System.err.println("DEBUG: Content of ${shFile}:")
+                System.err.println(shContent.stdout)
+                System.err.println("-----")
+            }
+        }
+
+        def kernelJsonFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.json")
+        def jsonFiles = kernelJsonFiles.stdout.trim().split('\n')
+        for (String jsonFile : jsonFiles) {
+            if (jsonFile.trim()) {
+                def jsonContent = jupyterContainer.execInContainer("cat", jsonFile.trim())
+                System.err.println("DEBUG: Content of ${jsonFile}:")
+                System.err.println(jsonContent.stdout)
+                System.err.println("-----")
+            }
+        }
+
+        System.err.println("DEBUG: Running jupyter nb-convert... ")
         // execute notebook
         result.execResult = jupyterContainer.execInContainer(
                 "/bin/sh",
                 "-c",
-                "umask 0000 && jupyter nbconvert --to notebook --execute /notebooks/${notebookName}.ipynb"
+                "umask 0000 && jupyter nbconvert --debug --to notebook --execute /notebooks/${notebookName}.ipynb"
         )
         // get output
         result.outResult = jupyterContainer.execInContainer("cat", "/notebooks/${notebookName}.nbconvert.ipynb")
