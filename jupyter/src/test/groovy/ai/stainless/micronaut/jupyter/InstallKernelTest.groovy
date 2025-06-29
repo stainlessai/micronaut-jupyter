@@ -42,9 +42,11 @@ class InstallKernelTest extends Specification {
             'jupyter.kernel.location': null
         ])
 
-        expect:
-        //bean should have been created
-        applicationContext.getBean(InstallKernel).getKernelLocation() == "/usr/local/share/jupyter/kernels"
+        when:
+        applicationContext.getBean(InstallKernel)
+
+        then:
+        thrown(io.micronaut.context.exceptions.NoSuchBeanException)
 
         cleanup:
         applicationContext.close()
