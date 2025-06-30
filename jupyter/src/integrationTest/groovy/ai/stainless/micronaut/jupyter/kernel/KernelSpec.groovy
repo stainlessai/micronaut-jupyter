@@ -100,7 +100,7 @@ class KernelSpec extends Specification {
                 .withCopyFileToContainer(MountableFile.forHostPath(basicServiceJarPath), "/app/libs/basic-service-0.1-all.jar")
                 .withCopyFileToContainer(MountableFile.forHostPath(testLogFilePath), "/app/libs/logback.xml")
                 .withWorkingDirectory("/app")
-                .withCommand("/bin/sh", "-c", "apt-get update && apt-get install -y net-tools procps python3-pip && pip install papermill && /app/test-startup.sh")
+                .withCommand("/bin/sh", "-c", "apt-get update && apt-get install -y net-tools procps && /app/test-startup.sh")
                 .withExposedPorts(8080)
                 .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
         micronautContainer.start()
@@ -331,17 +331,17 @@ class KernelSpec extends Specification {
 //        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
         // End - IN FOREGROUND
 
-        def nbconvertCmd = "papermill /notebooks/${notebookName}.ipynb"
-        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/papermill.log 2>&1")
-        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
+//        def nbconvertCmd = "papermill /notebooks/${notebookName}.ipynb"
+//        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/papermill.log 2>&1")
+//        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
 
 //        // IN BACKGROUND
-//        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output /notebooks/${notebookName}.nbconvert.ipynb --execute /notebooks/${notebookName}.ipynb"
-//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
-//        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
+        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output /notebooks/${notebookName}.nbconvert.ipynb --execute /notebooks/${notebookName}.ipynb"
+        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
+        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
 //
 //        // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
-//        Thread.sleep(10000)
+        Thread.sleep(10000)
 //        // End - IN BACKGROUND
 
         // Check container states before attempting netstat
