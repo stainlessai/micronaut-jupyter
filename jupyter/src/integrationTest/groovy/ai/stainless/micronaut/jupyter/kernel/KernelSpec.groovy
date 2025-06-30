@@ -76,7 +76,7 @@ class KernelSpec extends Specification {
             throw new RuntimeException("Required JAR file not found: ${testSupportLibJarPath}. Run 'gradle assemble' to build the test jars before running integration tests.")
         }
 
-        def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "tmp", "test-location", "jupyter", "kernels", "micronaut").toString()
+        def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "kernels", "micronaut").toString()
 
         // We use a shared /tmp directory among the containers for communication
         def testTempDir = Paths.get(projectRoot, "jupyter", "src", "test", "test_temp").toString()
