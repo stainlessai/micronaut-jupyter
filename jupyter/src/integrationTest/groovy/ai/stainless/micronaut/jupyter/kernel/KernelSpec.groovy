@@ -96,7 +96,7 @@ class KernelSpec extends Specification {
                         "/tmp", BindMode.READ_WRITE)
                 .withFileSystemBind(
                         kernelDir,
-                        "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
+                        "/usr/share/jupyter/kernels/micronaut", BindMode.READ_WRITE)
                 .withCopyFileToContainer(MountableFile.forHostPath(basicServiceJarPath), "/app/libs/basic-service-0.1-all.jar")
                 .withCopyFileToContainer(MountableFile.forHostPath(testLogFilePath), "/app/libs/logback.xml")
                 .withWorkingDirectory("/app")
@@ -123,7 +123,7 @@ class KernelSpec extends Specification {
 //        System.err.println(micronautLogs)
 
 //        // Debug: Check if kernel files were created by InstallKernel
-//        def kernelFilesCheck = micronautContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
+//        def kernelFilesCheck = micronautContainer.execInContainer("find", "/usr/share", "-name", "*.sh", "-o", "-name", "*.json")
 //        System.err.println("DEBUG: Kernel files in Micronaut container: " + kernelFilesCheck.stdout + kernelFilesCheck.stderr)
 //
         // Check the shared /tmp directory
@@ -142,7 +142,7 @@ class KernelSpec extends Specification {
         // X withCopyToContainer <- Not working
         jupyterContainer = new GenericContainer(jupyterImage)
                 .withNetwork(testNetwork)
-                .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
+                .withEnv("JUPYTER_PATH", "/usr/share/jupyter")
                 .withEnv("JUPYTER_SERVER", "http://${micronautIp}:8080")
                 .withEnv("MICRONAUT_SERVER_IP", micronautIp)
                 .withFileSystemBind(
@@ -150,10 +150,10 @@ class KernelSpec extends Specification {
                         "/tmp", BindMode.READ_WRITE)
                 .withFileSystemBind(
                         kernelDir,
-                        "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
+                        "/usr/share/jupyter/kernels/micronaut", BindMode.READ_WRITE)
         jupyterContainer.start()
 
-        jupyterContainer.execInContainer("chmod", "+x", "/tmp/test-location/jupyter/kernels/micronaut/kernel.sh");
+        jupyterContainer.execInContainer("chmod", "+x", "/usr/share/jupyter/kernels/micronaut/kernel.sh");
 
         // Set up port forwarding using socat in the Jupyter container
         System.err.println("DEBUG: Setting up port forwarding from localhost:8080 to micronaut-server:8080")
@@ -185,7 +185,7 @@ class KernelSpec extends Specification {
         // System.err.println("DEBUG: /tmp directory in Jupyter container: " + jupyterTmpCheck.stdout)
 
         // Debug: Check if the kernel files exist in the Jupyter container
-        // def jupyterKernelCheck = jupyterContainer.execInContainer("find", "/tmp/test-location", "-name", "*.sh", "-o", "-name", "*.json")
+        // def jupyterKernelCheck = jupyterContainer.execInContainer("find", "/usr/share", "-name", "*.sh", "-o", "-name", "*.json")
         // System.err.println("DEBUG: Kernel files in Jupyter container: " + jupyterKernelCheck.stdout + jupyterKernelCheck.stderr)
     }
 
@@ -267,16 +267,16 @@ class KernelSpec extends Specification {
 //        System.err.println(kernelspecCheck.stdout)
 
         // Debug: dump contents of all files in kernels directory
-//        def kernelDirsCheck = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "d")
+//        def kernelDirsCheck = jupyterContainer.execInContainer("find", "/usr/share/jupyter/kernels", "-type", "d")
 //        System.err.println("DEBUG: Kernel directories:")
 //        System.err.println(kernelDirsCheck.stdout)
 
-//        def allKernelFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-type", "f")
+//        def allKernelFiles = jupyterContainer.execInContainer("find", "/usr/share/jupyter/kernels", "-type", "f")
 //        System.err.println("DEBUG: All kernel files:")
 //        System.err.println(allKernelFiles.stdout)
 
         // Dump content of each file
-//        def kernelShFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.sh")
+//        def kernelShFiles = jupyterContainer.execInContainer("find", "/usr/share/jupyter/kernels", "-name", "kernel.sh")
 //        def shFiles = kernelShFiles.stdout.trim().split('\n')
 //        for (String shFile : shFiles) {
 //            if (shFile.trim()) {
@@ -287,7 +287,7 @@ class KernelSpec extends Specification {
 //            }
 //        }
 
-//        def kernelJsonFiles = jupyterContainer.execInContainer("find", "/tmp/test-location/jupyter/kernels", "-name", "kernel.json")
+//        def kernelJsonFiles = jupyterContainer.execInContainer("find", "/usr/share/jupyter/kernels", "-name", "kernel.json")
 //        def jsonFiles = kernelJsonFiles.stdout.trim().split('\n')
 //        for (String jsonFile : jsonFiles) {
 //            if (jsonFile.trim()) {
@@ -326,9 +326,8 @@ class KernelSpec extends Specification {
         System.err.println("DEBUG: nbconvert version: " + nbConvVer.stdout.trim())
 
         // IN FOREGROUND
-//        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName} --output-dir=/tmp  --ExecutePreprocessor.timeout=10000 --execute /notebooks/${notebookName}.ipynb"
-//        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1")
-//        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
+        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName} --output-dir=/tmp  --ExecutePreprocessor.timeout=30000 --execute /notebooks/${notebookName}.ipynb"
+        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1")
         // End - IN FOREGROUND
 
 //        def nbconvertCmd = "papermill /notebooks/${notebookName}.ipynb"
@@ -336,19 +335,19 @@ class KernelSpec extends Specification {
 //        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
 
 //        // IN BACKGROUND
-        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output /notebooks/${notebookName}.nbconvert.ipynb --execute /notebooks/${notebookName}.ipynb"
-        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
-        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
+//        def nbconvertCmd = "jupyter nbconvert --ExecutePreprocessor.timeout=30000 --debug --to notebook --output /notebooks/${notebookName}.nbconvert.ipynb --execute /notebooks/${notebookName}.ipynb"
+//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
+//        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
 //
 //        // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
-        Thread.sleep(10000)
+//        Thread.sleep(1000)
 //        // End - IN BACKGROUND
 
         // Check container states before attempting netstat
 //        System.err.println("DEBUG: Container states after kernel start attempt:")
 //        System.err.println("DEBUG: Micronaut container running: " + micronautContainer.isRunning())
 //        System.err.println("DEBUG: Jupyter container running: " + jupyterContainer.isRunning())
-        
+
         // Only check ports if Micronaut container is still running
         if (micronautContainer.isRunning()) {
 //            def netstatAfterKernel = micronautContainer.execInContainer("/bin/sh", "-c", "netstat -ln")
@@ -367,9 +366,6 @@ class KernelSpec extends Specification {
 //        System.err.println(nbconvertLogs.stderr)
 
         // Check final nbconvert logs again after waiting
-        //
-        // FIXME Micronaut is expecting this file on the local machine, it's why we shared /tmp before...
-        //
         def finalNbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
         System.err.println("DEBUG: Final nbconvert logs after waiting:")
         System.err.println(finalNbconvertLogs.stdout)
