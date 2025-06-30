@@ -80,7 +80,18 @@ class KernelSpec extends Specification {
 //        }
 //        testTempDirFile.mkdirs()
 
-        micronautContainer = new GenericContainer("openjdk:17-jdk-slim", )
+        // First, create a custom image with all the dependencies
+        def micronautImage = new ImageFromDockerfile()
+                .withDockerfileFromBuilder { builder ->
+                    builder
+                            .from("openjdk:17-jdk-slim")
+                            .run("apt-get update && apt-get install -y net-tools procps")
+                            .workDir("/app")
+                            .build()
+                }
+
+        // Then create the container using the custom image
+        micronautContainer = new GenericContainer(micronautImage)
                 .withNetwork(testNetwork)
                 .withNetworkAliases("micronaut-server")
                 .withClasspathResourceMapping("application-integration.yml", "/app/application.yml", BindMode.READ_ONLY)
@@ -97,12 +108,12 @@ class KernelSpec extends Specification {
                 .withFileSystemBind(
                         kernelDir,
                         "/usr/share/jupyter/kernels/micronaut", BindMode.READ_WRITE)
-                .withCopyFileToContainer(MountableFile.forHostPath(basicServiceJarPath), "/app/libs/basic-service-0.1-all.jar")
                 .withCopyFileToContainer(MountableFile.forHostPath(testLogFilePath), "/app/libs/logback.xml")
                 .withWorkingDirectory("/app")
-                .withCommand("/bin/sh", "-c", "apt-get update && apt-get install -y net-tools procps && /app/test-startup.sh")
+                .withCommand("/bin/sh", "-c", "/app/test-startup.sh")
                 .withExposedPorts(8080)
                 .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
+
         micronautContainer.start()
 
         // Get the container IP from the shared network
@@ -302,13 +313,17 @@ class KernelSpec extends Specification {
         // END - UNCOMMENT THIS SECTION TO DEBUG CONTAINER AND NETWORK STATES
         //
 
+        // FIXME this is done again in executeNotebook, so marked for deletion
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
-        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${currentMicronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
-        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
-
-        // Give socat a moment to start
-        Thread.sleep(2000)
+//        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${currentMicronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
+//        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
+//
+//        // Give socat a moment to start
+//        Thread.sleep(2000)
+        //
+        //
+        // End - FIXME
 
 //        def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
 //        System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)
@@ -321,23 +336,22 @@ class KernelSpec extends Specification {
 //            throw new Exception("Health check failed, can't connect to micronaut-server from jupyter server")
 //        }
 
-        // Start nbconvert in background with a timeout
-        def nbConvVer = jupyterContainer.execInContainer("/bin/sh", "-c", "jupyter nbconvert --version")
-        System.err.println("DEBUG: nbconvert version: " + nbConvVer.stdout.trim())
+        def nbConvVer = jupyterContainer.execInContainer("/bin/sh", "-c", "jupyter execute --version")
+        System.err.println("DEBUG: nbclient version: " + nbConvVer.stdout.trim())
 
         // IN FOREGROUND
-        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName} --output-dir=/tmp  --ExecutePreprocessor.timeout=30000 --execute /notebooks/${notebookName}.ipynb"
-        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1")
+        def nbclientCmd = "jupyter execute --Application.log_level=0 --NbClientApp.log_level=0 /notebooks/${notebookName}.ipynb"
+        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbclientCmd} </dev/null >/tmp/nbclient.log 2>&1")
         // End - IN FOREGROUND
 
-//        def nbconvertCmd = "papermill /notebooks/${notebookName}.ipynb"
-//        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/papermill.log 2>&1")
-//        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
+//        def nbclientCmd = "papermill /notebooks/${notebookName}.ipynb"
+//        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbclientCmd} </dev/null >/tmp/papermill.log 2>&1")
+//        System.err.println("DEBUG: Started nbclient process: " + process.stdout.trim())
 
 //        // IN BACKGROUND
-//        def nbconvertCmd = "jupyter nbconvert --ExecutePreprocessor.timeout=30000 --debug --to notebook --output /notebooks/${notebookName}.nbconvert.ipynb --execute /notebooks/${notebookName}.ipynb"
-//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
-//        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
+//        def nbclientCmd = "jupyter execute --ExecutePreprocessor.timeout=30000 --debug --to notebook --output /notebooks/${notebookName}.nbclient.ipynb --execute /notebooks/${notebookName}.ipynb"
+//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbclientCmd} </dev/null >/tmp/nbclient.log 2>&1 & echo \$!")
+//        System.err.println("DEBUG: Started nbclient process with PID: " + bgProcess.stdout.trim())
 //
 //        // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
 //        Thread.sleep(1000)
@@ -358,17 +372,17 @@ class KernelSpec extends Specification {
             // Get final logs before it died
         }
         
-        // Check nbconvert logs from the asynchronous call
-//        def nbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
-//        System.err.println("DEBUG: nbconvert logs from asynchronous execution:")
-//        System.err.println(nbconvertLogs.stdout)
-//        System.err.println("DEBUG: nbconvert stderr from asynchronous execution:")
-//        System.err.println(nbconvertLogs.stderr)
+        // Check nbclient logs from the asynchronous call
+//        def nbclientLogs = jupyterContainer.execInContainer("cat", "/tmp/nbclient.log")
+//        System.err.println("DEBUG: nbclient logs from asynchronous execution:")
+//        System.err.println(nbclientLogs.stdout)
+//        System.err.println("DEBUG: nbclient stderr from asynchronous execution:")
+//        System.err.println(nbclientLogs.stderr)
 
-        // Check final nbconvert logs again after waiting
-        def finalNbconvertLogs = jupyterContainer.execInContainer("cat", "/tmp/nbconvert.log")
-        System.err.println("DEBUG: Final nbconvert logs after waiting:")
-        System.err.println(finalNbconvertLogs.stdout)
+        // Check final nbclient logs again after waiting
+        def finalNbclientLogs = jupyterContainer.execInContainer("cat", "/tmp/nbclient.log")
+        System.err.println("DEBUG: Final nbclient logs after waiting:")
+        System.err.println(finalNbclientLogs.stdout)
         
         // List all files in notebooks directory to see what was created
 //        def notebookFiles = jupyterContainer.execInContainer("ls", "-la", "/notebooks/")
@@ -381,13 +395,13 @@ class KernelSpec extends Specification {
 //        System.err.println(ipynbFiles.stdout)
         
         // Try to get output from the expected file first, then try other possible names
-        result.outResult = jupyterContainer.execInContainer("cat", "/notebooks/${notebookName}.nbconvert.ipynb")
+        result.outResult = jupyterContainer.execInContainer("cat", "/notebooks/${notebookName}.nbclient.ipynb")
         if (result.outResult.exitCode != 0) {
-            // Try without the .nbconvert suffix
+            // Try without the .nbclient suffix
             def altResult = jupyterContainer.execInContainer("cat", "/notebooks/${notebookName}.ipynb")
             if (altResult.exitCode == 0) {
                 result.outResult = altResult
-                System.err.println("DEBUG: Found output in original file without .nbconvert suffix")
+                System.err.println("DEBUG: Found output in original file without .nbclient suffix")
             }
         }
         
@@ -397,8 +411,9 @@ class KernelSpec extends Specification {
 
         String finalLogs = micronautContainer.getLogs()
         System.err.println("DEBUG: Final Micronaut container logs:")
-        System.err.println(finalLogs.split('\n').takeRight(30).join('\n'))
-        
+        //System.err.println(finalLogs.split('\n').takeRight(30).join('\n'))
+        System.err.println(finalLogs)
+
         // Set execResult based on whether we got valid output
         result.execResult = new ExecResult(result.outResult.exitCode, result.outResult.stdout, result.outResult.stderr)
         // return result

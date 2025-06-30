@@ -9,22 +9,36 @@
         </encoder>
     </appender>
 
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/tmp/run.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
     </root>
 
-    <logger name="com.twosigma.beakerx.kernel" level="INFO" />
-    <logger name="ai.stainless" level="TRACE" />
+<!--    <logger name="com.twosigma.beakerx.kernel" level="INFO" />-->
+<!--    <logger name="ai.stainless" level="TRACE" />-->
 
-    <!-- Debug logging for Testcontainers -->
-    <logger name="org.testcontainers" level="INFO"/>
-    <logger name="tc" level="INFO"/>
-    <logger name="com.github.dockerjava" level="INFO"/>
+<!--    &lt;!&ndash; Debug logging for Testcontainers &ndash;&gt;-->
+<!--    <logger name="org.testcontainers" level="INFO"/>-->
+<!--    <logger name="tc" level="INFO"/>-->
+<!--    <logger name="com.github.dockerjava" level="INFO"/>-->
 
-    <!-- Silence excessive HTTP wire logging -->
+    <!-- Silence excessive HTTP logging -->
     <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http" level="OFF"/>
+    <logger name="com.github.dockerjava.api.command" level="OFF"/>
+    <logger name="io.micronaut.buffer.netty.NettyByteBufferFactory" level="INFO"/>
+    <logger name="io.netty.util.internal" level="INFO"/>
+    <logger name="io.netty.buffer" level="INFO"/>
+    <logger name="io.netty.channel" level="INFO"/>
+    <logger name="io.micronaut.context" level="DEBUG"/>
 
-    <logger name="org.hibernate.orm.deprecation" level="OFF" />
-    <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautWorkerThread" level="DEBUG" />
+<!--    <logger name="org.hibernate.orm.deprecation" level="OFF" />-->
+<!--    <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautWorkerThread" level="DEBUG" />-->
 
 </configuration>
