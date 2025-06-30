@@ -101,6 +101,32 @@ if [ $RET -ne 0 ]; then
   exit $RET
 fi
 
+# Test if kernel is responding with kernel_info (with retries)
+echo "DEBUG: Testing kernel availability..." >&2
+KERNEL_MAX_RETRIES=10
+KERNEL_RETRY_COUNT=0
+KERNEL_TEST_RET=1
+
+while [ $KERNEL_RETRY_COUNT -lt $KERNEL_MAX_RETRIES ] && [ $KERNEL_TEST_RET -ne 0 ]; do
+  echo "DEBUG: Kernel test attempt $((KERNEL_RETRY_COUNT + 1))/$KERNEL_MAX_RETRIES..." >&2
+  python3 "$(dirname "$0")/test_kernel.py" "$1"
+  KERNEL_TEST_RET=$?
+  
+  if [ $KERNEL_TEST_RET -ne 0 ]; then
+    echo "DEBUG: Kernel test failed with exit code $KERNEL_TEST_RET, retrying..." >&2
+    KERNEL_RETRY_COUNT=$((KERNEL_RETRY_COUNT + 1))
+    sleep 2
+  else
+    echo "DEBUG: Kernel test passed!" >&2
+    break
+  fi
+done
+
+if [ $KERNEL_TEST_RET -ne 0 ]; then
+  echo "DEBUG: Kernel test failed after $KERNEL_MAX_RETRIES attempts" >&2
+  exit 1
+fi
+
 # The kernel has been started, so things are out of control now
 # Make Jupyter think that we ("the kernel") are still doing something
 while true; do
