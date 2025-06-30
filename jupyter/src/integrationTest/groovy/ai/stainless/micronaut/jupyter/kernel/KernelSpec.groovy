@@ -59,7 +59,7 @@ class KernelSpec extends Specification {
         def currentDir = System.getProperty("user.dir")
         // When running from gradle, working directory is the jupyter subproject, so go up one level
         def projectRoot = currentDir.endsWith("/jupyter") ? new File(currentDir).getParent() : currentDir
-        def basicServiceJarPath = Paths.get(projectRoot, "examples", "basic-service", "build", "libs", "basic-service-0.1-all.jar").toString()
+        def basicServiceJarPath = Paths.get(projectRoot, "examples", "beans-service", "build", "libs", "beans-service-0.1-all.jar").toString()
         def testStartupScriptPath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "test-startup.sh").toString()
         def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "logback-test.xml")
 
