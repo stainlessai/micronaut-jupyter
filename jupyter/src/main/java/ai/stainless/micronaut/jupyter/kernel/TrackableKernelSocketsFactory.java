@@ -41,7 +41,7 @@ public class TrackableKernelSocketsFactory implements KernelSocketsFactory {
 
     public KernelSockets create(final KernelFunctionality kernel, final SocketCloseAction closeAction) {
         // create new ZMQ sockets instance
-        KernelSockets sockets = new ClosableKernelSocketsZMQ(kernel, configurationFile.getConfig(), closeAction);
+        KernelSockets sockets = new CloseableKernelSocketsZMQ(kernel, configurationFile.getConfig(), closeAction);
         // store this instance for later tracking
         instances.add(sockets);
         // return this instance

@@ -94,7 +94,9 @@ class KernelSpec extends Specification {
         micronautContainer = new GenericContainer(micronautImage)
                 .withNetwork(testNetwork)
                 .withNetworkAliases("micronaut-server")
-                .withClasspathResourceMapping("application-integration.yml", "/app/application.yml", BindMode.READ_ONLY)
+                .withClasspathResourceMapping("application-integration.yml",
+                        "/app/application.yml",
+                        BindMode.READ_ONLY)
                 .withCopyFileToContainer(
                         MountableFile.forHostPath(basicServiceJarPath),
                         "/app/libs/basic-service-0.1-all.jar")
@@ -173,13 +175,15 @@ class KernelSpec extends Specification {
         // def directTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://micronaut-server:8080/health")
         // System.err.println("DEBUG: Direct connection test: exitCode=" + directTest.exitCode + " stdout=" + directTest.stdout + " stderr=" + directTest.stderr)
 
+        // FIXME this is done again in executeNotebook, so marked for deletion
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
-        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${micronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
-        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
-
-        // Give socat a moment to start
-        Thread.sleep(2000)
+//        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${micronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
+//        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
+//
+//        // Give socat a moment to start
+//        Thread.sleep(2000)
+        // End - FIXME
 
         // Test the port forwarding
         // System.err.println("DEBUG: Test port forwarding from localhost:8080 to micronaut-server:8080")
@@ -201,6 +205,7 @@ class KernelSpec extends Specification {
     }
 
     def cleanupSpec() {
+        System.err.println("DEBUG: cleanupSpec()")
         if (jupyterContainer != null) {
             jupyterContainer.stop()
         }
@@ -313,17 +318,16 @@ class KernelSpec extends Specification {
         // END - UNCOMMENT THIS SECTION TO DEBUG CONTAINER AND NETWORK STATES
         //
 
-        // FIXME this is done again in executeNotebook, so marked for deletion
         // Start socat port forwarder for HTTP port 8080 only using the actual IP
         // ZMQ ports will be forwarded dynamically by kernel.sh
-//        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${currentMicronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
-//        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
+        def socatResult = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup socat TCP-LISTEN:8080,bind=127.0.0.1,reuseaddr,fork TCP:${currentMicronautIp}:8080 </dev/null >/dev/null 2>&1 & echo \$!")
+        System.err.println("DEBUG: socat HTTP (8080) start result: exitCode=" + socatResult.exitCode + " stdout=" + socatResult.stdout.trim() + " stderr=" + socatResult.stderr.trim())
 //
 //        // Give socat a moment to start
-//        Thread.sleep(2000)
+        Thread.sleep(2000)
         //
         //
-        // End - FIXME
+        // End
 
 //        def localTest = jupyterContainer.execInContainer("curl", "-f", "--connect-timeout", "5", "--max-time", "10", "http://localhost:8080/health")
 //        System.err.println("DEBUG: Localhost connection test: exitCode=" + localTest.exitCode + " stdout=" + localTest.stdout + " stderr=" + localTest.stderr)

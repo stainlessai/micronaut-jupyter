@@ -142,7 +142,7 @@ public class Micronaut extends Groovy {
         // close sockets factory instances
         for (KernelSockets it : kernelSocketsFactory.getInstances()) {
             try {
-                ((ClosableKernelSocketsZMQ) it).shutdown();
+                ((CloseableKernelSocketsZMQ) it).shutdown();
             } catch (NoSuchMethodError e) {
                 log.error(e.toString());
             } catch (Exception e) {

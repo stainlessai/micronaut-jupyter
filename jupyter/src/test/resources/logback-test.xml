@@ -23,6 +23,7 @@
 
 <!--    <logger name="com.twosigma.beakerx.kernel" level="INFO" />-->
 <!--    <logger name="ai.stainless" level="TRACE" />-->
+        <logger name="ai.stainless.micronaut.jupyter.kernel.CloseableKernelSocketsZMQ" level="TRACE"/>
 
 <!--    &lt;!&ndash; Debug logging for Testcontainers &ndash;&gt;-->
 <!--    <logger name="org.testcontainers" level="INFO"/>-->
@@ -36,7 +37,7 @@
     <logger name="io.netty.util.internal" level="INFO"/>
     <logger name="io.netty.buffer" level="INFO"/>
     <logger name="io.netty.channel" level="INFO"/>
-    <logger name="io.micronaut.context" level="DEBUG"/>
+    <logger name="io.micronaut.context" level="INFO"/>
 
 <!--    <logger name="org.hibernate.orm.deprecation" level="OFF" />-->
 <!--    <logger name="ai.stainless.micronaut.jupyter.kernel.MicronautWorkerThread" level="DEBUG" />-->

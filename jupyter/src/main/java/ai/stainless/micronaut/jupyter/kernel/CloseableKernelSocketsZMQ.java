@@ -53,9 +53,9 @@ import static com.twosigma.beakerx.message.MessageSerializer.toJson;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
-public class ClosableKernelSocketsZMQ extends KernelSockets {
+public class CloseableKernelSocketsZMQ extends KernelSockets {
 
-    public static final Logger logger = LoggerFactory.getLogger(ClosableKernelSocketsZMQ.class);
+    public static final Logger logger = LoggerFactory.getLogger(CloseableKernelSocketsZMQ.class);
 
     public static final String DELIM = "<IDS|MSG>";
 
@@ -73,41 +73,65 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
 
     private boolean shutdownSystem = false;
 
-    public ClosableKernelSocketsZMQ(KernelFunctionality kernel, Config configuration, SocketCloseAction closeAction) {
+    public CloseableKernelSocketsZMQ(KernelFunctionality kernel, Config configuration, SocketCloseAction closeAction) {
+        logger.debug("Initializing CloseableKernelSocketsZMQ with config: transport={}, host={}", 
+                    configuration.getTransport(), configuration.getHost());
         this.closeAction = closeAction;
         this.kernel = kernel;
         this.hmac = new HashedMessageAuthenticationCode(configuration.getKey());
         this.context = ZMQ.context(1);
         this.sendLock = new ReentrantLock();
+        logger.debug("Created ZMQ context and locks, configuring sockets...");
         configureSockets(configuration);
+        logger.debug("CloseableKernelSocketsZMQ initialization complete");
     }
 
     private void configureSockets(Config configuration) {
         final String connection = configuration.getTransport() + "://" + configuration.getHost();
+        logger.debug("Configuring sockets with connection string: {}", connection);
+        logger.debug("Socket ports - iopub: {}, heartbeat: {}, control: {}, stdin: {}, shell: {}",
+                    configuration.getIopub(), configuration.getHeartbeat(), configuration.getControl(),
+                    configuration.getStdin(), configuration.getShell());
 
         iopubSocket = getNewSocket(ZMQ.PUB, configuration.getIopub(), connection, context);
+        logger.trace("Created iopub socket on port {}", configuration.getIopub());
+        
         hearbeatSocket = getNewSocket(ZMQ.ROUTER, configuration.getHeartbeat(), connection, context);
+        logger.trace("Created heartbeat socket on port {}", configuration.getHeartbeat());
+        
         controlSocket = getNewSocket(ZMQ.ROUTER, configuration.getControl(), connection, context);
+        logger.trace("Created control socket on port {}", configuration.getControl());
+        
         stdinSocket = getNewSocket(ZMQ.ROUTER, configuration.getStdin(), connection, context);
+        logger.trace("Created stdin socket on port {}", configuration.getStdin());
+        
         shellSocket = getNewSocket(ZMQ.ROUTER, configuration.getShell(), connection, context);
+        logger.trace("Created shell socket on port {}", configuration.getShell());
 
         sockets = new ZMQ.Poller(3);
         sockets.register(hearbeatSocket, ZMQ.Poller.POLLIN);
         sockets.register(shellSocket, ZMQ.Poller.POLLIN);
         sockets.register(controlSocket, ZMQ.Poller.POLLIN);
+        logger.debug("Registered {} sockets with poller", 3);
     }
 
     public void publish(List<Message> message) {
+        logger.trace("Publishing {} messages to iopub socket", message.size());
         sendMsg(this.iopubSocket, message);
     }
 
     public void send(Message message) {
+        logger.trace("Sending message to shell socket: type={}, session={}", 
+                    message.getHeader().getType(), message.getHeader().getSession());
         sendMsg(this.shellSocket, singletonList(message));
     }
 
     public String sendStdIn(Message message) {
+        logger.trace("Sending stdin message and waiting for response: type={}", message.getHeader().getType());
         sendMsg(this.stdinSocket, singletonList(message));
-        return handleStdIn();
+        String response = handleStdIn();
+        logger.trace("Received stdin response: {}", response);
+        return response;
     }
 
     private void sendMsg(ZMQ.Socket socket, List<Message> messages) {
@@ -151,10 +175,13 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
     }
 
     private Message readMessage(ZMQ.Socket socket) {
+        logger.trace("Reading message from socket");
         ZMsg zmsg = null;
         Message message = null;
         try {
             zmsg = ZMsg.recvMsg(socket);
+            logger.trace("Received ZMsg with {} parts", zmsg.size());
+            
             ZFrame[] parts = new ZFrame[zmsg.size()];
             zmsg.toArray(parts);
             byte[] uuid = parts[MessageParts.UUID].getData();
@@ -164,71 +191,111 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
             byte[] content = parts[MessageParts.CONTENT].getData();
             byte[] expectedSig = parts[MessageParts.HMAC].getData();
 
+            logger.trace("Message parts - UUID length: {}, header length: {}, parent length: {}, metadata length: {}, content length: {}",
+                        uuid != null ? uuid.length : 0, header.length, parent.length, metadata.length, content.length);
+
             verifyDelim(parts[MessageParts.DELIM]);
+            logger.trace("Delimiter verified successfully");
+            
             verifySignatures(expectedSig, header, parent, metadata, content);
+            logger.trace("Message signatures verified successfully");
 
             message = new Message(parse(header, Header.class));
             if (uuid != null) {
                 message.getIdentities().add(uuid);
+                logger.trace("Added UUID to message identities");
             }
             message.setParentHeader(parse(parent, Header.class));
             message.setMetadata(parse(metadata, LinkedHashMap.class));
             message.setContent(parse(content, LinkedHashMap.class));
+            
+            logger.debug("Successfully parsed message: type={}, session={}", 
+                        message.getHeader().getType(), message.getHeader().getSession());
 
+        } catch (Exception e) {
+            logger.error("Error reading message from socket", e);
+            throw e;
         } finally {
             if (zmsg != null) {
                 zmsg.destroy();
             }
         }
 
-        logger.debug("readMessage="+message.getContent());
+        logger.debug("readMessage content: {}", message.getContent());
         return message;
     }
 
     @Override
     public void run() {
+        logger.debug("Starting CloseableKernelSocketsZMQ message loop");
         try {
             while (!this.isShutdown()) {
+                logger.trace("Polling sockets for messages...");
                 sockets.poll();
+                
                 if (isControlMsg()) {
+                    logger.trace("Received control message");
                     handleControlMsg();
                 } else if (isHeartbeatMsg()) {
+                    logger.trace("Received heartbeat message");
                     handleHeartbeat();
                 } else if (isShellMsg()) {
+                    logger.trace("Received shell message");
                     handleShell();
                 } else if (isStdinMsg()) {
+                    logger.trace("Received stdin message");
                     handleStdIn();
                 } else if (this.isShutdown()) {
+                    logger.debug("Shutdown detected, breaking message loop");
                     break;
                 } else {
-                    logger.error("not handled message from sockets");
+                    logger.error("Unhandled message from sockets - no socket had data ready");
                 }
             }
+            logger.debug("Message loop completed normally");
         } catch (Exception e) {
+            logger.error("Exception in message loop", e);
             throw new RuntimeException(e);
         } catch (Error e) {
-            logger.error(e.toString());
+            logger.error("Error in message loop: {}", e.toString(), e);
         } finally {
+            logger.debug("Closing sockets and cleaning up");
             close();
         }
     }
 
     private String handleStdIn() {
+        logger.trace("Handling stdin message");
         Message msg = readMessage(stdinSocket);
-        return (String) msg.getContent().get("value");
+        logger.debug("Stdin message received: type={}, content keys: {}", 
+                    msg.getHeader().getType(), msg.getContent().keySet());
+        String value = (String) msg.getContent().get("value");
+        logger.trace("Extracted stdin value: {}", value);
+        return value;
     }
 
     private void handleShell() {
+        logger.trace("Handling shell message");
         Message message = readMessage(shellSocket);
+        logger.debug("Shell message received: type={}, session={}", 
+                    message.getHeader().getType(), message.getHeader().getSession());
+        
         Handler<Message> handler = kernel.getHandler(message.type());
         if (handler != null) {
+            logger.trace("Found handler for message type: {}", message.type());
             handler.handle(message);
+            logger.trace("Handler completed for message type: {}", message.type());
+        } else {
+            logger.warn("No handler found for shell message type: {}", message.type());
         }
     }
 
     private void handleHeartbeat() {
+        logger.trace("Handling heartbeat message");
         byte[] buffer = hearbeatSocket.recv(0);
+        logger.trace("Received heartbeat data, length: {}", buffer != null ? buffer.length : 0);
         hearbeatSocket.send(buffer);
+        logger.trace("Echoed heartbeat response");
     }
 
     private void handleControlMsg() {
@@ -250,35 +317,72 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
   }
 
     private ZMQ.Socket getNewSocket(int type, int port, String connection, ZMQ.Context context) {
+        String socketTypeStr = getSocketTypeString(type);
+        String bindAddress = connection + ":" + String.valueOf(port);
+        logger.debug("Creating {} socket and binding to {}", socketTypeStr, bindAddress);
+        
         ZMQ.Socket socket = context.socket(type);
-        socket.bind(connection + ":" + String.valueOf(port));
+        try {
+            socket.bind(bindAddress);
+            logger.trace("Successfully bound {} socket to {}", socketTypeStr, bindAddress);
+        } catch (Exception e) {
+            logger.error("Failed to bind {} socket to {}", socketTypeStr, bindAddress, e);
+            throw e;
+        }
         return socket;
+    }
+    
+    private String getSocketTypeString(int type) {
+        switch (type) {
+            case ZMQ.PUB: return "PUB";
+            case ZMQ.ROUTER: return "ROUTER";
+            case ZMQ.SUB: return "SUB";
+            case ZMQ.DEALER: return "DEALER";
+            case ZMQ.REQ: return "REQ";
+            case ZMQ.REP: return "REP";
+            default: return "UNKNOWN(" + type + ")";
+        }
     }
 
     private void close() {
-        closeAction.close();
+        logger.debug("Closing CloseableKernelSocketsZMQ");
+        try {
+            closeAction.close();
+            logger.trace("Close action completed");
+        } catch (Exception e) {
+            logger.error("Error during close action", e);
+        }
         closeSockets();
+        logger.debug("CloseableKernelSocketsZMQ closed");
     }
 
     private void closeSockets() {
+        logger.debug("Closing all ZMQ sockets");
         try {
             if (shellSocket != null) {
                 shellSocket.close();
+                logger.trace("Closed shell socket");
             }
             if (controlSocket != null) {
                 controlSocket.close();
+                logger.trace("Closed control socket");
             }
             if (iopubSocket != null) {
                 iopubSocket.close();
+                logger.trace("Closed iopub socket");
             }
             if (stdinSocket != null) {
                 stdinSocket.close();
+                logger.trace("Closed stdin socket");
             }
             if (hearbeatSocket != null) {
                 hearbeatSocket.close();
+                logger.trace("Closed heartbeat socket");
             }
             context.close();
+            logger.debug("Closed ZMQ context");
         } catch (Exception e) {
+            logger.error("Error closing sockets", e);
         }
     }
 
@@ -315,8 +419,9 @@ public class ClosableKernelSocketsZMQ extends KernelSockets {
     }
 
     public void shutdown() {
-        logger.debug("kernel shutdown");
+        logger.debug("Initiating kernel shutdown");
         this.shutdownSystem = true;
+        logger.trace("Shutdown flag set to true");
     }
 
     private boolean isShutdown() {

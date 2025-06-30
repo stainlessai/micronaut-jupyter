@@ -39,16 +39,26 @@ HB_PORT=$(jq -r '.hb_port' $1)
 #echo "DEBUG: Setting up port forwarding for ZMQ ports:" >&2
 #echo "DEBUG: shell_port=$SHELL_PORT, iopub_port=$IOPUB_PORT, stdin_port=$STDIN_PORT, control_port=$CONTROL_PORT, hb_port=$HB_PORT" >&2
 
-# Start socat port forwarders for each ZMQ port
+# Start socat port forwarders for each ZMQ port with debug logging
 # Use the IP address from environment variable, fallback to hostname
 MICRONAUT_IP="${MICRONAUT_SERVER_IP:-micronaut-server}"
-#echo "DEBUG: Using Micronaut IP/hostname: $MICRONAUT_IP" >&2
+echo "DEBUG: Using Micronaut IP/hostname: $MICRONAUT_IP" >&2
 
-nohup socat TCP-LISTEN:$SHELL_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$SHELL_PORT </dev/null >/dev/null 2>&1 &
-nohup socat TCP-LISTEN:$IOPUB_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$IOPUB_PORT </dev/null >/dev/null 2>&1 &
-nohup socat TCP-LISTEN:$STDIN_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$STDIN_PORT </dev/null >/dev/null 2>&1 &
-nohup socat TCP-LISTEN:$CONTROL_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$CONTROL_PORT </dev/null >/dev/null 2>&1 &
-nohup socat TCP-LISTEN:$HB_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$HB_PORT </dev/null >/dev/null 2>&1 &
+echo "DEBUG: Starting socat port forwarders with debug logging..." >&2
+nohup socat -d -d -v TCP-LISTEN:$SHELL_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$SHELL_PORT </dev/null >/tmp/socat_shell.log 2>&1 &
+echo "DEBUG: Started shell port forwarder: 127.0.0.1:$SHELL_PORT -> $MICRONAUT_IP:$SHELL_PORT" >&2
+
+nohup socat -d -d -v TCP-LISTEN:$IOPUB_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$IOPUB_PORT </dev/null >/tmp/socat_iopub.log 2>&1 &
+echo "DEBUG: Started iopub port forwarder: 127.0.0.1:$IOPUB_PORT -> $MICRONAUT_IP:$IOPUB_PORT" >&2
+
+nohup socat -d -d -v TCP-LISTEN:$STDIN_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$STDIN_PORT </dev/null >/tmp/socat_stdin.log 2>&1 &
+echo "DEBUG: Started stdin port forwarder: 127.0.0.1:$STDIN_PORT -> $MICRONAUT_IP:$STDIN_PORT" >&2
+
+nohup socat -d -d -v TCP-LISTEN:$CONTROL_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$CONTROL_PORT </dev/null >/tmp/socat_control.log 2>&1 &
+echo "DEBUG: Started control port forwarder: 127.0.0.1:$CONTROL_PORT -> $MICRONAUT_IP:$CONTROL_PORT" >&2
+
+nohup socat -d -d -v TCP-LISTEN:$HB_PORT,bind=127.0.0.1,reuseaddr,fork TCP:$MICRONAUT_IP:$HB_PORT </dev/null >/tmp/socat_hb.log 2>&1 &
+echo "DEBUG: Started heartbeat port forwarder: 127.0.0.1:$HB_PORT -> $MICRONAUT_IP:$HB_PORT" >&2
 
 #echo "DEBUG: Port forwarding setup complete" >&2
 
