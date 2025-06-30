@@ -111,6 +111,7 @@ class KernelSpec extends Specification {
                         kernelDir,
                         "/usr/share/jupyter/kernels/micronaut", BindMode.READ_WRITE)
                 .withCopyFileToContainer(MountableFile.forHostPath(testLogFilePath), "/app/libs/logback.xml")
+                .withEnv("JUPYTER_KERNEL_BIND_HOST", "0.0.0.0")
                 .withWorkingDirectory("/app")
                 .withCommand("/bin/sh", "-c", "/app/test-startup.sh")
                 .withExposedPorts(8080)

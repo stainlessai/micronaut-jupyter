@@ -87,8 +87,15 @@ public class CloseableKernelSocketsZMQ extends KernelSockets {
     }
 
     private void configureSockets(Config configuration) {
-        final String connection = configuration.getTransport() + "://" + configuration.getHost();
-        logger.debug("Configuring sockets with connection string: {}", connection);
+        // Check for environment variable override for bind host
+        String bindHost = System.getenv("JUPYTER_KERNEL_BIND_HOST");
+        if (bindHost == null || bindHost.trim().isEmpty()) {
+            bindHost = configuration.getHost();
+        }
+        
+        final String connection = configuration.getTransport() + "://" + bindHost;
+        logger.debug("Configuring sockets with connection string: {} (bind host: {}, config host: {})", 
+                    connection, bindHost, configuration.getHost());
         logger.debug("Socket ports - iopub: {}, heartbeat: {}, control: {}, stdin: {}, shell: {}",
                     configuration.getIopub(), configuration.getHeartbeat(), configuration.getControl(),
                     configuration.getStdin(), configuration.getShell());
