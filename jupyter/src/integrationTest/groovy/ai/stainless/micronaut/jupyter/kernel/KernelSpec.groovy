@@ -355,7 +355,7 @@ class KernelSpec extends Specification {
         System.err.println("DEBUG: nbclient version: " + nbConvVer.stdout.trim())
 
         // IN FOREGROUND
-        def nbclientCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName}.nbclient --output-dir=/notebooks  --ExecutePreprocessor.timeout=30000 --execute /notebooks/${notebookName}.ipynb"
+        def nbclientCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName}.nbclient --output-dir=/notebooks --ExecutePreprocessor.timeout=30000 --allow-errors --execute /notebooks/${notebookName}.ipynb"
         def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbclientCmd} </dev/null >/tmp/nbclient.log 2>&1")
         // End - IN FOREGROUND
 

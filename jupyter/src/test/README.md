@@ -188,3 +188,146 @@ netstat -tlnp | grep <port>
 ### Python Tools (in Jupyter container)
 - **jupyter_client** - Jupyter protocol client
 - **nbclient** - Notebook execution engine
+
+## Integration Test Writing Guide
+
+This section documents the step-by-step process for creating new integration tests, using the exception handling test as an example.
+
+### Three-Component Approach
+
+Each integration test follows a three-component pattern:
+
+1. **Support Library Class** - Test utility class in `src/integrationTest/groovy/`
+2. **Test Notebook** - Jupyter notebook in `src/test/resources/notebooks/`
+3. **Integration Test Class** - Spock test extending `KernelSpec`
+
+### Step-by-Step Process
+
+#### 1. Create Support Library Class
+
+Create a test utility class in the appropriate package under `src/integrationTest/groovy/`:
+
+```groovy
+// Example: src/integrationTest/groovy/ai/stainless/micronaut/jupyter/exception/ExceptionThrower.groovy
+package ai.stainless.micronaut.jupyter.exception
+
+class ExceptionThrower {
+    void throwRuntimeException() {
+        throw new RuntimeException("This is a test uncaught exception from ExceptionThrower")
+    }
+    
+    void throwNullPointerException() {
+        throw new NullPointerException("Test NPE from ExceptionThrower")
+    }
+}
+```
+
+#### 2. Update Build Configuration
+
+Add the new package to the `integrationTestJar` task in `build.gradle`:
+
+```gradle
+task integrationTestJar(type: Jar) {
+    archiveBaseName = 'test-support-lib'
+    archiveVersion = ''
+    from sourceSets.integrationTest.output
+    include '**/logging/**', '**/exception/**'  // Add new package here
+}
+```
+
+#### 3. Create Test Notebook
+
+Create a Jupyter notebook in `src/test/resources/notebooks/` that exercises the functionality:
+
+```json
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "%import org.slf4j.Logger\n",
+        "%import org.slf4j.LoggerFactory\n",
+        "%import groovy.util.logging.Slf4j"
+      ]
+    },
+    {
+      "cell_type": "code", 
+      "source": [
+        "log = LoggerFactory.getLogger(\"jupyter.notebook.exception\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "println \"Before importing ExceptionThrower\"\n",
+        "%import ai.stainless.micronaut.jupyter.exception.ExceptionThrower\n",
+        "println \"After importing ExceptionThrower\""
+      ]
+    }
+  ]
+}
+```
+
+#### 4. Create Integration Test Class
+
+Create a Spock test class extending `KernelSpec`:
+
+```groovy
+package ai.stainless.micronaut.jupyter.kernel
+
+class ExceptionHandlingTest extends KernelSpec {
+
+    def "handles uncaught exceptions gracefully"() {
+        when:
+        NotebookExecResult notebookResult = executeNotebook("exceptionHandling")
+
+        then:
+        verifyExecution(notebookResult)
+        
+        def cells = notebookResult.outJson.cells
+        
+        // Verify each cell's execution and outputs
+        cells[0].execution_count == 1
+        cells[0].outputs.size() == 0
+        
+        // Check for expected error handling
+        def errorOutput = cells[4].outputs.find { it.output_type == 'error' }
+        errorOutput.ename.contains("RuntimeException")
+    }
+}
+```
+
+### Key Considerations
+
+#### Variable Scoping
+- Variables defined in one notebook cell may not be available in subsequent cells
+- Use instance variables or static methods when sharing state between cells
+- Test variable persistence explicitly in your notebooks
+
+#### Build Dependencies
+- Run `gradle assemble` before integration tests to ensure JAR is built
+- The `integrationTestJar` task must include all necessary package patterns
+- JAR is automatically uploaded to containers via the `KernelSpec` base class
+
+#### Error Expectations
+- Integration tests can validate both successful execution and error scenarios
+- Use `output_type == 'error'` to find error outputs in notebook results
+- Check `ename` and `evalue` fields for specific exception details
+
+#### Container Communication
+- All ZMQ port forwarding is handled automatically by `KernelSpec`
+- Health checks ensure container readiness before test execution
+- Shared filesystem enables JAR distribution between containers
+
+### Running New Tests
+
+```bash
+# Build support JAR
+gradle assemble
+
+# Run specific integration test
+gradle integrationTest --tests="ExceptionHandlingTest"
+
+# Run all integration tests
+gradle integrationTest
+```
