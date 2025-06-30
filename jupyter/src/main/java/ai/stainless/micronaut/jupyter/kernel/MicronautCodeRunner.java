@@ -66,10 +66,13 @@ public class MicronautCodeRunner implements Callable<TryResult> {
         TryResult either;
         String scriptName = SCRIPT_NAME;
         
-        // Set up uncaught exception handler for this execution
-        Thread.currentThread().setUncaughtExceptionHandler(
-            new GlobalUncaughtExceptionHandler(evaluator.getKernel(), theOutput)
-        );
+        // Set up uncaught exception handler for this execution (unless disabled via env var)
+        String disableHandler = System.getenv("DISABLE_GLOBAL_EXCEPTION_HANDLER");
+        if (!"true".equalsIgnoreCase(disableHandler) && !"1".equals(disableHandler)) {
+            Thread.currentThread().setUncaughtExceptionHandler(
+                new GlobalUncaughtExceptionHandler(evaluator.getKernel(), theOutput)
+            );
+        }
         
         try {
             theOutput.setOutputHandler();

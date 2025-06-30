@@ -229,6 +229,10 @@ class KernelSpec extends Specification {
     }
 
     protected NotebookExecResult executeNotebook(String notebookName) {
+        return executeNotebook(notebookName, [:])
+    }
+
+    protected NotebookExecResult executeNotebook(String notebookName, Map<String, String> envVars) {
         // create new result
         NotebookExecResult result = new NotebookExecResult()
 
@@ -356,7 +360,14 @@ class KernelSpec extends Specification {
 
         // IN FOREGROUND
         def nbclientCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName}.nbclient --output-dir=/notebooks --ExecutePreprocessor.timeout=30000 --allow-errors --execute /notebooks/${notebookName}.ipynb"
-        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbclientCmd} </dev/null >/tmp/nbclient.log 2>&1")
+        
+        // Build environment variables string
+        def envVarString = ""
+        if (envVars && !envVars.isEmpty()) {
+            envVarString = envVars.collect { k, v -> "${k}=${v}" }.join(" ") + " "
+        }
+        
+        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${envVarString}${nbclientCmd} </dev/null >/tmp/nbclient.log 2>&1")
         // End - IN FOREGROUND
 
 //        def nbclientCmd = "papermill /notebooks/${notebookName}.ipynb"
