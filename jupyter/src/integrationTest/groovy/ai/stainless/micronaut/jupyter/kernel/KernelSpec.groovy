@@ -61,7 +61,8 @@ class KernelSpec extends Specification {
         def projectRoot = currentDir.endsWith("/jupyter") ? new File(currentDir).getParent() : currentDir
         def basicServiceJarPath = Paths.get(projectRoot, "examples", "basic-service", "build", "libs", "basic-service-0.1-all.jar").toString()
         def testStartupScriptPath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "test-startup.sh").toString()
-        
+        def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "logback-test.xml")
+
         // Check if the basic-service JAR exists
         def basicServiceJar = new File(basicServiceJarPath)
         if (!basicServiceJar.exists()) {
@@ -69,6 +70,15 @@ class KernelSpec extends Specification {
         }
 
         def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "tmp", "test-location", "jupyter", "kernels", "micronaut").toString()
+
+        // We use a shared /tmp directory among the containers for communication
+        def testTempDir = Paths.get(projectRoot, "jupyter", "src", "test", "test_temp").toString()
+        // Delete contents of test temp directory if it exists
+//        def testTempDirFile = new File(testTempDir)
+//        if (testTempDirFile.exists()) {
+//            testTempDirFile.deleteDir()
+//        }
+//        testTempDirFile.mkdirs()
 
         micronautContainer = new GenericContainer("openjdk:17-jdk-slim", )
                 .withNetwork(testNetwork)
@@ -82,10 +92,15 @@ class KernelSpec extends Specification {
                         0774),
                         "/app/test-startup.sh")
                 .withFileSystemBind(
+                        testTempDir,
+                        "/tmp", BindMode.READ_WRITE)
+                .withFileSystemBind(
                         kernelDir,
                         "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
+                .withCopyFileToContainer(MountableFile.forHostPath(basicServiceJarPath), "/app/libs/basic-service-0.1-all.jar")
+                .withCopyFileToContainer(MountableFile.forHostPath(testLogFilePath), "/app/libs/logback.xml")
                 .withWorkingDirectory("/app")
-                .withCommand("/bin/sh", "-c", "apt-get update && apt-get install -y net-tools procps && /app/test-startup.sh")
+                .withCommand("/bin/sh", "-c", "apt-get update && apt-get install -y net-tools procps python3-pip && pip install papermill && /app/test-startup.sh")
                 .withExposedPorts(8080)
                 .waitingFor(Wait.forHttp("/health").forPort(8080).forStatusCode(200))
         micronautContainer.start()
@@ -130,6 +145,9 @@ class KernelSpec extends Specification {
                 .withEnv("JUPYTER_PATH", "/tmp/test-location/jupyter")
                 .withEnv("JUPYTER_SERVER", "http://${micronautIp}:8080")
                 .withEnv("MICRONAUT_SERVER_IP", micronautIp)
+                .withFileSystemBind(
+                        testTempDir,
+                        "/tmp", BindMode.READ_WRITE)
                 .withFileSystemBind(
                         kernelDir,
                         "/tmp/test-location/jupyter/kernels/micronaut", BindMode.READ_WRITE)
@@ -303,16 +321,29 @@ class KernelSpec extends Specification {
 //            throw new Exception("Health check failed, can't connect to micronaut-server from jupyter server")
 //        }
 
-        System.err.println("DEBUG: Starting jupyter nb-convert in background to trigger kernel startup...")
-        
         // Start nbconvert in background with a timeout
-        def nbconvertCmd = "timeout 30 jupyter nbconvert --debug --to notebook --execute /notebooks/${notebookName}.ipynb --output /notebooks/${notebookName}.nbconvert.ipynb"
-        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
-        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
-        
-        // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
-        Thread.sleep(10000)
-        
+        def nbConvVer = jupyterContainer.execInContainer("/bin/sh", "-c", "jupyter nbconvert --version")
+        System.err.println("DEBUG: nbconvert version: " + nbConvVer.stdout.trim())
+
+        // IN FOREGROUND
+//        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output ${notebookName} --output-dir=/tmp  --ExecutePreprocessor.timeout=10000 --execute /notebooks/${notebookName}.ipynb"
+//        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1")
+//        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
+        // End - IN FOREGROUND
+
+        def nbconvertCmd = "papermill /notebooks/${notebookName}.ipynb"
+        def process = jupyterContainer.execInContainer("/bin/sh", "-c", "${nbconvertCmd} </dev/null >/tmp/papermill.log 2>&1")
+        System.err.println("DEBUG: Started nbconvert process: " + process.stdout.trim())
+
+//        // IN BACKGROUND
+//        def nbconvertCmd = "jupyter nbconvert --debug --to notebook --output /notebooks/${notebookName}.nbconvert.ipynb --execute /notebooks/${notebookName}.ipynb"
+//        def bgProcess = jupyterContainer.execInContainer("/bin/sh", "-c", "nohup ${nbconvertCmd} </dev/null >/tmp/nbconvert.log 2>&1 & echo \$!")
+//        System.err.println("DEBUG: Started nbconvert process with PID: " + bgProcess.stdout.trim())
+//
+//        // Wait a bit for the kernel.sh script to make the /jupyterkernel/start request
+//        Thread.sleep(10000)
+//        // End - IN BACKGROUND
+
         // Check container states before attempting netstat
 //        System.err.println("DEBUG: Container states after kernel start attempt:")
 //        System.err.println("DEBUG: Micronaut container running: " + micronautContainer.isRunning())
@@ -326,9 +357,6 @@ class KernelSpec extends Specification {
         } else {
             System.err.println("ERROR: Micronaut container has stopped - cannot check ports")
             // Get final logs before it died
-            String finalLogs = micronautContainer.getLogs()
-            System.err.println("DEBUG: Final Micronaut container logs:")
-            System.err.println(finalLogs.split('\n').takeRight(30).join('\n'))
         }
         
         // Check nbconvert logs from the asynchronous call
@@ -337,15 +365,7 @@ class KernelSpec extends Specification {
 //        System.err.println(nbconvertLogs.stdout)
 //        System.err.println("DEBUG: nbconvert stderr from asynchronous execution:")
 //        System.err.println(nbconvertLogs.stderr)
-        
-        // Wait longer for the asynchronous notebook execution to complete
-        System.err.println("DEBUG: Waiting for asynchronous notebook execution to complete...")
-        Thread.sleep(10000)
-        
-        // Check if the background process completed successfully
-        def processCheck = jupyterContainer.execInContainer("/bin/sh", "-c", "pgrep -f 'jupyter nbconvert' || echo 'process completed'")
-        System.err.println("DEBUG: Background process check: " + processCheck.stdout)
-        
+
         // Check final nbconvert logs again after waiting
         //
         // FIXME Micronaut is expecting this file on the local machine, it's why we shared /tmp before...
@@ -378,6 +398,10 @@ class KernelSpec extends Specification {
         if (result.outResult.exitCode == 0) {
             result.outJson = new JsonSlurper().parseText(result.outResult.stdout) as Map
         }
+
+        String finalLogs = micronautContainer.getLogs()
+        System.err.println("DEBUG: Final Micronaut container logs:")
+        System.err.println(finalLogs.split('\n').takeRight(30).join('\n'))
         
         // Set execResult based on whether we got valid output
         result.execResult = new ExecResult(result.outResult.exitCode, result.outResult.stdout, result.outResult.stderr)

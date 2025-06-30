@@ -7,6 +7,8 @@ while [ ! -f /app/application.yml ]; do
 done
 echo "Found /app/application.yml, starting application..."
 
+ls -al /app/libs
+
 export CLASSPATH="/app:$CLASSPATH"
 
-java -Dmicronaut.config.files=/app/application.yml -jar /app/libs/basic-service-0.1-all.jar
+java -Dlogback.configurationFile=/app/libs/logback.xml -Dmicronaut.config.files=/app/application.yml -jar /app/libs/basic-service-0.1-all.jar
