@@ -205,6 +205,15 @@ task unitTest(type: Test) {
     classpath = sourceSets.test.runtimeClasspath
 }
 
+task integrationTestJar(type: Jar) {
+    archiveBaseName = 'test-support-lib'
+    archiveVersion = ''
+    from sourceSets.integrationTest.output
+    include '**/logging/**'
+}
+
+assemble.dependsOn integrationTestJar
+
 task integrationTest() {
     dependsOn basicIntegrationTest
     // dependsOn gormTest

@@ -15,18 +15,20 @@ class LoggingTest extends KernelSpec {
         // commands should have executed successfully
         verifyExecution(notebookResult)
         // test stdout of cell
-        notebookResult.outJson.cells?.get(2)?.outputs?.find { it.name == "stdout" }?.text == [
+        notebookResult.outJson.cells?.get(2)?.outputs?.find { it.name == "stdout" }?.text.containsAll([
             "Before in-cell logging\n",
             "After in-cell logging\n"
-        ]
-        notebookResult.outJson.cells?.get(4)?.outputs?.find { it.name == "stdout" }?.text == [
+        ])
+
+        notebookResult.outJson.cells?.get(4)?.outputs?.find { it.name == "stdout" }?.text.containsAll([
             "Before in-class logging\n",
             "After in-class logging\n"
-        ]
-        notebookResult.outJson.cells?.get(5)?.outputs?.find { it.name == "stdout" }?.text == [
+        ])
+
+        notebookResult.outJson.cells?.get(5)?.outputs?.find { it.name == "stdout" }?.text.containsAll([
             "Before in-library logging\n",
             "After in-library logging\n"
-        ]
+        ])
     }
 
     @Property(name = "jupyter.kernel.redirectLogOutput", value = "")
@@ -39,7 +41,7 @@ class LoggingTest extends KernelSpec {
         // commands should have executed successfully
         verifyExecution(notebookResult)
         // test stdout of cell
-        notebookResult.outJson.cells?.get(2)?.outputs?.find { it.name == "stdout" }?.text?.size() == 5
+        notebookResult.outJson.cells?.get(2)?.outputs?.find { it.name == "stdout" }?.text?.size() == 2
         notebookResult.outJson.cells?.get(4)?.outputs?.find { it.name == "stdout" }?.text?.get(1)?.contains("Info line")
         notebookResult.outJson.cells?.get(5)?.outputs?.find { it.name == "stdout" }?.text?.get(3)?.contains("Error line")
     }

@@ -66,6 +66,9 @@ mainClassName = "micronaut.examples.beans.Application"
 
 shadowJar {
     mergeServiceFiles()
+    manifest {
+        attributes 'Class-Path': 'test-support-lib.jar'
+    }
 }
 
 run.classpath += configurations.developmentOnly
