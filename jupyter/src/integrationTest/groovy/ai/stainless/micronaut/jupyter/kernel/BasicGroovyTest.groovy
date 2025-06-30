@@ -12,7 +12,7 @@ class BasicGroovyTest extends KernelSpec {
         // commands should have executed successfully
         verifyExecution(notebookResult)
         // test stdout of cell
-        notebookResult.outJson.cells[0].outputs[0].text == "hello\n"
+        notebookResult.outJson.cells[0].outputs[0].text[0].trim() == "hello"
     }
 
 }

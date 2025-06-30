@@ -23,7 +23,7 @@
 
 <!--    <logger name="com.twosigma.beakerx.kernel" level="INFO" />-->
 <!--    <logger name="ai.stainless" level="TRACE" />-->
-        <logger name="ai.stainless.micronaut.jupyter.kernel.CloseableKernelSocketsZMQ" level="TRACE"/>
+        <logger name="ai.stainless.micronaut.jupyter.kernel.CloseableKernelSocketsZMQ" level="INFO"/>
 
 <!--    &lt;!&ndash; Debug logging for Testcontainers &ndash;&gt;-->
 <!--    <logger name="org.testcontainers" level="INFO"/>-->
