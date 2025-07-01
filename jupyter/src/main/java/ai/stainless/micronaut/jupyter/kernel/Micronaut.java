@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.twosigma.beakerx.kernel.Utils.uuid;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 @Slf4j
 public class Micronaut extends Groovy {
@@ -131,7 +133,52 @@ public class Micronaut extends Groovy {
 
         Kernel.showNullExecutionResult = false;
 
+        // Register signal handlers
+        registerSignalHandlers();
+
         log.info("Micronaut kernel initialized successfully");
+    }
+
+    /**
+     * Register signal handlers to detect and log signals
+     */
+    private void registerSignalHandlers() {
+        log.info("Starting signal handler registration");
+        String[] signalsToHandle = {"INT", "TERM", "HUP", "USR1", "USR2"};
+        
+        for (String signalName : signalsToHandle) {
+            try {
+                Signal signal = new Signal(signalName);
+                Signal.handle(signal, new SignalHandler() {
+                    @Override
+                    public void handle(Signal signal) {
+                        log.warn("Received signal: SIG{} ({})", signal.getName(), signal.getNumber());
+                        System.err.println("SIGNAL RECEIVED: SIG" + signal.getName() + " (" + signal.getNumber() + ")");
+                        
+//                        // For SIGTERM, perform graceful shutdown
+//                        if ("TERM".equals(signal.getName())) {
+//                            log.info("SIGTERM received - initiating graceful shutdown");
+//                            try {
+//                                kill();
+//                                System.exit(0);
+//                            } catch (Exception e) {
+//                                log.error("Error during graceful shutdown", e);
+//                                System.exit(1);
+//                            }
+//                        }
+//
+//                        // For other signals, just log them
+//                        log.info("Signal SIG{} handled - continuing operation", signal.getName());
+                    }
+                });
+                log.info("Successfully registered signal handler for SIG{}", signalName);
+            } catch (IllegalArgumentException e) {
+                log.warn("Signal SIG{} not supported on this platform: {}", signalName, e.getMessage());
+            } catch (Exception e) {
+                log.error("Failed to register signal handler for SIG{}: {}", signalName, e.getMessage());
+            }
+        }
+        log.info("Signal handler registration complete");
     }
 
     /**

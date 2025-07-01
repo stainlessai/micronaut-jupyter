@@ -14,4 +14,7 @@ export CLASSPATH="/app:$CLASSPATH"
 #
 # The ClassPath manifest in basic-service-0.1-all.jar contains an entry for test-service-lib.jar
 #
-java -Dlogback.configurationFile=/app/libs/logback.xml -Dmicronaut.config.files=/app/application.yml -jar /app/libs/basic-service-0.1-all.jar
+java -Dlogback.configurationFile=/app/libs/logback.xml \
+  -Dlogback.debug=true \
+  -Dmicronaut.config.files=/app/application.yml \
+  -jar /app/libs/basic-service-0.1-all.jar

@@ -62,7 +62,7 @@ class KernelSpec extends Specification {
         def basicServiceJarPath = Paths.get(projectRoot, "examples", "beans-service", "build", "libs", "beans-service-0.1-all.jar").toString()
         def testSupportLibJarPath = Paths.get(projectRoot, "jupyter", "build", "libs", "test-support-lib.jar").toString()
         def testStartupScriptPath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "test-startup.sh").toString()
-        def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "logback-test.xml")
+        def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "logback-integrationTest.xml")
 
         // Check if the basic-service JAR exists
         def basicServiceJar = new File(basicServiceJarPath)
@@ -81,11 +81,11 @@ class KernelSpec extends Specification {
         // We use a shared /tmp directory among the containers for communication
         def testTempDir = Paths.get(projectRoot, "jupyter", "src", "test", "test_temp").toString()
         // Delete contents of test temp directory if it exists
-//        def testTempDirFile = new File(testTempDir)
-//        if (testTempDirFile.exists()) {
-//            testTempDirFile.deleteDir()
-//        }
-//        testTempDirFile.mkdirs()
+        def testTempDirFile = new File(testTempDir)
+        if (testTempDirFile.exists()) {
+            testTempDirFile.deleteDir()
+        }
+        testTempDirFile.mkdirs()
 
         // First, create a custom image with all the dependencies
         def micronautImage = new ImageFromDockerfile()

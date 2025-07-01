@@ -42,8 +42,8 @@ class LoggingTest extends KernelSpec {
         verifyExecution(notebookResult)
         // test stdout of cell
         notebookResult.outJson.cells?.get(2)?.outputs?.find { it.name == "stdout" }?.text?.size() == 2
-        notebookResult.outJson.cells?.get(4)?.outputs?.find { it.name == "stdout" }?.text?.get(1)?.contains("Info line")
-        notebookResult.outJson.cells?.get(5)?.outputs?.find { it.name == "stdout" }?.text?.get(3)?.contains("Error line")
-    }
+        notebookResult.outJson.cells?.get(4)?.outputs?.find { it.name == "stdout" }?.text?.get(1)?.contains("After in-class logging")
+        notebookResult.outJson.cells?.get(5)?.outputs?.find { it.name == "stdout" }?.text?.get(1)?.contains("After in-library logging")
 
+    }
 }
