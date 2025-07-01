@@ -11,6 +11,7 @@ micronaut:
         enabled: true
         sensitive: false
 
+# Needs to be enabled to expose the InstallKernel bean referenced in the notebook for BeansTest
 jupyter:
   kernel:
-    install: false
+    install: true
