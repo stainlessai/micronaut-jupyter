@@ -209,7 +209,7 @@ task integrationTestJar(type: Jar) {
     archiveBaseName = 'test-support-lib'
     archiveVersion = ''
     from sourceSets.integrationTest.output
-    include '**/logging/**', '**/exception/**'
+    include '**/logging/**', '**/exception/**', '**/test/**'
 }
 
 assemble.dependsOn integrationTestJar

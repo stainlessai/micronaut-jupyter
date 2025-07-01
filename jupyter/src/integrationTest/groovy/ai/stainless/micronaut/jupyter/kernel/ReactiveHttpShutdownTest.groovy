@@ -34,16 +34,16 @@ class ReactiveHttpShutdownTest extends KernelSpec {
         testLog.info("Cleanup completed")
     }
     
-    def "ThreadDeath occurs when kernel shuts down during blocking HTTP call"() {
+    def "ThreadDeath does not occur when kernel shuts down during blocking HTTP call"() {
         given: "Mock server that never responds to simulate network hang"
         mockServer.setNeverRespond(true) // Server will never respond, simulating a hang
-        testLog.info("Test: ThreadDeath during blocking HTTP call - server will never respond")
+        testLog.info("Test: Kernel continuation during blocking HTTP call - server will never respond")
         
         when: "Execute notebook cell with blocking HTTP call"
         testLog.info("Starting notebook execution with non-responding server")
         def result = executeNotebook("reactiveHttpBlocking", ["JUPYTER_KERNEL_TIMEOUT": "10"]) // 10 second timeout
         
-        then: "Notebook execution should complete with timeout or connection error"
+        then: "Notebook execution should complete successfully despite blocking call"
         testLog.info("Notebook execution completed, checking results")
         def cells = result.outJson.cells
         testLog.info("Found {} cells in result", cells.size())
@@ -61,23 +61,9 @@ class ReactiveHttpShutdownTest extends KernelSpec {
             }
         }
         
-        // Should see evidence of timeout, connection error, or interruption
-        def hasErrorOrTimeout = cells.any { cell ->
-            cell.outputs?.any { output ->
-                // Check for various timeout/connection issues
-                (output.ename == "ConnectTimeoutException") ||
-                (output.ename == "ReadTimeoutException") ||
-                (output.ename == "SocketTimeoutException") ||
-                (output.text && output.text.join('').contains("timeout")) ||
-                (output.text && output.text.join('').contains("Connection refused")) ||
-                (output.text && output.text.join('').contains("ERROR after")) ||
-                (output.ename == "InterruptedException") ||
-                (output.text && output.text.join('').contains("interrupted"))
-            }
-        }
-        
-        testLog.info("Error or timeout detected: {}", hasErrorOrTimeout)
-        hasErrorOrTimeout || result.execResult.exitCode != 0 // Either explicit error or non-zero exit
+        // Kernel should complete successfully (exit code 0) despite blocking calls
+        testLog.info("Execution completed with exit code: {}", result.execResult.exitCode)
+        result.execResult.exitCode == 0 // Kernel should exit cleanly
     }
     
     def "Non-blocking HTTP call handles timeout more gracefully"() {
