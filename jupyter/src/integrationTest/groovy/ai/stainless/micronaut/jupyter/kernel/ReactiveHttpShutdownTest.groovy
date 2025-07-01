@@ -1,6 +1,5 @@
 package ai.stainless.micronaut.jupyter.kernel
 
-import ai.stainless.micronaut.integration.services.SlowHttpServer
 import groovy.json.JsonBuilder
 import groovy.util.logging.Slf4j
 import org.slf4j.LoggerFactory
@@ -13,30 +12,28 @@ import java.util.concurrent.TimeoutException
 class ReactiveHttpShutdownTest extends KernelSpec {
     
     private static final org.slf4j.Logger testLog = LoggerFactory.getLogger(ReactiveHttpShutdownTest.class)
-    private SlowHttpServer mockServer
     
     def setup() {
         testLog.info("Setting up ReactiveHttpShutdownTest")
-        mockServer = new SlowHttpServer()
-        mockServer.start()
         
         // Set the slow URL as a system property for the notebooks to use
-        System.setProperty('test.slow.url', mockServer.getSlowUrl())
-        testLog.info("Mock server started at: {}", mockServer.getUrl())
+        System.setProperty('test.slow.url', 'http://localhost:8080/slow')
+        testLog.info("Using slow controller at: http://localhost:8080/slow")
     }
     
     def cleanup() {
         testLog.info("Cleaning up ReactiveHttpShutdownTest")
-        if (mockServer) {
-            mockServer.stop()
-        }
         System.clearProperty('test.slow.url')
         testLog.info("Cleanup completed")
     }
     
     def "ThreadDeath does not occur when kernel shuts down during blocking HTTP call"() {
         given: "Mock server that never responds to simulate network hang"
-        mockServer.setNeverRespond(true) // Server will never respond, simulating a hang
+        // Configure controller to never respond via HTTP call to container
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/never-respond",
+            "-H", "Content-Type: application/json",
+            "-d", '{"neverRespond": true}')
         testLog.info("Test: Kernel continuation during blocking HTTP call - server will never respond")
         
         when: "Execute notebook cell with blocking HTTP call"
@@ -83,8 +80,16 @@ class ReactiveHttpShutdownTest extends KernelSpec {
     
     def "Non-blocking HTTP call handles timeout more gracefully"() {
         given: "Mock server with moderate delay longer than client timeout"
-        mockServer.setNeverRespond(false) // Reset from previous test
-        mockServer.setResponseDelay(15_000) // 15 second delay
+        // Configure controller via HTTP calls to container
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/never-respond",
+            "-H", "Content-Type: application/json",
+            "-d", '{"neverRespond": false}')
+        
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/delay",
+            "-H", "Content-Type: application/json",
+            "-d", '{"delay": 15000}')
         testLog.info("Test: Non-blocking HTTP call with timeout - server delay set to 15s")
         
         when: "Execute notebook with non-blocking HTTP call with shorter timeout"
@@ -123,8 +128,16 @@ class ReactiveHttpShutdownTest extends KernelSpec {
     
     def "Error handling with onErrorReturn handles timeout gracefully"() {
         given: "Mock server with long delay to trigger timeout"
-        mockServer.setNeverRespond(false) // Reset from previous test
-        mockServer.setResponseDelay(25_000) // 25 second delay
+        // Configure controller via HTTP calls to container
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/never-respond",
+            "-H", "Content-Type: application/json",
+            "-d", '{"neverRespond": false}')
+        
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/delay",
+            "-H", "Content-Type: application/json",
+            "-d", '{"delay": 25000}')
         testLog.info("Test: Error handling with timeout - server delay set to 25s")
         
         when: "Execute notebook with error handling and shorter timeout"
@@ -176,8 +189,16 @@ class ReactiveHttpShutdownTest extends KernelSpec {
     
     def "SIGINT interruption during blocking HTTP call handles gracefully"() {
         given: "Mock server with long delay to ensure blocking call is active"
-        mockServer.setNeverRespond(false) // Reset from previous test
-        mockServer.setResponseDelay(30_000) // 30 second delay to ensure time for SIGINT
+        // Configure controller via HTTP calls to container
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/never-respond",
+            "-H", "Content-Type: application/json",
+            "-d", '{"neverRespond": false}')
+        
+        jupyterContainer.execInContainer("curl", "-X", "POST", 
+            "http://localhost:8080/slow/config/delay",
+            "-H", "Content-Type: application/json",
+            "-d", '{"delay": 30000}')
         testLog.info("Test: SIGINT interruption during blocking HTTP call - server delay set to 30s")
         
         when: "Execute notebook with blocking HTTP call and send SIGINT after delay"
