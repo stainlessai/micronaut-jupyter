@@ -1,4 +1,4 @@
-package ai.stainless.micronaut.jupyter.test
+package ai.stainless.micronaut.integration.services
 
 import groovy.util.logging.Slf4j
 import io.micronaut.http.HttpRequest

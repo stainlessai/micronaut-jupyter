@@ -54,26 +54,20 @@ class KernelSpec extends Specification {
         // Create shared network for containers to communicate
         testNetwork = Network.newNetwork()
 
-        // Start Micronaut server in container using basic-service example
+        // Start Micronaut server in container using integration test application
         // Use relative paths from project root
         def currentDir = System.getProperty("user.dir")
         // When running from gradle, working directory is the jupyter subproject, so go up one level
         def projectRoot = currentDir.endsWith("/jupyter") ? new File(currentDir).getParent() : currentDir
-        def basicServiceJarPath = Paths.get(projectRoot, "examples", "beans-service", "build", "libs", "beans-service-0.1-all.jar").toString()
-        def testSupportLibJarPath = Paths.get(projectRoot, "jupyter", "build", "libs", "test-support-lib.jar").toString()
+        def integrationTestJarPath = Paths.get(projectRoot, "jupyter", "build", "libs", "integration-test-0.1-all.jar").toString()
         def testStartupScriptPath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "test-startup.sh").toString()
-        def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "logback-integrationTest.xml")
+        def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "integrationTest", "resources", "logback-integration-test.xml")
+        def integrationConfigPath = Paths.get(projectRoot, "jupyter", "src", "integrationTest", "resources", "application-integration-test.yml").toString()
 
-        // Check if the basic-service JAR exists
-        def basicServiceJar = new File(basicServiceJarPath)
-        if (!basicServiceJar.exists()) {
-            throw new RuntimeException("Required JAR file not found: ${basicServiceJarPath}. Run 'gradle assemble' to build the test jars before running integration tests.")
-        }
-        
-        // Check if the test support library JAR exists
-        def testSupportLibJar = new File(testSupportLibJarPath)
-        if (!testSupportLibJar.exists()) {
-            throw new RuntimeException("Required JAR file not found: ${testSupportLibJarPath}. Run 'gradle assemble' to build the test jars before running integration tests.")
+        // Check if the integration test JAR exists
+        def integrationTestJar = new File(integrationTestJarPath)
+        if (!integrationTestJar.exists()) {
+            throw new RuntimeException("Required JAR file not found: ${integrationTestJarPath}. Run 'gradle assemble' to build the integration test JAR before running integration tests.")
         }
 
         def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "kernels", "micronaut").toString()
@@ -101,15 +95,12 @@ class KernelSpec extends Specification {
         micronautContainer = new GenericContainer(micronautImage)
                 .withNetwork(testNetwork)
                 .withNetworkAliases("micronaut-server")
-                .withClasspathResourceMapping("application-integration.yml",
-                        "/app/application.yml",
-                        BindMode.READ_ONLY)
                 .withCopyFileToContainer(
-                        MountableFile.forHostPath(basicServiceJarPath),
-                        "/app/libs/basic-service-0.1-all.jar")
+                        MountableFile.forHostPath(integrationConfigPath),
+                        "/app/application.yml")
                 .withCopyFileToContainer(
-                        MountableFile.forHostPath(testSupportLibJarPath),
-                        "/app/libs/test-support-lib.jar")
+                        MountableFile.forHostPath(integrationTestJarPath),
+                        "/app/libs/integration-test-0.1-all.jar")
                 .withCopyFileToContainer(MountableFile.forHostPath(
                         testStartupScriptPath,
                         0774),

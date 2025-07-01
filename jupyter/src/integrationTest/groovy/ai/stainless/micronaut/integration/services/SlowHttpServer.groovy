@@ -1,4 +1,4 @@
-package ai.stainless.micronaut.jupyter.test
+package ai.stainless.micronaut.integration.services
 
 import groovy.util.logging.Slf4j
 import java.net.ServerSocket
@@ -24,7 +24,7 @@ class SlowHttpServer {
      */
     void start() {
         try {
-            serverSocket = new ServerSocket(8888) // Use any available port
+            serverSocket = new ServerSocket(0) // Use any available port
             port = serverSocket.getLocalPort()
             running.set(true)
             

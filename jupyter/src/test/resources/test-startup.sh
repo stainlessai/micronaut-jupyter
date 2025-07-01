@@ -9,12 +9,10 @@ echo "Found /app/application.yml, starting application..."
 
 ls -al /app/libs
 
-export CLASSPATH="/app:$CLASSPATH"
-
 #
-# The ClassPath manifest in basic-service-0.1-all.jar contains an entry for test-service-lib.jar
+# Use the integration test fat JAR with all dependencies included
 #
 java -Dlogback.configurationFile=/app/libs/logback.xml \
   -Dlogback.debug=true \
   -Dmicronaut.config.files=/app/application.yml \
-  -jar /app/libs/basic-service-0.1-all.jar
+  -jar /app/libs/integration-test-0.1-all.jar

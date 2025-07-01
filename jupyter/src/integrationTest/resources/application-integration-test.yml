@@ -2,6 +2,10 @@ micronaut:
   server:
     port: 8080
     host: 0.0.0.0
+  http:
+    client:
+      read-timeout: 30s
+      connect-timeout: 5s
   management:
     endpoints:
       health:
@@ -13,5 +17,7 @@ micronaut:
 
 # Needs to be enabled to expose the InstallKernel bean referenced in the notebook for BeansTest
 jupyter:
+  server-url: http://localhost:8080
   kernel:
     install: true
+

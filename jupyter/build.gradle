@@ -3,6 +3,7 @@ plugins {
     id 'groovy'
     id 'maven-publish'
     id 'signing'
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 repositories {
@@ -109,6 +110,13 @@ dependencies {
     integrationTestImplementation "io.micronaut:micronaut-http-client"
     integrationTestImplementation "ch.qos.logback:logback-classic:1.2.3"
     
+    // Add runtime dependencies needed for integration test application
+    integrationTestImplementation "io.micronaut:micronaut-runtime:$micronautVersion"
+    integrationTestImplementation "io.micronaut:micronaut-http-server-netty:$micronautVersion"
+    integrationTestRuntimeOnly "io.micronaut:micronaut-http-server-netty:$micronautVersion"
+    integrationTestImplementation "io.micronaut.groovy:micronaut-runtime-groovy"
+    integrationTestImplementation "org.apache.groovy:groovy-all:$groovyVersion"
+    
     // Add JUnit 5 dependencies needed for @Testcontainers
     integrationTestImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
     integrationTestImplementation "org.junit.jupiter:junit-jupiter-engine:5.8.2"
@@ -182,34 +190,59 @@ task mdTest(type: Test) {
     classpath = sourceSets.mdTest.runtimeClasspath
 }
 
+task unitTest(type: Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+}
+
+shadowJar {
+    dependsOn integrationTestClasses
+
+    archiveBaseName = 'integration-test'
+    archiveVersion = '0.1'
+    archiveClassifier = 'all'
+
+    // Include integration test classes and resources
+    from sourceSets.integrationTest.output.classesDirs
+    from sourceSets.integrationTest.output.resourcesDir
+
+    // Include ONLY .class files from main (exclude main resources)
+    from sourceSets.main.output.classesDirs
+
+    // Use integration test runtime classpath
+    configurations = [project.configurations.integrationTestRuntimeClasspath]
+
+    mergeServiceFiles()
+
+    manifest {
+        attributes 'Main-Class': 'ai.stainless.micronaut.integration.Application'
+        attributes 'Implementation-Title': 'Integration Test Application'
+        attributes 'Implementation-Version': '0.1'
+    }
+}
+
+task integrationTestJar {
+    dependsOn shadowJar
+}
+
 task basicIntegrationTest(type: Test) {
+    dependsOn integrationTestJar
+
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
-    
+
     // Ensure test discovery works
     useJUnitPlatform()
-    
+
     // Explicit test logging
     testLogging {
         events "passed", "skipped", "failed", "started"
         showStandardStreams = true
         exceptionFormat = "full"
     }
-    
+
     // Force test execution
     outputs.upToDateWhen { false }
-}
-
-task unitTest(type: Test) {
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
-}
-
-task integrationTestJar(type: Jar) {
-    archiveBaseName = 'test-support-lib'
-    archiveVersion = ''
-    from sourceSets.integrationTest.output
-    include '**/logging/**', '**/exception/**', '**/test/**'
 }
 
 assemble.dependsOn integrationTestJar
