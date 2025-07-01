@@ -92,7 +92,7 @@ class KernelSpec extends Specification {
                 .withDockerfileFromBuilder { builder ->
                     builder
                             .from("openjdk:17-jdk-slim")
-                            .run("apt-get update && apt-get install -y net-tools procps")
+                            .run("apt-get update && apt-get install -y net-tools procps curl")
                             .workDir("/app")
                             .build()
                 }
