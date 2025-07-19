@@ -4,8 +4,8 @@
 # jq '.ip = "0.0.0.0"' $1 > tmp.$.json && mv tmp.$.json $1
 
 # Wait for server to be ready with retries
-# Use localhost since port forwarding is already set up by socat
-SERVER_HOST="localhost"
+# Use micronaut-server directly for container-to-container communication
+SERVER_HOST="micronaut-server"
 SERVER_URL="http://${SERVER_HOST}:8080"
 MAX_RETRIES=30
 RETRY_COUNT=0
