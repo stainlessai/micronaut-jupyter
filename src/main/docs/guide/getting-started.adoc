@@ -1,0 +1,343 @@
+== Getting Started
+
+This guide will walk you through setting up and using Micronaut Jupyter in your project. By the end of this guide, you'll have a working Jupyter environment that can access your Micronaut application's beans, services, and repositories.
+
+=== Quick Start
+
+For those who want to get started immediately:
+
+1. **Add the dependency** to your `build.gradle`:
+   [source,groovy]
+   ----
+   implementation "ai.stainless:micronaut-jupyter:1.1.2"
+   ----
+
+2. **Configure kernel location** in `application.yml`:
+   [source,yaml]
+   ----
+   jupyter:
+     kernel:
+       location: ~/.local/share/jupyter/kernels
+   ----
+
+3. **Start your application**:
+   [source,bash]
+   ----
+   ./gradlew run
+   ----
+
+4. **Launch Jupyter Lab**:
+   [source,bash]
+   ----
+   jupyter lab
+   ----
+
+5. **Create a new notebook** with the "Micronaut" kernel and start coding!
+
+=== What You'll Learn
+
+This getting started guide covers:
+
+* **Prerequisites**: What you need installed before starting
+* **Project Setup**: Adding Micronaut Jupyter to your project
+* **Configuration**: Setting up kernel directories and application configuration
+* **Usage Patterns**: Core techniques for working with beans, repositories, and application classes
+* **Examples**: Hands-on examples you can run immediately
+* **Troubleshooting**: Common issues and their solutions
+
+=== Why Use Micronaut Jupyter?
+
+Micronaut Jupyter bridges the gap between your production application code and interactive development. Unlike traditional notebook environments that require you to recreate your application's setup, Micronaut Jupyter gives you direct access to:
+
+* **Your actual application context** - not a simulation
+* **Production-ready services and repositories** - with all their configuration and dependencies
+* **Real business logic** - test and prototype with the actual code that runs in production
+* **Live data connections** - work with actual databases and external services
+
+This makes it perfect for:
+* **Data analysis** using your application's business logic
+* **Feature prototyping** with access to real services
+* **Interactive debugging** of complex application scenarios
+* **Live documentation** that stays current with your codebase
+
+=== Step-by-Step Tutorial
+
+Let's walk through creating your first Micronaut Jupyter notebook from scratch.
+
+==== Step 1: Verify Prerequisites
+
+Before starting, ensure you have the required software installed:
+
+[source,bash]
+----
+# Check Java version (17+ required)
+java -version
+
+# Install Jupyter with tested versions
+pip install ipykernel==6.29.5 notebook==6.5.7 tornado==6.4.1 jupyter-client==7.4.9 jupyterlab==3.5.3
+
+# Verify Jupyter installation
+jupyter --version
+----
+
+==== Step 2: Create or Use an Existing Micronaut Project
+
+If you don't have a Micronaut project, create one:
+
+[source,bash]
+----
+# Using Micronaut CLI
+mn create-app example.micronaut-jupyter-demo --lang=groovy
+
+# Or using curl
+curl https://launch.micronaut.io/example.micronaut-jupyter-demo.zip\?lang\=groovy -o demo.zip
+unzip demo.zip
+cd micronaut-jupyter-demo
+----
+
+==== Step 3: Add Micronaut Jupyter Dependency
+
+Edit your `build.gradle`:
+
+[source,groovy]
+----
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation "ai.stainless:micronaut-jupyter:1.1.2"
+    // ... your other dependencies
+}
+----
+
+==== Step 4: Configure Jupyter Kernel Location
+
+Create or edit `src/main/resources/application.yml`:
+
+[source,yaml]
+----
+jupyter:
+  kernel:
+    location: ~/.local/share/jupyter/kernels
+
+micronaut:
+  application:
+    name: micronaut-jupyter-demo
+----
+
+==== Step 5: Create a Simple Service (Optional)
+
+Create a sample service to test with. Create `src/main/groovy/example/GreetingService.groovy`:
+
+[source,groovy]
+----
+package example
+
+import io.micronaut.context.annotation.Singleton
+
+@Singleton
+class GreetingService {
+    String greet(String name) {
+        return "Hello, ${name}! Welcome to Micronaut Jupyter."
+    }
+    
+    List<String> getAvailableGreetings() {
+        return ["Hello", "Hi", "Greetings", "Welcome"]
+    }
+}
+----
+
+==== Step 6: Start Your Application
+
+[source,bash]
+----
+./gradlew run
+----
+
+Wait for the application to start. You should see:
+[source]
+----
+INFO  - Micronaut kernel installed successfully
+INFO  - Startup completed in XXXXms. Server Running: http://localhost:8080
+----
+
+==== Step 7: Launch Jupyter Lab
+
+In a new terminal (keep your app running):
+
+[source,bash]
+----
+jupyter lab
+----
+
+This opens Jupyter Lab in your browser at http://localhost:8888.
+
+==== Step 8: Create Your First Notebook
+
+1. In Jupyter Lab, click the **"+"** button to create a new launcher
+2. Under "Notebook", click **"Micronaut"** (you should see this option)
+3. A new notebook opens with the Micronaut kernel
+
+==== Step 9: Test Basic Functionality
+
+In your new notebook, try these cells:
+
+**Cell 1 - Basic Groovy:**
+[source,groovy]
+----
+println "Hello from Micronaut Jupyter!"
+def numbers = [1, 2, 3, 4, 5]
+numbers.collect { it * 2 }
+----
+
+**Cell 2 - Access Your Service:**
+[source,groovy]
+----
+// Get the greeting service we created
+greetingService = service example.GreetingService
+
+// Use the service
+message = greetingService.greet("Developer")
+println message
+----
+
+**Cell 3 - Explore Service Methods:**
+[source,groovy]
+----
+// Get available greetings
+greetings = greetingService.availableGreetings
+println "Available greetings: ${greetings}"
+
+// Try different greetings
+greetings.each { greeting ->
+    println "${greeting}, World!"
+}
+----
+
+**Cell 4 - Access Application Context:**
+[source,groovy]
+----
+import io.micronaut.context.ApplicationContext
+import io.micronaut.context.env.Environment
+
+// Get the application context
+context = service ApplicationContext
+env = service Environment
+
+// Show application info
+println "Application name: ${env.getProperty('micronaut.application.name', String.class)}"
+println "Active environments: ${env.activeNames}"
+println "Bean count: ${context.allBeanDefinitions.size()}"
+----
+
+==== Step 10: Verify Everything Works
+
+If all cells execute successfully, congratulations! You have:
+
+✓ Successfully integrated Micronaut Jupyter into your project
+✓ Created and accessed Micronaut beans from notebooks
+✓ Demonstrated the core functionality
+
+=== What's Next?
+
+Now that you have the basics working, explore these areas:
+
+==== Learn More Usage Patterns
+
+Check out the link:usage.html[Usage Guide] for:
+* Working with repositories and databases
+* Reactive programming patterns
+* Event handling and configuration access
+* Advanced BeakerX features
+
+==== Explore the Examples
+
+Run the comprehensive examples included with the project:
+* link:examples.html[Examples Guide] - Three complete example applications
+
+==== Advanced Configuration
+
+Learn about:
+* Custom kernel configurations
+* Docker deployment
+* Security considerations
+* Performance tuning
+
+=== Troubleshooting Your Setup
+
+==== Kernel Not Appearing
+
+**Problem**: "Micronaut" doesn't appear as a kernel option in Jupyter.
+
+**Solutions**:
+1. Verify your application started without errors
+2. Check the application logs for kernel installation messages
+3. Verify kernel directory permissions:
+   [source,bash]
+   ----
+   jupyter kernelspec list
+   ----
+4. Restart Jupyter Lab after starting your application
+
+==== Import Errors
+
+**Problem**: Cannot import application classes with `%import` or regular imports.
+
+**Solutions**:
+1. Ensure your application compiled successfully (`./gradlew compileGroovy`)
+2. Check package names are correct
+3. Verify classes are in the main source set, not test
+
+==== Service Not Found
+
+**Problem**: `service ClassName` returns errors.
+
+**Solutions**:
+1. Verify the class is annotated with `@Singleton`, `@Service`, etc.
+2. Check the class is in a package scanned by Micronaut
+3. Ensure there are no circular dependencies
+4. Try using the fully qualified class name
+
+==== Connection Issues
+
+**Problem**: Notebook cells hang or don't execute.
+
+**Solutions**:
+1. Restart the kernel (Kernel → Restart Kernel)
+2. Check if your application is still running
+3. Look for errors in the application logs
+4. Try creating a new notebook
+
+==== Permission Errors
+
+**Problem**: Cannot write to kernel directory.
+
+**Solutions**:
+1. Use the user directory option: `~/.local/share/jupyter/kernels`
+2. Fix permissions on the target directory
+3. Check the `jupyter.kernel.location` configuration
+
+=== Getting Help
+
+If you encounter issues not covered here:
+
+1. **Check the logs**: Your application logs contain detailed error information
+2. **Verify versions**: Ensure you're using compatible versions as listed in the introduction
+3. **Try the examples**: The included examples are tested and known to work
+4. **Review the setup**: Double-check each configuration step
+
+=== Summary
+
+You've successfully:
+
+* ✅ Set up Micronaut Jupyter in your project
+* ✅ Configured the kernel installation location
+* ✅ Created your first interactive notebook
+* ✅ Accessed Micronaut beans and services from notebooks
+* ✅ Learned troubleshooting techniques
+
+You're now ready to use Micronaut Jupyter for interactive development, data analysis, prototyping, and more. The combination of your application's full context with Jupyter's interactive environment opens up powerful possibilities for development and analysis workflows.
+
+Explore the link:usage.html[Usage Guide] and link:examples.html[Examples] to learn more advanced techniques and see real-world applications of Micronaut Jupyter.

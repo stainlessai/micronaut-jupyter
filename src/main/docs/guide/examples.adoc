@@ -1,0 +1,387 @@
+== Examples
+
+Micronaut Jupyter includes three comprehensive example applications that demonstrate different aspects of the integration. These examples provide hands-on experience with the most common use cases and serve as templates for your own implementations.
+
+=== Overview of Examples
+
+==== Basic Service Example (`examples/basic-service/`)
+
+**Purpose**: Demonstrates importing and using application classes
+
+**Key Features**:
+* Importing custom classes from the application classpath
+* Working with business logic objects
+* Basic Groovy execution patterns
+* Logging integration
+
+**Use Case**: Perfect for applications that have custom domain objects, utilities, or business logic classes that you want to use interactively.
+
+==== Beans Service Example (`examples/beans-service/`)
+
+**Purpose**: Shows how to access and use Micronaut dependency injection
+
+**Key Features**:
+* Retrieving beans using the `service` keyword
+* Working with injected dependencies
+* Service method invocation
+* Stateful service interactions
+
+**Use Case**: Ideal for applications with complex service layers where you want to test or analyze service behavior interactively.
+
+==== Micronaut Data Example (`examples/md-service/`)
+
+**Purpose**: Demonstrates repository and database interactions
+
+**Key Features**:
+* Using Micronaut Data repositories
+* CRUD operations on entities
+* Managing entity relationships
+* Database queries and persistence
+
+**Use Case**: Essential for data-driven applications where you need to analyze, query, or manipulate data using your existing repository layer.
+
+=== Prerequisites for Running Examples
+
+Before running any example, ensure you have:
+
+1. **Java 17+** installed
+2. **Jupyter Lab/Notebook** with the tested versions:
+   [source,bash]
+   ----
+   pip install ipykernel==6.29.5 notebook==6.5.7 tornado==6.4.1 jupyter-client==7.4.9 jupyterlab==3.5.3
+   ----
+
+3. **Kernel directory** configured (choose one):
+   - Default: `sudo chmod 777 /usr/local/share/jupyter/kernels` (development only)
+   - User directory: `mkdir -p ~/.local/share/jupyter/kernels`
+   - Custom directory: Set up as described in the setup guide
+
+=== Running the Examples
+
+==== Method 1: Quick Start (Recommended)
+
+Each example can be run independently:
+
+1. **Navigate to the example directory**:
+   [source,bash]
+   ----
+   cd examples/basic-service
+   # or: cd examples/beans-service
+   # or: cd examples/md-service
+   ----
+
+2. **Start the Micronaut application**:
+   [source,bash]
+   ----
+   ../../gradlew run
+   ----
+
+3. **Wait for successful startup**. Look for these log messages:
+   [source]
+   ----
+   INFO  - Micronaut kernel installed successfully
+   INFO  - Startup completed in 2345ms. Server Running: http://localhost:8080
+   ----
+
+4. **Open a new terminal** in the same directory and start Jupyter:
+   [source,bash]
+   ----
+   jupyter lab
+   ----
+
+5. **Access Jupyter** at http://localhost:8888
+
+6. **Open the example notebooks** from the `notebooks/` directory
+
+==== Method 2: Docker (Containerized)
+
+Each example includes a Dockerfile for containerized execution:
+
+1. **Build the Docker image**:
+   [source,bash]
+   ----
+   cd examples/basic-service
+   docker build -t micronaut-jupyter-basic .
+   ----
+
+2. **Run the container**:
+   [source,bash]
+   ----
+   docker run -p 8080:8080 -p 8888:8888 micronaut-jupyter-basic
+   ----
+
+3. **Access services**:
+   - Micronaut application: http://localhost:8080
+   - Jupyter Lab: http://localhost:8888
+
+=== Example Walkthrough
+
+==== Basic Service Example
+
+**Application Structure**:
+[source]
+----
+src/main/groovy/micronaut/examples/basic/
+├── Application.groovy
+└── library/
+    ├── Operation.groovy
+    ├── Status.groovy
+    └── Workflow.groovy
+----
+
+**Key Notebook**: `notebooks/use-library.ipynb`
+
+**What it demonstrates**:
+
+1. **Import application classes**:
+   [source,groovy]
+   ----
+   %import micronaut.examples.basic.library.Workflow
+   %import org.slf4j.LoggerFactory
+   ----
+
+2. **Create and configure business objects**:
+   [source,groovy]
+   ----
+   workflow = new Workflow()
+   workflow.build {
+       add { it * 5 }
+       add { it / 3 }
+       add { it + 100 }
+   }
+   ----
+
+3. **Execute business logic**:
+   [source,groovy]
+   ----
+   result = workflow.execute(100)
+   println "Result: $result"
+   ----
+
+4. **Access object state**:
+   [source,groovy]
+   ----
+   workflow.ops.each { op ->
+       println "Operation status: ${op.status}"
+   }
+   ----
+
+==== Beans Service Example
+
+**Application Structure**:
+[source]
+----
+src/main/groovy/micronaut/examples/beans/
+├── Application.groovy
+└── services/
+    └── CalculatorService.groovy
+----
+
+**Key Notebook**: `notebooks/use-bean.ipynb`
+
+**What it demonstrates**:
+
+1. **Retrieve Micronaut beans**:
+   [source,groovy]
+   ----
+   calculator = service micronaut.examples.beans.services.CalculatorService
+   ----
+
+2. **Use dependency-injected services**:
+   [source,groovy]
+   ----
+   sum = calculator.sum(1, 5, 7, 8)
+   product = calculator.product(45.5 as Float, 3, 6)
+   ----
+
+3. **Access service state**:
+   [source,groovy]
+   ----
+   import groovy.json.*
+   JsonOutput.prettyPrint(new JsonBuilder(calculator.history).toString())
+   ----
+
+4. **Interactive service exploration**:
+   [source,groovy]
+   ----
+   // Calculator maintains operation history
+   calculator.difference(1554, 45, 67.8 as Float, 5)
+   calculator.quotient(1789, 43, 2, 10)
+   
+   // View complete calculation history
+   calculator.history.each { op ->
+       println "${op.op}: ${op.params.join(', ')}"
+   }
+   ----
+
+==== Micronaut Data Example
+
+**Application Structure**:
+[source]
+----
+src/main/groovy/micronaut/examples/md/
+├── Application.groovy
+├── domains/
+│   └── Person.groovy
+└── repositories/
+    └── FriendRepository.groovy
+----
+
+**Key Notebook**: `notebooks/use-repo.ipynb`
+
+**What it demonstrates**:
+
+1. **Access Micronaut Data repositories**:
+   [source,groovy]
+   ----
+   friends = service micronaut.examples.md.repositories.FriendRepository
+   ----
+
+2. **Query existing data**:
+   [source,groovy]
+   ----
+   allPeople = friends.findAll()
+   println "Found ${allPeople.size()} people"
+   ----
+
+3. **Create and persist entities**:
+   [source,groovy]
+   ----
+   import micronaut.examples.md.domains.Person
+   
+   netty = new Person(firstName: "Netty", lastName: "Dobs")
+   fred = new Person(firstName: "Fred", lastName: "Dobs")
+   
+   // Set up relationships
+   netty.friends.add(fred)
+   fred.friends.add(netty)
+   
+   // Save to database
+   friends.saveAll([netty, fred])
+   ----
+
+4. **Query relationships**:
+   [source,groovy]
+   ----
+   savedNetty = friends.find("Netty", "Dobs")
+   println "Netty's friends: ${savedNetty.friends.collect { it.firstName }}"
+   ----
+
+=== Configuration Details
+
+Each example includes specific configuration:
+
+==== Application Configuration
+
+All examples use similar `application.yml` configurations:
+
+[source,yaml]
+----
+jupyter:
+  kernel:
+    location: /usr/local/share/jupyter/kernels  # Adjust as needed
+
+micronaut:
+  application:
+    name: example-service
+  server:
+    port: 8080
+
+# Example-specific configurations
+datasources:
+  default:  # For md-service example
+    url: jdbc:h2:mem:testDb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+----
+
+==== Kernel Configuration
+
+The kernel specification (`kernel.json`) is automatically generated but includes:
+
+[source,json]
+----
+{
+  "argv": [
+    "java",
+    "-jar", "/path/to/example.jar",
+    "--kernel-connection-file={connection_file}"
+  ],
+  "display_name": "Micronaut",
+  "language": "groovy"
+}
+----
+
+=== Testing the Examples
+
+==== Verification Steps
+
+For each example, verify the setup works:
+
+1. **Application health**: Visit http://localhost:8080/health
+2. **Kernel installation**: Run `jupyter kernelspec list` and confirm "micronaut" appears
+3. **Kernel selection**: In Jupyter, "Micronaut" should appear as a kernel option
+4. **Basic execution**: Create a new notebook and run:
+   [source,groovy]
+   ----
+   println "Hello from Micronaut Jupyter!"
+   ----
+
+==== Common Issues and Solutions
+
+**Kernel not appearing in Jupyter**:
+- Check application logs for kernel installation errors
+- Verify kernel directory permissions
+- Restart Jupyter after starting the application
+
+**Import errors in notebooks**:
+- Ensure the application compiled successfully
+- Check package names match your source structure
+- Verify classes are on the application classpath
+
+**Service not found errors**:
+- Confirm beans are properly annotated
+- Check that services are in scanned packages
+- Verify there are no circular dependencies
+
+**Database errors (md-service)**:
+- H2 database runs in-memory, data resets on restart
+- Check application.yml for correct database configuration
+- Ensure Micronaut Data dependencies are present
+
+=== Extending the Examples
+
+These examples serve as starting points for your own applications:
+
+==== Adding New Services
+
+1. Create service classes with proper Micronaut annotations
+2. Use `service ClassName` in notebooks to access them
+3. Follow dependency injection patterns
+
+==== Adding New Repositories
+
+1. Define entity classes with JPA annotations
+2. Create repository interfaces extending `CrudRepository`
+3. Use repositories in notebooks for data operations
+
+==== Custom Configuration
+
+1. Add configuration properties to `application.yml`
+2. Access via `Environment` service in notebooks:
+   [source,groovy]
+   ----
+   env = service io.micronaut.context.env.Environment
+   customProperty = env.getProperty("my.custom.property", String.class)
+   ----
+
+=== Next Steps
+
+After exploring the examples:
+
+1. **Try your own application**: Follow the setup guide to integrate Micronaut Jupyter into your existing project
+2. **Explore advanced features**: Check the usage guide for reactive programming, event handling, and hot reloading
+3. **Create custom notebooks**: Develop notebooks specific to your application's domain and use cases
+
+The examples provide a solid foundation for understanding how Micronaut Jupyter can enhance your development workflow with interactive, context-aware notebooks.

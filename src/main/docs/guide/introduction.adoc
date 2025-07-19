@@ -1,20 +1,77 @@
-A Micronaut configuration that integrates your app with an existing Jupyter
-installation.
+== Introduction
 
-## Features
+Micronaut Jupyter is a powerful integration library that connects your Micronaut applications with Jupyter notebooks, enabling interactive development, data analysis, and rapid prototyping directly within your application context.
 
-### Micronaut kernel
+TIP: New to Micronaut Jupyter? Start with the link:getting-started.html[**Getting Started Guide**] for quick setup instructions.
 
-A special Micronaut kernel is provided to Jupyter that can be used to run
-notebooks. This kernel can:
+=== What is Micronaut Jupyter?
 
-- Execute Groovy code
-- Import classes on your Micronaut app's classpath
-- Access Micronaut beans
-- Use Micronaut Data repositories
-- Use GORM Data Services and dynamic finders
-- Access functionality available to the
-https://nbviewer.jupyter.org/github/twosigma/beakerx/blob/master/StartHere.ipynb[BeakerX Groovy]
-kernel
-  ** **Note:** This requires that the `beakerx` Python package (and possibly
-    other Jupyter packages) be installed on the system separately.
+Micronaut Jupyter provides a custom Jupyter kernel that runs within your Micronaut application's context, giving you full access to your application's beans, services, repositories, and classpath from within Jupyter notebooks. This creates a powerful development and analysis environment where you can:
+
+* Interactively explore your application's functionality
+* Perform data analysis using your application's services and repositories  
+* Prototype new features rapidly
+* Debug and test application components in real-time
+* Create live documentation and tutorials
+
+=== Key Features
+
+==== Enhanced Micronaut Kernel
+
+The Micronaut kernel extends the powerful BeakerX Groovy kernel with native Micronaut integration:
+
+* **Full Groovy Support**: Execute any Groovy code with access to the full Groovy ecosystem
+* **Classpath Integration**: Import and use any classes available on your Micronaut application's classpath
+* **Bean Access**: Retrieve and interact with any Micronaut bean using the `service` keyword
+* **Repository Integration**: Use Micronaut Data repositories and GORM dynamic finders seamlessly
+* **Context Awareness**: Access the full Micronaut ApplicationContext and all its features
+* **Configuration Access**: Read application configuration and properties
+* **Event Handling**: Listen to and publish Micronaut events
+* **Isolation & Safety**: Each kernel runs in isolation with proper resource management
+
+==== Advanced Kernel Management
+
+Recent improvements include:
+
+* **Separate Kernel Instances**: Each notebook gets its own isolated kernel instance
+* **Resource Management**: Automatic cleanup of kernel resources and connections
+* **ThreadDeath Handling**: Enhanced stability and error recovery mechanisms
+* **Reactive Support**: Full support for reactive streams and async operations
+* **Hot Reloading**: Support for Micronaut's refresh scope and configuration reloading
+
+==== BeakerX Integration
+
+Built on the robust BeakerX platform, you also get access to:
+
+* **Rich Visualizations**: Charts, plots, and interactive widgets
+* **Table Display**: Rich table formatting and manipulation
+* **Magic Commands**: Powerful notebook shortcuts and utilities
+* **Polyglot Support**: Ability to mix languages within notebooks (when BeakerX is installed)
+
+NOTE: BeakerX features require the `beakerx` Python package to be installed separately.
+
+=== Version Compatibility
+
+Current version (1.1.2) supports:
+
+* **Micronaut**: 4.7.1
+* **Groovy**: 4.0.26  
+* **Micronaut Data**: 4.12.0
+* **BeakerX**: 2.1-SNAPSHOT (requires manual build)
+* **JupyterLab**: 3.5.3
+* **Jupyter Client**: 7.4.9
+
+=== Use Cases
+
+Micronaut Jupyter is ideal for:
+
+* **Interactive Development**: Rapidly prototype and test new features
+* **Data Analysis**: Analyze data using your application's business logic and repositories
+* **Live Documentation**: Create executable documentation that always stays current
+* **Debugging**: Interactively debug complex application scenarios
+* **Training & Demos**: Provide hands-on training environments
+* **Research & Experimentation**: Test hypotheses using real application data and logic
+
+=== Next Steps
+
+Ready to get started? Head over to the link:getting-started.html[Getting Started Guide] for step-by-step setup instructions and examples.

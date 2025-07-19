@@ -1,8 +1,314 @@
-When your app starts up, this configuration will make any necessary
-configurations to Jupyter. Once both your app and Jupyter are running, login to
-Jupyter to start using the features.
+=== Running Your Application
 
-For examples, see the
-https://github.com/stainlessai/micronaut-jupyter/tree/master/examples/[example apps]
-that use this configuration along with sample Jupyter notebooks that take
-advantage of the available features.
+==== Starting the Application
+
+Start your Micronaut application as you normally would:
+
+[source,bash]
+----
+./gradlew run
+----
+
+When the application starts up, Micronaut Jupyter will automatically:
+
+1. Install the Micronaut kernel specification to the configured Jupyter directory
+2. Register the kernel with Jupyter
+3. Set up the necessary infrastructure for notebook communication
+
+Look for log messages confirming successful kernel installation:
+
+[source]
+----
+INFO  - Micronaut kernel installed successfully
+INFO  - Kernel available at: /opt/jupyter-kernels/kernels/micronaut
+----
+
+==== Launching Jupyter
+
+Start Jupyter Lab in your project directory:
+
+[source,bash]
+----
+jupyter lab
+----
+
+Or for classic Jupyter Notebook:
+
+[source,bash]
+----
+jupyter notebook
+----
+
+Access the Jupyter interface at http://localhost:8888 (default).
+
+==== Creating a New Notebook
+
+1. In Jupyter, click "New" and select "Micronaut" from the kernel list
+2. You'll see a new notebook with the Micronaut kernel active
+3. The kernel indicator should show "Micronaut" in the top-right corner
+
+=== Core Usage Patterns
+
+==== Accessing Micronaut Beans
+
+Use the special `service` keyword to retrieve any Micronaut bean:
+
+[source,groovy]
+----
+// Get a service bean
+calculator = service mypackage.services.CalculatorService
+
+// Use the service
+result = calculator.add(10, 20)
+println "Result: $result"
+----
+
+==== Importing Application Classes
+
+Import and use any class from your application's classpath:
+
+[source,groovy]
+----
+%import mypackage.domain.User
+%import mypackage.utils.DateHelper
+
+// Create and use domain objects
+user = new User(name: "John", email: "john@example.com")
+println "User created: ${user.name}"
+----
+
+==== Working with Repositories
+
+Access Micronaut Data repositories directly:
+
+[source,groovy]
+----
+// Get a repository
+userRepo = service mypackage.repositories.UserRepository
+
+// Query data
+users = userRepo.findAll()
+println "Found ${users.size()} users"
+
+// Create new entities
+import mypackage.domain.User
+newUser = new User(name: "Alice", email: "alice@example.com")
+userRepo.save(newUser)
+----
+
+==== Configuration and Context Access
+
+Access application configuration and the ApplicationContext:
+
+[source,groovy]
+----
+// Access configuration
+import io.micronaut.context.ApplicationContext
+context = service ApplicationContext
+
+// Get configuration properties
+import io.micronaut.context.env.Environment
+env = service Environment
+dbUrl = env.getProperty("datasources.default.url", String.class)
+println "Database URL: $dbUrl"
+----
+
+=== Example Applications
+
+The project includes three comprehensive examples demonstrating different aspects:
+
+==== Basic Service Example
+
+Location: `examples/basic-service/`
+
+Demonstrates:
+* Importing and using application classes
+* Working with custom business logic
+* Basic Groovy execution
+
+Key notebook: `notebooks/use-library.ipynb`
+
+[source,groovy]
+----
+// Import application classes
+%import micronaut.examples.basic.library.Workflow
+%import org.slf4j.LoggerFactory
+
+// Create and configure workflow
+workflow = new Workflow()
+workflow.build {
+    add { it * 5 }
+    add { it / 3 }
+    add { it + 100 }
+}
+
+// Execute workflow
+result = workflow.execute(100)
+println "Result: $result"
+----
+
+==== Beans Service Example
+
+Location: `examples/beans-service/`
+
+Demonstrates:
+* Accessing Micronaut beans
+* Dependency injection in notebooks
+* Service method invocation
+
+Key notebook: `notebooks/use-bean.ipynb`
+
+[source,groovy]
+----
+// Get calculator service bean
+calculator = service micronaut.examples.beans.services.CalculatorService
+
+// Perform calculations
+sum = calculator.sum(1, 5, 7, 8)
+product = calculator.product(45.5 as Float, 3, 6)
+
+// View calculation history
+import groovy.json.*
+JsonOutput.prettyPrint(new JsonBuilder(calculator.history).toString())
+----
+
+==== Micronaut Data Example
+
+Location: `examples/md-service/`
+
+Demonstrates:
+* Using Micronaut Data repositories
+* CRUD operations
+* Entity relationships
+
+Key notebook: `notebooks/use-repo.ipynb`
+
+[source,groovy]
+----
+// Get repository
+friends = service micronaut.examples.md.repositories.FriendRepository
+
+// Create entities
+import micronaut.examples.md.domains.Person
+netty = new Person(firstName: "Netty", lastName: "Dobs")
+fred = new Person(firstName: "Fred", lastName: "Dobs")
+
+// Set up relationships
+netty.friends.add(fred)
+fred.friends.add(netty)
+
+// Save to database
+friends.saveAll([netty, fred])
+
+// Query relationships
+savedNetty = friends.find("Netty", "Dobs")
+println "Netty's friends: ${savedNetty.friends.collect { it.firstName }}"
+----
+
+=== Advanced Features
+
+==== Reactive Programming
+
+Work with reactive types seamlessly:
+
+[source,groovy]
+----
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.core.Flowable
+
+// Use reactive services
+reactiveService = service mypackage.services.ReactiveService
+
+// Work with reactive streams
+Flowable.fromIterable([1, 2, 3, 4, 5])
+    .map { it * 2 }
+    .filter { it > 4 }
+    .subscribe { println "Value: $it" }
+----
+
+==== Event Handling
+
+Listen to and publish Micronaut events:
+
+[source,groovy]
+----
+import io.micronaut.runtime.event.ApplicationEventPublisher
+import mypackage.events.CustomEvent
+
+// Get event publisher
+publisher = service ApplicationEventPublisher
+
+// Publish events
+event = new CustomEvent("Hello from Jupyter!")
+publisher.publishEvent(event)
+----
+
+==== Hot Reloading and Refresh
+
+When using Micronaut's refresh scope:
+
+[source,groovy]
+----
+import io.micronaut.runtime.context.scope.refresh.RefreshEvent
+
+// Trigger application refresh
+publisher = service ApplicationEventPublisher
+publisher.publishEvent(new RefreshEvent())
+
+// Re-acquire beans to get updated configurations
+updatedService = service mypackage.services.ConfigurableService
+----
+
+=== Running the Examples
+
+To run any example:
+
+1. Navigate to the example directory:
+   [source,bash]
+   ----
+   cd examples/basic-service
+   ----
+
+2. Start the application:
+   [source,bash]
+   ----
+   ../../gradlew run
+   ----
+
+3. In another terminal, start Jupyter from the same directory:
+   [source,bash]
+   ----
+   jupyter lab
+   ----
+
+4. Open the notebooks in the `notebooks/` directory and run the cells
+
+=== Troubleshooting
+
+==== Kernel Not Available
+
+If the Micronaut kernel doesn't appear in Jupyter:
+
+1. Check that your application started successfully
+2. Verify kernel installation logs in your application output
+3. Ensure Jupyter can read the kernel directory:
+   [source,bash]
+   ----
+   jupyter kernelspec list
+   ----
+
+==== Import Errors
+
+If you can't import application classes:
+
+1. Ensure the classes are on the application's classpath
+2. Use fully qualified class names
+3. Check for compilation errors in your application
+
+==== Bean Not Found
+
+If `service` calls fail:
+
+1. Verify the bean is properly annotated (`@Singleton`, `@Service`, etc.)
+2. Check that the bean is in a package scanned by Micronaut
+3. Ensure there are no circular dependencies

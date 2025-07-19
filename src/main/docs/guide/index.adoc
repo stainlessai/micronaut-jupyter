@@ -1,0 +1,58 @@
+= Micronaut Jupyter Documentation
+:toc: left
+:toclevels: 2
+:sectnums:
+:source-highlighter: coderay
+
+Welcome to the Micronaut Jupyter documentation. This guide covers everything you need to integrate Jupyter notebooks with your Micronaut applications.
+
+== Table of Contents
+
+=== link:introduction.html[Introduction]
+Learn about Micronaut Jupyter, its features, and use cases.
+
+* What is Micronaut Jupyter?
+* Key Features
+* Version Compatibility  
+* Use Cases
+
+=== link:getting-started.html[Getting Started]
+Complete step-by-step guide to set up and use Micronaut Jupyter.
+
+* link:getting-started/setup.html[Setup] - Prerequisites, dependencies, and configuration
+* link:getting-started/usage.html[Usage] - Core patterns and running your first notebook
+
+=== link:examples.html[Examples]
+Comprehensive examples demonstrating different aspects of Micronaut Jupyter.
+
+* Basic Service Example - Import and use application classes
+* Beans Service Example - Access Micronaut dependency injection
+* Micronaut Data Example - Work with repositories and databases
+
+== Quick Navigation
+
+[cols="1,3"]
+|===
+|New Users |Start with link:getting-started.html[**Getting Started Guide**] for setup instructions
+|Existing Users |Jump to link:getting-started/usage.html[Usage Patterns] or link:examples.html[Examples]
+|Troubleshooting |Check the troubleshooting sections in each guide
+|===
+
+== What is Micronaut Jupyter?
+
+Micronaut Jupyter bridges the gap between your production Micronaut applications and interactive Jupyter notebooks. Unlike traditional notebook environments, it gives you direct access to your application's:
+
+* **Beans and Services** - Use dependency injection in notebooks
+* **Repositories** - Query and manipulate data with your existing data layer
+* **Configuration** - Access application properties and environment settings
+* **Business Logic** - Test and prototype with actual production code
+
+== Getting Help
+
+* **Documentation Issues**: Check each section's troubleshooting guide
+* **Version Compatibility**: See the link:introduction.html#version-compatibility[Version Compatibility] section
+* **Examples**: All examples include working code you can run immediately
+
+== License
+
+This project is licensed under the Apache License 2.0.

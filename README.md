@@ -4,9 +4,12 @@ micronaut-jupyter
 [![Build Status](https://travis-ci.org/stainlessai/micronaut-jupyter.svg?branch=master)](https://travis-ci.org/stainlessai/micronaut-jupyter)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/ai.stainless/micronaut-jupyter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/ai.stainless/micronaut-jupyter)
 [![](https://jitpack.io/v/stainlessai/micronaut-jupyter.svg)](https://jitpack.io/#stainlessai/micronaut-jupyter)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://stainlessai.github.io/micronaut-jupyter/)
 
 A Micronaut configuration that integrates your app with an existing Jupyter
 installation.
+
+📚 **[View Full Documentation](https://stainlessai.github.io/micronaut-jupyter/)**
 
 ## Features
 

@@ -1,5 +1,9 @@
-introduction: Introduction
+index: Documentation Index
+introduction: 
+  title: Introduction
+  getting-started-link: "link:getting-started.html[Getting Started →]"
 getting-started:
   title: Getting Started
   setup: Setup
   usage: Usage
+examples: Examples

@@ -21,11 +21,46 @@ buildscript {
     }
 }
 
+plugins {
+    id 'org.asciidoctor.jvm.convert' version '4.0.4'
+}
+
 repositories {
     mavenCentral()
 }
 
 group "ai.stainless"
+
+// apply plugin: "grails-docs"
+
+asciidoctor {
+    sourceDir = file('src/main/docs/guide')
+    outputDir = file('build/docs/guide')
+    
+    sources {
+        include '**/*.adoc'
+    }
+    
+    attributes = [
+        'source-highlighter': 'coderay',
+        'imagesdir': './images',
+        'toc': 'left',
+        'icons': 'font',
+        'setanchors': '',
+        'idprefix': '',
+        'idseparator': '-',
+        'docinfo1': ''
+    ]
+}
+
+task docs {
+    dependsOn asciidoctor
+    description = "Generate HTML documentation from AsciiDoc guide files"
+    
+    doLast {
+        println "Documentation generated in: build/docs/guide"
+    }
+}
 
 subprojects { Project subproject ->
     group "ai.stainless"
@@ -148,9 +183,7 @@ task rsync {
     }
 }
 
-task build {
-    dependsOn rsync
-}
+// Removed conflicting build task - already exists from plugin
 
 task printBeakerXDeps {
     doLast {

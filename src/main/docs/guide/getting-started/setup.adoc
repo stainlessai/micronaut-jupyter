@@ -1,36 +1,164 @@
-### Add Build Dependency (Gradle)
-Ensure the following repositories are added to your gradle build:
-```Groovy
+=== Prerequisites
+
+Before setting up Micronaut Jupyter, ensure you have the following installed:
+
+==== Jupyter Environment
+
+Install Jupyter with the tested configuration:
+
+[source,bash]
+----
+pip install ipykernel==6.29.5 notebook==6.5.7 tornado==6.4.1 jupyter-client==7.4.9 jupyterlab==3.5.3
+----
+
+NOTE: While later versions may work, this specific combination has been thoroughly tested.
+
+==== BeakerX Dependencies (Optional but Recommended)
+
+For enhanced visualization and BeakerX features, you'll need to build BeakerX 2.0 manually since it's not yet published:
+
+[source,bash]
+----
+git clone --recurse-submodules https://github.com/stainlessai/beakerx-jlab2  
+
+cd beakerx-jlab2/beakerx_kernel_base
+./gradlew install -xtest        
+
+cd ../beakerx_kernel_groovy
+./gradlew install -xtest
+----
+
+This builds the required BeakerX 2.0-SNAPSHOT jars to your local Maven cache.
+
+=== Project Setup
+
+==== Add Build Dependencies
+
+Add the necessary repositories to your `build.gradle`:
+
+[source,groovy]
+----
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    mavenLocal() // Required if using BeakerX 2.0-SNAPSHOT
 }
-```
-Add the following dependency to your gradle build:
-```Groovy
+----
+
+Add the Micronaut Jupyter dependency:
+
+[source,groovy]
+----
 dependencies {
-    implementation "ai.stainless:micronaut-jupyter:0.2.4"
+    implementation "ai.stainless:micronaut-jupyter:1.1.2"
 }
-```
+----
 
-### Configure your Jupyter Kernels Directory
-Ensure that your app can write to a directory where Jupyter will search for
-kernels.
+==== Configure Kernel Installation Directory
 
-#### Option 1 - Easiest (**Possible security vulnerability!**)
-The default directory is `/usr/local/share/jupyter/kernels`, so the following
-is sufficient:
-```bash
-chmod 777 /usr/local/share/jupyter/kernels
-```
+Micronaut Jupyter needs to install kernel specifications that Jupyter can find. Choose one of these approaches:
 
-#### Option 2 - May be More Secure
-Create a separate directory, say at `/opt/jupyter-alt/kernels`, that your app
-can write to. Then, configure Jupyter to search this directory using
-https://jupyter.readthedocs.io/en/latest/projects/jupyter-directories.html#envvar-JUPYTER_PATH[JUPYTER_PATH].
-Lastly, add the following config to your application.yml:
-```yml
+===== Option 1: Default System Directory (Development Only)
+
+WARNING: This approach has security implications and should only be used in development environments.
+
+Make the default Jupyter kernels directory writable:
+
+[source,bash]
+----
+sudo chmod 777 /usr/local/share/jupyter/kernels
+----
+
+===== Option 2: Custom Directory (Recommended)
+
+Create a dedicated directory for kernels:
+
+[source,bash]
+----
+sudo mkdir -p /opt/jupyter-kernels
+sudo chown $USER:$USER /opt/jupyter-kernels
+----
+
+Configure Jupyter to search this directory by setting the `JUPYTER_PATH` environment variable:
+
+[source,bash]
+----
+export JUPYTER_PATH="/opt/jupyter-kernels:$JUPYTER_PATH"
+----
+
+Add this to your shell profile (`.bashrc`, `.zshrc`, etc.) to make it permanent.
+
+Configure your Micronaut application to use this directory in `application.yml`:
+
+[source,yaml]
+----
 jupyter:
   kernel:
-    location: /opt/jupyter-alt/kernels
-```
+    location: /opt/jupyter-kernels/kernels
+----
+
+===== Option 3: User Directory
+
+Use Jupyter's user-specific directory (no special permissions required):
+
+[source,bash]
+----
+mkdir -p ~/.local/share/jupyter/kernels
+----
+
+Configure your application:
+
+[source,yaml]
+----
+jupyter:
+  kernel:
+    location: ~/.local/share/jupyter/kernels
+----
+
+=== Application Configuration
+
+==== Basic Configuration
+
+Add basic Micronaut Jupyter configuration to your `application.yml`:
+
+[source,yaml]
+----
+jupyter:
+  kernel:
+    # Kernel installation directory (see options above)
+    location: /opt/jupyter-kernels/kernels
+    # Redirect kernel output to application logs
+    redirectLogOutput: true
+    # Kernel shutdown timeout
+    shutdownTimeoutMs: 5000
+----
+
+==== Advanced Configuration Options
+
+[source,yaml]
+----
+jupyter:
+  kernel:
+    location: /opt/jupyter-kernels/kernels
+    redirectLogOutput: true
+    shutdownTimeoutMs: 10000
+    # Additional JVM options for kernel processes
+    jvmOpts: "-Xmx512m -XX:+UseG1GC"
+----
+
+=== Docker Support
+
+Each example includes a `Dockerfile` for containerized deployment. To run with Docker:
+
+[source,bash]
+----
+# Build the image
+docker build -t my-micronaut-jupyter .
+
+# Run with Jupyter accessible
+docker run -p 8888:8888 -p 8080:8080 my-micronaut-jupyter
+----
+
+The container exposes:
+- Port 8080: Your Micronaut application
+- Port 8888: Jupyter Lab interface
