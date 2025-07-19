@@ -39,12 +39,15 @@ import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.twosigma.beakerx.kernel.msg.JupyterMessages.SHUTDOWN_REPLY;
@@ -310,11 +313,33 @@ public class CloseableKernelSocketsZMQ extends KernelSockets {
         logger.trace("handleControlMsg: "+message.toString());
         JupyterMessages type = message.getHeader().getTypeEnum();
         if (type.equals(SHUTDOWN_REQUEST)) {
+            // Parse restart flag from message content per Jupyter protocol
+            Map<String, Serializable> content = message.getContent();
+            boolean restart = content != null && Boolean.TRUE.equals(content.get("restart"));
+            
+            logger.info("Received shutdown_request with restart={}", restart);
+            
+            // Create reply with same restart flag per Jupyter specification
             Message reply = new Message(new Header(SHUTDOWN_REPLY, message.getHeader().getSession()));
             reply.setParentHeader(message.getHeader());
-            reply.setContent(message.getContent());
+            
+            // Mirror the restart flag in reply content
+            Map<String, Serializable> replyContent = new HashMap<>();
+            replyContent.put("status", "ok");
+            replyContent.put("restart", restart);
+            reply.setContent(replyContent);
+            
             sendMsg(controlSocket, Collections.singletonList(reply));
-            shutdown();
+            
+            if (restart) {
+                // Handle restart case - restart only this kernel's executor
+                logger.info("Handling restart request for specific kernel");
+                restartKernelExecutor();
+            } else {
+                // Handle final shutdown case
+                logger.info("Handling final shutdown request");
+                shutdown();
+            }
         }
         Handler<Message> handler = kernel.getHandler(message.type());
         if (handler != null) {
@@ -322,6 +347,51 @@ public class CloseableKernelSocketsZMQ extends KernelSockets {
         }
         logger.trace("leavin' handleControlMsg()");
   }
+
+    /**
+     * Restart only this kernel's executor, not all kernels
+     * This coordinates with KernelManager to restart the specific kernel
+     */
+    private void restartKernelExecutor() {
+        try {
+            // Get kernel ID from connection file or kernel instance
+            String kernelId = getKernelIdFromConnection();
+            if (kernelId != null) {
+                // TODO: Need to coordinate with KernelManager to restart specific kernel
+                // For now, log the intent - full implementation requires KernelManager integration
+                logger.info("Should restart kernel '{}' executor only, not affecting other users", kernelId);
+                
+                // This will need to call something like:
+                // kernelManager.restartKernel(kernelId);
+                
+                // For now, just shutdown this specific socket connection
+                // The kernel will need to be restarted by the client
+                shutdown();
+            } else {
+                logger.warn("Could not determine kernel ID for restart, falling back to shutdown");
+                shutdown();
+            }
+        } catch (Exception e) {
+            logger.error("Error during kernel restart, falling back to shutdown", e);
+            shutdown();
+        }
+    }
+
+    /**
+     * Extract kernel ID from connection information
+     * This needs to be implemented based on how kernel ID is passed to this socket handler
+     */
+    private String getKernelIdFromConnection() {
+        // TODO: Implementation depends on how kernel ID is made available to socket handler
+        // Options:
+        // 1. Pass kernel ID during socket creation
+        // 2. Extract from connection config
+        // 3. Use session ID as kernel identifier
+        
+        // For now, return null to indicate inability to determine kernel ID
+        logger.debug("Kernel ID extraction not yet implemented - needs integration with KernelManager");
+        return null;
+    }
 
     private ZMQ.Socket getNewSocket(int type, int port, String connection, ZMQ.Context context) {
         String socketTypeStr = getSocketTypeString(type);

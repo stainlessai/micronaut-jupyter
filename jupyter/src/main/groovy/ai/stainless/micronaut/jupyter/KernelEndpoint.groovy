@@ -46,20 +46,61 @@ public class KernelEndpoint {
      * 1. Come through ZMQ SHUTDOWN_REQUEST with restart=true flag
      * 2. Only affect the specific requesting kernel
      * 3. Maintain isolation between different users' kernels
+     * 
+     * @deprecated Use per-kernel restart via ZMQ protocol instead
      */
     @Post("/restart")
     public Map restart() {
-        log.info("Received kernel restart request")
+        log.warn("DEPRECATED: Global restart endpoint called - this affects ALL users!")
+        log.warn("This violates user isolation and should only be used for testing ThreadDeath propagation")
         
         if (this.kernelManager == null) {
             throw new IllegalStateException("KernelManager was not injected")
         }
         
-        kernelManager.restartKernel("all-kernels")
+        // Use the old global killAllKernels for backward compatibility in tests
+        kernelManager.killAllKernels()
         
         return [
-            "message": "Kernel restart request received!"
+            "message": "DEPRECATED: Global kernel restart completed - affected ALL users!",
+            "warning": "This endpoint violates user isolation and will be removed"
         ]
+    }
+    
+    /**
+     * Restart a specific kernel by ID with proper isolation
+     * This is the proper way to restart kernels without affecting other users
+     */
+    @Post("/restart/{kernelId}")
+    public Map restartKernel(@PathVariable String kernelId) {
+        log.info("Received isolated restart request for kernel: {}", kernelId)
+        
+        if (this.kernelManager == null) {
+            throw new IllegalStateException("KernelManager was not injected")
+        }
+        
+        if (kernelId == null || kernelId.trim().isEmpty()) {
+            return [
+                "status": "error",
+                "message": "Kernel ID cannot be null or empty"
+            ]
+        }
+        
+        try {
+            kernelManager.restartKernel(kernelId)
+            return [
+                "status": "ok",
+                "message": "Kernel '${kernelId}' restart completed",
+                "kernelId": kernelId
+            ]
+        } catch (Exception e) {
+            log.error("Error restarting kernel '{}'", kernelId, e)
+            return [
+                "status": "error", 
+                "message": "Failed to restart kernel '${kernelId}': ${e.message}",
+                "kernelId": kernelId
+            ]
+        }
     }
 
 
