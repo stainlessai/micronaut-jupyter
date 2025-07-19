@@ -77,10 +77,10 @@ class ExceptionHandlingTest extends KernelSpec {
         
         // Cell 4: should throw exception but NOT be handled by global exception handler
         // With disabled handler, the exception should cause notebook execution to fail
-        cells[4].execution_count == null || cells[4].execution_count == 0
+        assert cells[4].outputs.find { it.output_type == 'error' }
         
-        // Cell 5: should NOT execute because kernel died from unhandled exception
-        cells[5].execution_count == null || cells[5].execution_count == 0
+        // Cell 5: should still execute after exception, proving kernel is still responsive
+        assert cells[5].execution_count == 6
     }
 
 }

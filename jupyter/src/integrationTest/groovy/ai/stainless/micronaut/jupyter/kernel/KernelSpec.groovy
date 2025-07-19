@@ -59,16 +59,55 @@ class KernelSpec extends Specification {
         def currentDir = System.getProperty("user.dir")
         // When running from gradle, working directory is the jupyter subproject, so go up one level
         def projectRoot = currentDir.endsWith("/jupyter") ? new File(currentDir).getParent() : currentDir
+        // Detect which jar to use based on test context
         def integrationTestJarPath = Paths.get(projectRoot, "jupyter", "build", "libs", "integration-test-0.1-all.jar").toString()
+        def mdTestJarPath = Paths.get(projectRoot, "jupyter", "build", "libs", "md-test-0.1-all.jar").toString()
+        
+        // Check if this is an mdTest by looking for mdTest-specific files or system properties
+        def isMdTest = false
+        
+        // Method 1: Check if md-test jar exists and integration test jar is older
+        def mdTestJar = new File(mdTestJarPath)
+        def integrationTestJar = new File(integrationTestJarPath)
+        
+        if (mdTestJar.exists() && integrationTestJar.exists()) {
+            // If md-test jar is newer, it's likely we're running mdTest
+            isMdTest = mdTestJar.lastModified() > integrationTestJar.lastModified()
+        }
+        
+        // Method 2: Check system property or environment variable
+        def testTask = System.getProperty("gradle.test.task") ?: System.getenv("GRADLE_TEST_TASK")
+        if (testTask == "mdTest") {
+            isMdTest = true
+        }
+        
+        // Method 3: Check if there are mdTest classes being compiled recently
+        def mdTestClassesDir = new File(projectRoot, "jupyter/build/classes/groovy/mdTest")
+        def integrationTestClassesDir = new File(projectRoot, "jupyter/build/classes/groovy/integrationTest")
+        
+        if (mdTestClassesDir.exists() && integrationTestClassesDir.exists()) {
+            // Check if mdTest classes are newer
+            def mdTestTime = mdTestClassesDir.listFiles()?.collect { it.lastModified() }?.max() ?: 0
+            def integrationTestTime = integrationTestClassesDir.listFiles()?.collect { it.lastModified() }?.max() ?: 0
+            if (mdTestTime > integrationTestTime) {
+                isMdTest = true
+            }
+        }
+        
+        def jarPath = isMdTest ? mdTestJarPath : integrationTestJarPath
+        def jarFile = new File(jarPath)
+        
         def testStartupScriptPath = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "test-startup.sh").toString()
         def testLogFilePath = Paths.get(projectRoot, "jupyter", "src", "integrationTest", "resources", "logback-integration-test.xml")
         def integrationConfigPath = Paths.get(projectRoot, "jupyter", "src", "integrationTest", "resources", "application-integration-test.yml").toString()
 
-        // Check if the integration test JAR exists
-        def integrationTestJar = new File(integrationTestJarPath)
-        if (!integrationTestJar.exists()) {
-            throw new RuntimeException("Required JAR file not found: ${integrationTestJarPath}. Run 'gradle assemble' to build the integration test JAR before running integration tests.")
+        // Check if the required JAR exists
+        if (!jarFile.exists()) {
+            def jarType = isMdTest ? "MD test" : "integration test"
+            throw new RuntimeException("Required JAR file not found: ${jarPath}. Run 'gradle assemble' to build the ${jarType} JAR before running tests.")
         }
+        
+        integrationTestJarPath = jarPath
 
         def kernelDir = Paths.get(projectRoot, "jupyter", "src", "test", "resources", "kernels", "micronaut").toString()
 

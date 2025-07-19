@@ -124,6 +124,7 @@ dependencies {
     mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
     mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
     mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
+    mdTestImplementation project(':examples:md-service')
     mdTestRuntimeOnly "com.h2database:h2:1.4.200"
 
     testRuntimeOnly("org.yaml:snakeyaml")
@@ -185,11 +186,6 @@ tasks.withType(Test) {
 //    classpath = sourceSets.gormTest.runtimeClasspath
 //}
 
-task mdTest(type: Test) {
-    testClassesDirs = sourceSets.mdTest.output.classesDirs
-    classpath = sourceSets.mdTest.runtimeClasspath
-}
-
 task unitTest(type: Test) {
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
@@ -223,6 +219,50 @@ shadowJar {
 
 task integrationTestJar {
     dependsOn shadowJar
+}
+
+task mdTestShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    dependsOn mdTestClasses, processIntegrationTestResources
+
+    archiveBaseName = 'md-test'
+    archiveVersion = '0.1'
+    archiveClassifier = 'all'
+
+    // Enable zip64 to handle large archives
+    zip64 = true
+
+    // Include mdTest classes and resources
+    from sourceSets.mdTest.output.classesDirs
+    from sourceSets.mdTest.output.resourcesDir
+
+    // Include integration test classes (KernelSpec is in integrationTest)
+    from sourceSets.integrationTest.output.classesDirs
+    from sourceSets.integrationTest.output.resourcesDir
+
+    // Include ONLY .class files from main (exclude main resources)
+    from sourceSets.main.output.classesDirs
+
+    // Use mdTest runtime classpath
+    configurations = [project.configurations.mdTestRuntimeClasspath]
+
+    mergeServiceFiles()
+
+    manifest {
+        attributes 'Main-Class': 'ai.stainless.micronaut.integration.Application'
+        attributes 'Implementation-Title': 'MD Test Application'
+        attributes 'Implementation-Version': '0.1'
+    }
+}
+
+task mdTestJar {
+    dependsOn mdTestShadowJar
+}
+
+task mdTest(type: Test) {
+    dependsOn mdTestJar
+    
+    testClassesDirs = sourceSets.mdTest.output.classesDirs
+    classpath = sourceSets.mdTest.runtimeClasspath
 }
 
 task basicIntegrationTest(type: Test) {

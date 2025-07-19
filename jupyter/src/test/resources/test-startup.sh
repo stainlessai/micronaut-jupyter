@@ -12,7 +12,8 @@ ls -al /app/libs
 #
 # Use the integration test fat JAR with all dependencies included
 #
-java -Dlogback.configurationFile=/app/libs/logback.xml \
+java -DDISABLE_GLOBAL_EXCEPTION_HANDLER=${DISABLE_GLOBAL_EXCEPTION_HANDLER} \
+  -Dlogback.configurationFile=/app/libs/logback.xml \
   -Dlogback.debug=true \
   -Dmicronaut.config.files=/app/application.yml \
   -jar /app/libs/integration-test-0.1-all.jar

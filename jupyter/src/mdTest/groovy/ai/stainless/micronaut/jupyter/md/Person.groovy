@@ -5,7 +5,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.persistence.ManyToMany
 
-@Entity
+@Entity(name = "MdTestPerson")
 public class Person {
     @Id
     @GeneratedValue

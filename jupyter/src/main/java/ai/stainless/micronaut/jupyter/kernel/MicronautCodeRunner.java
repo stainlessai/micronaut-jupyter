@@ -67,7 +67,7 @@ public class MicronautCodeRunner implements Callable<TryResult> {
         String scriptName = SCRIPT_NAME;
         
         // Set up uncaught exception handler for this execution (unless disabled via env var)
-        String disableHandler = System.getenv("DISABLE_GLOBAL_EXCEPTION_HANDLER");
+        String disableHandler = System.getProperty("DISABLE_GLOBAL_EXCEPTION_HANDLER");
         if (!"true".equalsIgnoreCase(disableHandler) && !"1".equals(disableHandler)) {
             Thread.currentThread().setUncaughtExceptionHandler(
                 new GlobalUncaughtExceptionHandler(evaluator.getKernel(), theOutput)

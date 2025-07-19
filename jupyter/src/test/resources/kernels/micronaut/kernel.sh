@@ -101,6 +101,7 @@ curl -X POST "${SERVER_URL}/jupyterkernel/start" \
      -o "$RESPONSE_FILE" \
      2>&1
 
+
 RET=$?
 echo "DEBUG: Curl exit code: $RET" >&2
 echo "DEBUG: Raw response body:" >&2
