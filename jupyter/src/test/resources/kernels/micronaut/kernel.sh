@@ -140,12 +140,11 @@ fi
 
 # The kernel has been started, so things are out of control now
 # Make Jupyter think that we ("the kernel") are still doing something
+# This loop must continue running - if it exits, Jupyter thinks the kernel died
 while true; do
-  echo "DEBUG: Trying health check: ${SERVER_URL}/health" >&2
-  if curl -f --connect-timeout 1 --max-time 3 "${SERVER_URL}/health" >/dev/null 2>&1; then
-    echo "Server is healthy."
-    break
+  if ! curl -f --connect-timeout 1 --max-time 3 "${SERVER_URL}/health" >/dev/null 2>&1; then
+    echo "Server not healthy, exiting!!!" >&2
+    exit 1
   fi
-  echo "Server not healthy!!!" >&2
   sleep 5
 done
