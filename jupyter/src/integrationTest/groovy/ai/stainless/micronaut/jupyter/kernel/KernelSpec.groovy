@@ -124,7 +124,7 @@ class KernelSpec extends Specification {
         def micronautImage = new ImageFromDockerfile()
                 .withDockerfileFromBuilder { builder ->
                     builder
-                            .from("openjdk:17-jdk-slim")
+                            .from("eclipse-temurin:17-jdk-jammy")
                             .run("apt-get update && apt-get install -y net-tools procps curl")
                             .workDir("/app")
                             .build()
