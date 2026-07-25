@@ -9,7 +9,7 @@ COPY ./notebooks/ /notebooks
 USER root
 RUN apt update && apt install -y iptables iproute2 curl jq dos2unix dnsutils iputils-ping net-tools socat procps
 
-RUN pip install --upgrade nbclient
+RUN pip install --upgrade nbclient papermill
 
 # Create the jupyter kernel directory structure
 RUN mkdir -p /usr/share/jupyter/kernels/micronaut
