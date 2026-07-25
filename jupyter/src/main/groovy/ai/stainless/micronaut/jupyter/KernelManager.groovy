@@ -56,7 +56,9 @@ public class KernelManager {
     // Dependency injection for StandardStreamHandler
     @Inject
     private StandardStreamHandler streamHandler
-    private ExecutorService kernelExecutor
+    // One isolated executor per kernel so killing/restarting one kernel can never
+    // touch another kernel's threads
+    private final Map<String, ExecutorService> kernelExecutors = new ConcurrentHashMap<>()
     private final List<Thread> exitPreventionHooks = new CopyOnWriteArrayList<>()
 
     @Inject
@@ -67,20 +69,20 @@ public class KernelManager {
      */
     public KernelManager() {
         log.info("Initializing KernelManager")
-        initializeExecutor()
-        log.info("KernelManager initialized successfully")
     }
 
     /**
-     * Initialize thread pool with named threads for better debugging
+     * Create an isolated thread pool for a single kernel, with threads named after
+     * the kernel for better debugging
      */
-    private void initializeExecutor() {
+    private ExecutorService createKernelExecutor(String kernelId) {
+        String shortId = kernelId.length() > 8 ? kernelId.substring(0, 8) : kernelId
         ThreadFactory threadFactory = new ThreadFactory() {
             private final AtomicInteger threadNumber = new AtomicInteger(1)
 
             @Override
             public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r, "Jupyter-Kernel-" + threadNumber.getAndIncrement())
+                Thread thread = new Thread(r, "Jupyter-Kernel-" + shortId + "-" + threadNumber.getAndIncrement())
                 thread.setDaemon(false) // Allow JVM to exit when these threads are running
                 // Set default uncaught exception handler for all threads created by this factory
                 thread.setUncaughtExceptionHandler(
@@ -90,8 +92,7 @@ public class KernelManager {
             }
         }
 
-        kernelExecutor = Executors.newCachedThreadPool(threadFactory)
-        log.debug("Kernel executor service initialized")
+        return Executors.newCachedThreadPool(threadFactory)
     }
 
     @PostConstruct
@@ -116,8 +117,8 @@ public class KernelManager {
         // Clean up resources
         killAllKernels()
 
-        // Shutdown executor service
-        shutdownExecutor()
+        // Shutdown any remaining executor services
+        shutdownAllExecutors()
 
         // Remove exit prevention hooks
         removeAllExitPreventionHooks()
@@ -128,20 +129,25 @@ public class KernelManager {
         log.info("KernelManager destroyed successfully")
     }
 
-    private void shutdownExecutor() {
-        if (kernelExecutor != null && !kernelExecutor.isShutdown()) {
-            log.debug("Shutting down kernel executor service")
-            kernelExecutor.shutdown()
+    private void shutdownAllExecutors() {
+        List<String> kernelIds = new ArrayList<>(kernelExecutors.keySet())
+        for (String kernelId : kernelIds) {
+            ExecutorService executor = kernelExecutors.remove(kernelId)
+            if (executor == null || executor.isShutdown()) {
+                continue
+            }
+            log.debug("Shutting down executor service for kernel '{}'", kernelId)
+            executor.shutdown()
             try {
-                if (!kernelExecutor.awaitTermination(shutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
-                    log.warn("Kernel executor did not terminate in {}ms, forcing shutdown", shutdownTimeoutMs)
-                    List<Runnable> tasksNotExecuted = kernelExecutor.shutdownNow()
+                if (!executor.awaitTermination(shutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
+                    log.warn("Executor for kernel '{}' did not terminate in {}ms, forcing shutdown", kernelId, shutdownTimeoutMs)
+                    List<Runnable> tasksNotExecuted = executor.shutdownNow()
                     log.debug("{} kernel tasks were never executed", tasksNotExecuted.size())
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt()
                 log.warn("Interrupted while waiting for kernel executor shutdown", e)
-                kernelExecutor.shutdownNow()
+                executor.shutdownNow()
             }
         }
     }
@@ -173,14 +179,9 @@ public class KernelManager {
             throw new IllegalArgumentException("Connection file path cannot be null or empty")
         }
 
-        if (kernelExecutor == null || kernelExecutor.isShutdown()) {
-            log.warn("Kernel executor was shut down. Re-initializing for new kernel request.")
-            initializeExecutor()
-        }
-
         // Generate unique kernel ID for tracking (restart isolation)
         String kernelId = generateKernelId()
-        
+
         // Thread-safe check for duplicate kernel ID and prevent starting if already exists
         synchronized (reservedKernelIds) {
             if (reservedKernelIds.contains(kernelId) || kernelById.containsKey(kernelId)) {
@@ -190,10 +191,13 @@ public class KernelManager {
             // Reserve the kernel ID immediately to prevent race conditions
             reservedKernelIds.add(kernelId)
         }
-        
+
         connectionFileToKernelId.put(connectionFile, kernelId)
 
         log.info("Starting new Micronaut kernel with ID '{}' and connection file: {}", kernelId, connectionFile)
+
+        ExecutorService kernelExecutor = createKernelExecutor(kernelId)
+        kernelExecutors.put(kernelId, kernelExecutor)
 
         kernelExecutor.submit(() -> {
             String threadName = Thread.currentThread().getName()
@@ -207,6 +211,9 @@ public class KernelManager {
             Micronaut kernel = null
             try {
                 kernel = createAndInitializeKernel(connectionFile)
+                // Wire restart isolation into the kernel's ZMQ sockets: a
+                // shutdown_request with restart=true will restart only this kernel
+                kernel.setRestartContext(kernelId, () -> restartKernel(kernelId))
                 // Update kernel tracking with actual kernel instance
                 synchronized (reservedKernelIds) {
                     reservedKernelIds.remove(kernelId)
@@ -347,6 +354,13 @@ public class KernelManager {
                 kernelById.remove(kernelId)
             }
             connectionFileToKernelId.entrySet().removeIf(entry -> kernelId.equals(entry.getValue()))
+
+            // Release this kernel's isolated executor. Called from the executor's own
+            // thread, so use shutdown() which lets the current task finish.
+            ExecutorService executor = kernelExecutors.remove(kernelId)
+            if (executor != null) {
+                executor.shutdown()
+            }
         }
     }
 
@@ -425,11 +439,22 @@ public class KernelManager {
             connectionFileToKernelId.clear()
             reservedKernelIds.clear()
         }
+
+        // Shut down executors for any kernels that did not clean themselves up;
+        // each executor terminates once its kernel task finishes
+        for (ExecutorService executor : new ArrayList<>(kernelExecutors.values())) {
+            executor.shutdown()
+        }
+        kernelExecutors.clear()
+
         log.debug("Cleared all kernel tracking maps")
     }
 
     /**
-     * Restart a specific kernel by ID (isolation-aware)
+     * Restart a specific kernel by ID (isolation-aware).
+     * Kills only this kernel and releases its resources; the Jupyter client then
+     * relaunches the kernel process, which re-registers via the /start endpoint
+     * with the same connection file, producing a fresh kernel and executor.
      */
     public void restartKernel(String kernelId) {
         if (kernelId == null || kernelId.trim().isEmpty()) {
@@ -459,6 +484,13 @@ public class KernelManager {
      */
     public Kernel getKernelById(String kernelId) {
         return kernelById.get(kernelId)
+    }
+
+    /**
+     * Get the IDs of all tracked kernels
+     */
+    public List<String> getKernelIds() {
+        return new ArrayList<>(kernelById.keySet())
     }
 
     /**

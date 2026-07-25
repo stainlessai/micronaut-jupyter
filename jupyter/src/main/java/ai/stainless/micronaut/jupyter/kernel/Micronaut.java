@@ -62,6 +62,16 @@ public class Micronaut extends Groovy {
         this.evaluator = evaluator;
     }
 
+    /**
+     * Wire this kernel's id and its isolated restart action into the sockets factory.
+     * Must be called before run() (sockets are created during run), so that a ZMQ
+     * shutdown_request with restart=true restarts only this kernel.
+     */
+    public void setRestartContext(String kernelId, Runnable restartAction) {
+        kernelSocketsFactory.setKernelId(kernelId);
+        kernelSocketsFactory.setRestartAction(restartAction);
+    }
+
     public ApplicationContext getApplicationContext() {
         return applicationContext;
     }

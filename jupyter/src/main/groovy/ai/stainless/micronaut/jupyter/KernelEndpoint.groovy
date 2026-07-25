@@ -3,6 +3,7 @@ package ai.stainless.micronaut.jupyter
 import groovy.util.logging.Slf4j
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
 import io.micronaut.security.rules.SecurityRule
@@ -30,6 +31,17 @@ public class KernelEndpoint {
         return [
                 "message": "Kernel start request received!"
         ]
+    }
+
+    /**
+     * List the IDs of all active kernels
+     */
+    @Get("/kernels")
+    public Map kernels() {
+        if (this.kernelManager == null) {
+            throw new IllegalStateException("KernelManager was not injected")
+        }
+        return ["kernels": kernelManager.getKernelIds()]
     }
 
     /**
@@ -90,14 +102,14 @@ public class KernelEndpoint {
             kernelManager.restartKernel(kernelId)
             return [
                 "status": "ok",
-                "message": "Kernel '${kernelId}' restart completed",
+                "message": "Kernel '${kernelId}' restart completed".toString(),
                 "kernelId": kernelId
             ]
         } catch (Exception e) {
             log.error("Error restarting kernel '{}'", kernelId, e)
             return [
-                "status": "error", 
-                "message": "Failed to restart kernel '${kernelId}': ${e.message}",
+                "status": "error",
+                "message": "Failed to restart kernel '${kernelId}': ${e.message}".toString(),
                 "kernelId": kernelId
             ]
         }

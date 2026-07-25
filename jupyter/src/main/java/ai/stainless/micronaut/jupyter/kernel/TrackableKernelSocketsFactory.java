@@ -35,13 +35,27 @@ public class TrackableKernelSocketsFactory implements KernelSocketsFactory {
 
     private ArrayList<KernelSockets> instances = new ArrayList<>();
 
+    // Restart wiring propagated to each sockets instance this factory creates
+    private String kernelId;
+    private Runnable restartAction;
+
     public TrackableKernelSocketsFactory(ConfigurationFile configurationFile) {
         this.configurationFile = checkNotNull(configurationFile);
     }
 
+    public void setKernelId(String kernelId) {
+        this.kernelId = kernelId;
+    }
+
+    public void setRestartAction(Runnable restartAction) {
+        this.restartAction = restartAction;
+    }
+
     public KernelSockets create(final KernelFunctionality kernel, final SocketCloseAction closeAction) {
         // create new ZMQ sockets instance
-        KernelSockets sockets = new CloseableKernelSocketsZMQ(kernel, configurationFile.getConfig(), closeAction);
+        CloseableKernelSocketsZMQ sockets = new CloseableKernelSocketsZMQ(kernel, configurationFile.getConfig(), closeAction);
+        sockets.setKernelId(kernelId);
+        sockets.setRestartAction(restartAction);
         // store this instance for later tracking
         instances.add(sockets);
         // return this instance
