@@ -32,3 +32,8 @@ application-local.yml
 *_summary.md
 test_temp
 lib/
+
+# Local secrets and scratch files — never commit
+.token
+*.log
+.venv/
