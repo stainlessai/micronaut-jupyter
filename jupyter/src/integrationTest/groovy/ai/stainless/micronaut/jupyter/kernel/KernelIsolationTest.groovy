@@ -1,11 +1,20 @@
 package ai.stainless.micronaut.jupyter.kernel
 
+import com.twosigma.beakerx.kernel.msg.JupyterMessages
+import com.twosigma.beakerx.message.Header
+import com.twosigma.beakerx.message.MessageSerializer
+import com.twosigma.beakerx.security.HashedMessageAuthenticationCode
+import groovy.json.JsonSlurper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import org.zeromq.ZMQ
+import org.zeromq.ZMsg
 import spock.lang.Specification
 import spock.lang.Timeout
+import spock.util.concurrent.PollingConditions
 import ai.stainless.micronaut.jupyter.KernelManager
 import com.twosigma.beakerx.kernel.Kernel
 import jakarta.inject.Inject
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -129,6 +138,115 @@ class KernelIsolationTest extends Specification {
 
         cleanup:
         cleanupMockFiles(connectionFile)
+    }
+
+    @Timeout(value = 90, unit = TimeUnit.SECONDS)
+    def "ZMQ shutdown_request with restart=true restarts only the target kernel"() {
+        given: "Two running kernels with known ports and keys"
+        String connectionFile1 = "/tmp/test-zmq-restart-1.json"
+        String connectionFile2 = "/tmp/test-zmq-restart-2.json"
+        String key1 = UUID.randomUUID().toString()
+        String key2 = UUID.randomUUID().toString()
+        int basePort1 = 24311
+        int basePort2 = 24321
+        createZmqConnectionFile(connectionFile1, key1, basePort1)
+        createZmqConnectionFile(connectionFile2, key2, basePort2)
+
+        kernelManager.startNewKernel(connectionFile1)
+        kernelManager.startNewKernel(connectionFile2)
+
+        new PollingConditions(timeout: 20, initialDelay: 0.5, delay: 0.5).eventually {
+            assert kernelManager.getKernelIdFromConnectionFile(connectionFile1) != null
+            assert kernelManager.getKernelIdFromConnectionFile(connectionFile2) != null
+            assert kernelManager.getKernelById(kernelManager.getKernelIdFromConnectionFile(connectionFile1)) != null
+            assert kernelManager.getKernelById(kernelManager.getKernelIdFromConnectionFile(connectionFile2)) != null
+        }
+        String kernelId1 = kernelManager.getKernelIdFromConnectionFile(connectionFile1)
+        String kernelId2 = kernelManager.getKernelIdFromConnectionFile(connectionFile2)
+
+        // Give the socket threads a moment to bind and start polling
+        Thread.sleep(1000)
+
+        when: "Sending a Jupyter protocol shutdown_request with restart=true to kernel 1's control channel"
+        Map replyContent = sendShutdownRequest("127.0.0.1", basePort1 + 3, key1, true)
+
+        then: "The kernel replies with shutdown_reply mirroring the restart flag"
+        replyContent != null
+        replyContent.status == "ok"
+        replyContent.restart == true
+
+        and: "Kernel 1 is killed and cleaned up"
+        new PollingConditions(timeout: 20, delay: 0.5).eventually {
+            assert kernelManager.getKernelById(kernelId1) == null
+        }
+
+        and: "Kernel 2 is unaffected"
+        kernelManager.getKernelById(kernelId2) != null
+
+        cleanup:
+        cleanupMockFiles(connectionFile1, connectionFile2)
+    }
+
+    /**
+     * Send a signed Jupyter shutdown_request over ZMQ to a kernel's control port
+     * and return the parsed content of the shutdown_reply (null if no reply arrived).
+     */
+    private Map sendShutdownRequest(String host, int port, String key, boolean restart) {
+        def hmac = new HashedMessageAuthenticationCode(key)
+        def context = ZMQ.context(1)
+        def socket = context.socket(ZMQ.DEALER)
+        try {
+            socket.setReceiveTimeOut(30000)
+            socket.connect("tcp://${host}:${port}")
+
+            String header = MessageSerializer.toJson(new Header(JupyterMessages.SHUTDOWN_REQUEST, UUID.randomUUID().toString()))
+            String parent = "{}"
+            String metadata = "{}"
+            String content = MessageSerializer.toJson([restart: restart])
+            String digest = hmac.sign([header, parent, metadata, content])
+
+            ZMsg request = new ZMsg()
+            request.add(CloseableKernelSocketsZMQ.DELIM)
+            request.add(digest.getBytes(StandardCharsets.UTF_8))
+            request.add(header.getBytes(StandardCharsets.UTF_8))
+            request.add(parent.getBytes(StandardCharsets.UTF_8))
+            request.add(metadata.getBytes(StandardCharsets.UTF_8))
+            request.add(content.getBytes(StandardCharsets.UTF_8))
+            request.send(socket)
+
+            ZMsg reply = ZMsg.recvMsg(socket)
+            if (reply == null) {
+                return null
+            }
+            List<String> frames = reply.collect { new String(it.getData(), StandardCharsets.UTF_8) }
+            int delimIndex = frames.indexOf(CloseableKernelSocketsZMQ.DELIM)
+            assert delimIndex >= 0: "shutdown_reply missing delimiter, frames: ${frames}"
+            Map replyHeader = new JsonSlurper().parseText(frames[delimIndex + 2]) as Map
+            assert replyHeader.msg_type == "shutdown_reply": "Unexpected reply type: ${replyHeader}"
+            return new JsonSlurper().parseText(frames[delimIndex + 5]) as Map
+        } finally {
+            socket.setLinger(0)
+            socket.close()
+            context.close()
+        }
+    }
+
+    /**
+     * Create a connection file with explicit ports so the test can talk ZMQ to the kernel
+     */
+    private void createZmqConnectionFile(String filePath, String key, int basePort) {
+        new File(filePath).text = """{
+  "shell_port": ${basePort},
+  "iopub_port": ${basePort + 1},
+  "stdin_port": ${basePort + 2},
+  "control_port": ${basePort + 3},
+  "hb_port": ${basePort + 4},
+  "ip": "127.0.0.1",
+  "key": "${key}",
+  "transport": "tcp",
+  "signature_scheme": "hmac-sha256",
+  "kernel_name": "zmq-restart-test"
+}"""
     }
 
     /**
