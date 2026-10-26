@@ -3,26 +3,14 @@ plugins {
     id 'groovy'
     id 'maven-publish'
     id 'signing'
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 repositories {
     maven { url 'https://jitpack.io' }
 }
 
-configurations {
-    gormTestCompile.extendsFrom integrationTestCompile
-    gormTestRuntime.extendsFrom integrationTestRuntime
-    gormTestImplementation.extendsFrom integrationTestImplementation
-
-    mdTestCompile.extendsFrom integrationTestCompile
-    mdTestRuntime.extendsFrom integrationTestRuntime
-    mdTestImplementation.extendsFrom integrationTestImplementation
-
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
-    integrationTestImplementation.extendsFrom testImplementation
-}
+// Configuration inheritance is set up after sourceSets creates the configurations
 
 sourceSets.main.java.srcDirs = []
 sourceSets.main.groovy.srcDirs += ["src/main/java"]
@@ -48,16 +36,23 @@ sourceSets {
                     !elem.file.absolutePath.contains('KernelSpec.groovy')
         }
         resources.srcDir file('src/test/resources')
-        compileClasspath += sourceSets.main.output + configurations.testRuntime
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
         runtimeClasspath += output + compileClasspath
     }
 
     integrationTest {
         groovy.srcDir file('src/integrationTest/groovy')
         resources.srcDir file('src/test/resources')
-        compileClasspath += sourceSets.main.output + configurations.testRuntime
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
         runtimeClasspath += output + compileClasspath
     }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    mdTestImplementation.extendsFrom integrationTestImplementation
+    mdTestRuntimeOnly.extendsFrom integrationTestRuntimeOnly
 }
 
 dependencies {
@@ -121,11 +116,12 @@ dependencies {
     integrationTestImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
     integrationTestImplementation "org.junit.jupiter:junit-jupiter-engine:5.8.2"
 
-    mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
-    mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
-    mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
-    mdTestImplementation project(':examples:md-service')
-    mdTestRuntimeOnly "com.h2database:h2:1.4.200"
+    // md-service excluded from Gradle 9 build (Hibernate plugin incompatible)
+    // mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
+    // mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
+    // mdTestImplementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
+    // mdTestImplementation project(':examples:md-service')
+    // mdTestRuntimeOnly "com.h2database:h2:1.4.200"
 
     testRuntimeOnly("org.yaml:snakeyaml")
 

@@ -1,6 +1,6 @@
 plugins {
     id "groovy"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.6.1"
     id "application"
 }
 
@@ -45,7 +45,7 @@ dependencies {
 
 test.classpath += configurations.developmentOnly
 
-mainClassName = "micronaut.examples.basic.Application"
+application { mainClass.set("micronaut.examples.basic.Application") }
 
 shadowJar {
     mergeServiceFiles()

@@ -11,10 +11,12 @@ rootProject.name = 'micronaut-jupyter'
 
 include 'jupyter'
 include ':examples:basic-service'
-include ':examples:beans-service'
+// Hibernate plugin uses getConvention() removed in Gradle 9
+// include ':examples:beans-service'
 
 // Micronaut 4 doesn't support GORM
 // https://github.com/micronaut-projects/micronaut-starter/issues/1858
 // include ':examples:gorm-service'
 
-include ':examples:md-service'
+// md-service Hibernate plugin also incompatible with Gradle 9
+// include ':examples:md-service'
