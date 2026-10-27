@@ -124,8 +124,9 @@ class KernelSpec extends Specification {
         def micronautImage = new ImageFromDockerfile()
                 .withDockerfileFromBuilder { builder ->
                     builder
-                            .from("eclipse-temurin:17-jdk-jammy")
+                            .from("eclipse-temurin:25-jdk-noble")
                             .run("apt-get update && apt-get install -y net-tools procps curl")
+                            .run("mkdir -p /usr/local/share/jupyter/kernels")
                             .workDir("/app")
                             .build()
                 }
@@ -171,10 +172,10 @@ class KernelSpec extends Specification {
 //
 //        System.err.println("DEBUG: Micronaut container IP: " + micronautIp)
 //
-//        // Debug: Check Micronaut logs to see if InstallKernel ran
-//        String micronautLogs = micronautContainer.getLogs()
-//        System.err.println("DEBUG: Micronaut container logs:")
-//        System.err.println(micronautLogs)
+        // Debug: Check Micronaut logs to see if InstallKernel ran
+        String micronautLogs = micronautContainer.getLogs()
+        System.err.println("DEBUG: Micronaut container logs:")
+        System.err.println(micronautLogs)
 
 //        // Debug: Check if kernel files were created by InstallKernel
 //        def kernelFilesCheck = micronautContainer.execInContainer("find", "/usr/share", "-name", "*.sh", "-o", "-name", "*.json")
