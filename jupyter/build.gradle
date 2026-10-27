@@ -116,6 +116,9 @@ dependencies {
     integrationTestImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
     integrationTestImplementation "org.junit.jupiter:junit-jupiter-engine:5.8.2"
 
+    // Include basic-service classes so example notebooks can run in integration tests
+    integrationTestImplementation project(':examples:basic-service')
+
     // md-service excluded from Gradle 9 build (Hibernate plugin incompatible)
     // mdTestImplementation "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
     // mdTestImplementation "io.micronaut.configuration:micronaut-jdbc-tomcat:1.2.3"
@@ -269,6 +272,7 @@ task mdTest(type: Test) {
 
 task basicIntegrationTest(type: Test) {
     dependsOn integrationTestJar
+    dependsOn ':examples:basic-service:shadowJar'
 
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath

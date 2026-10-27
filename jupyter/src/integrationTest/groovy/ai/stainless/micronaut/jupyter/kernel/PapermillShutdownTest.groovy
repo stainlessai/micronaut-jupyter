@@ -80,7 +80,7 @@ class PapermillShutdownTest extends Specification {
                             builder
                                     .from("jupyter/base-notebook")
                                     .user("root")
-                                    .run("apt-get update && apt-get install -y curl procps openjdk-17-jre-headless")
+                                    .run("apt-get update && apt-get install -y curl procps openjdk-25-jre-headless")
                                     .run("pip install --upgrade papermill nbclient")
                                     .user("jovyan")
                                     .build()

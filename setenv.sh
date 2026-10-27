@@ -2,6 +2,6 @@
 
 source ~/.bashrc
 
-sdk use java 11.0.14.1-jbr
-sdk use gradle 8.1.1 
+sdk use java 25.0.2-tem
+sdk use gradle 9.8.2
 
