@@ -1,5 +1,5 @@
 ipykernel==6.29.5
 notebook==6.5.7
-tornado==6.5.9
+tornado==6.6
 jupyter-client==7.4.9
 jupyterlab==4.5.11
